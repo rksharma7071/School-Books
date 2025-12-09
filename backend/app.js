@@ -2,6 +2,8 @@ import express from "express";
 import "dotenv/config";
 import { connectDB } from "./config/database.js";
 import bookRouter from "./routes/book.route.js";
+import userRouter from "./routes/user.route.js";
+import authRouter from "./routes/auth.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -9,7 +11,9 @@ const PORT = process.env.PORT || 3000;
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-app.use("/book", bookRouter);
+app.use("/api/book", bookRouter);
+app.use("/api/user", userRouter);
+app.use("/api/auth", authRouter);
 
 app.get("/", (req, res) => {
     res.status(200).send("Hello");

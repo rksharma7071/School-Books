@@ -1,11 +1,5 @@
 import React, { useState } from 'react'
-import { FaChevronDown, FaChevronRight } from "react-icons/fa6";
-import { MdHome } from "react-icons/md";
-import { FaBookOpen } from "react-icons/fa";
-import { IoIosSettings } from "react-icons/io";
-import { Link } from 'react-router-dom';
-import { LuUserRound } from "react-icons/lu";
-import { FaUser } from "react-icons/fa";
+import { Link, NavLink } from 'react-router-dom';
 
 function SideMenu() {
     const [openMenu, setOpenMenu] = useState(null);
@@ -32,32 +26,41 @@ function SideMenu() {
 
                     {openMenu === "books" && (
                         <div className="mt-2 space-y-1 text-sm">
-                            <Link
-                                to="/books"
-                                className="group flex items-center justify-between rounded-lg px-10 py-2 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
-                            >
-                                <span className="flex items-center gap-2">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-gray-300 group-hover:bg-indigo-500" />All Books</span>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-700">120</span>
-                            </Link>
+                            <NavLink to="/books" className={({ isActive }) => `group flex items-center justify-between rounded-lg px-10 py-2 transition-colors ${isActive ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-700"}`}>
 
-                            <Link
+                                <span className="flex items-center gap-2">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-gray-300 group-hover:bg-indigo-500" />
+                                    All Book
+                                </span>
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-700  group-hover:bg-indigo-200">120</span>
+                            </NavLink>
+
+
+                            <NavLink
                                 to="/add-book"
-                                className="group flex items-center justify-between rounded-lg px-10 py-2 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                                className={({ isActive }) => `group flex items-center justify-between rounded-lg px-10 py-2 transition-colors ${isActive ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-700"}`}
                             >
                                 <span className="flex items-center gap-2">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-gray-300 group-hover:bg-indigo-500" />Add Book</span>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100">New</span>
-                            </Link>
+                                    <span className="h-1.5 w-1.5 rounded-full bg-gray-300 group-hover:bg-indigo-500" />
+                                    Add Book
+                                </span>
 
-                            <Link
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-700  group-hover:bg-indigo-200">New</span>
+                            </NavLink>
+
+                            <NavLink
                                 to="/categories"
-                                className="group flex items-center justify-between rounded-lg px-10 py-2 text-gray-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors"
+                                className={({ isActive }) => `group flex items-center justify-between rounded-lg px-10 py-2 transition-colors ${isActive ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-indigo-50 hover:text-indigo-700"}`}
                             >
                                 <span className="flex items-center gap-2">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-gray-300 group-hover:bg-indigo-500" />Categories</span>
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 group-hover:bg-indigo-100 group-hover:text-indigo-700">8</span>
-                            </Link>
+                                    <span className="h-1.5 w-1.5 rounded-full bg-gray-300 group-hover:bg-indigo-500" />
+                                    Categories
+                                </span>
+
+                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-indigo-700  group-hover:bg-indigo-200">
+                                    New
+                                </span>
+                            </NavLink>
                         </div>
                     )}
 
