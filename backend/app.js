@@ -16,7 +16,13 @@ app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 
 app.get("/", (req, res) => {
-    res.status(200).send("Hello");
+    res.status(200).json({
+        "/api/book": "All Book",
+        "/api/book/category": "All Category",
+        "/api/user": "All User",
+        "/api/user/id": "Specific User",
+        "/api/auth": "Auth",
+    });
 });
 
 connectDB();

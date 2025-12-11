@@ -1,0 +1,128 @@
+import axios from "axios";
+import { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { BookContext } from "../context/School";
+
+function Login() {
+    const { user, setUser } = useContext(BookContext);
+
+    const navigate = useNavigate();
+
+    const [form, setForm] = useState({
+        email: "",
+        password: "",
+    });
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    const loginAdmin = async () => {
+        try {
+            setLoading(true);
+            setError("");
+
+            const res = await axios.post("/api/auth/login", form);
+
+            const { token, user } = res.data;
+            // console.log({ token, user });
+
+            if (user.role !== "admin" && user.role !== "student") {
+                setError("Access denied. Admin only.");
+                return;
+            }
+            setUser(user);
+            localStorage.setItem("token", token);
+            localStorage.setItem("user", JSON.stringify(user));
+
+            navigate("/", { replace: true });
+
+        } catch (error) {
+            // console.log("Admin Login Error:", error);
+            setError(error.response?.data?.message || "Invalid email or password");
+
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        loginAdmin();
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+
+        setForm((prev) => ({ ...prev, [name]: value }));
+    };
+
+    return (
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600">
+            <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8">
+
+                <div className="text-center mb-6">
+                    <h2 className="text-3xl font-bold text-gray-800">SchoolBook</h2>
+                    <p className="text-gray-500 text-sm mt-1">Sign in to access the dashboard</p>
+                </div>
+
+                {error && (<div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">{error}</div>)}
+
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Email</label>
+                        <input
+                            name="email"
+                            value={form.email}
+                            onChange={handleChange}
+                            type="email"
+                            required
+                            placeholder="admin@example.com"
+                            className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700">Password</label>
+                        <input
+                            name="password"
+                            value={form.password}
+                            onChange={handleChange}
+                            type="password"
+                            required
+                            placeholder="••••••••"
+                            className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between text-sm">
+                        <label className="flex items-center gap-2">
+                            <input type="checkbox" className="rounded border-gray-300" />
+                            Remember me
+                        </label>
+                        <span className="text-blue-600 hover:underline cursor-pointer">Forgot password?</span>
+                    </div>
+
+                    {/* Button */}
+                    <button
+                        type="submit"
+                        disabled={loading}
+                        className={`w-full text-white py-2 rounded-lg text-sm font-semibold transition 
+              ${loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
+                    >{loading ? "Logging in..." : "Login"}</button>
+                    <div className="text-center text-sm">
+                        <span
+                            onClick={() => navigate("/register")}
+                            className="text-blue-600 hover:underline cursor-pointer"
+                        >
+                            New user? Register here
+                        </span>
+                    </div>
+                </form>
+
+                <p className="text-center text-sm text-gray-500 mt-6">© {new Date().getFullYear()} ZynexIT Solutions</p>
+            </div>
+        </div>
+    );
+}
+
+export default Login;

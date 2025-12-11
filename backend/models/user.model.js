@@ -1,4 +1,16 @@
-import mongoose from "mongoose";
+import mongoose, { mongo } from "mongoose";
+
+const permissionSchema = new mongoose.Schema({
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    createUser: { type: Boolean, default: false },
+    updateUser: { type: Boolean, default: false },
+    deleteUser: { type: Boolean, default: false },
+    readUser: { type: Boolean, default: false },
+    createBook: { type: Boolean, default: false },
+    updateBook: { type: Boolean, default: false },
+    deleteBook: { type: Boolean, default: false },
+    readBook: { type: Boolean, default: false },
+});
 
 const userSchema = new mongoose.Schema(
     {
@@ -14,5 +26,7 @@ const userSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+const Permission = mongoose.model("Permission", permissionSchema);
 const User = mongoose.model("User", userSchema);
-export default User;
+
+export { User, Permission };

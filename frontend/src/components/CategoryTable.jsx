@@ -1,10 +1,14 @@
-import React from 'react'
+import React, { useContext } from 'react'
 import { MdDelete } from 'react-icons/md';
 import { RiEdit2Fill } from 'react-icons/ri';
+import { BookContext } from '../context/School';
 
 function CategoryTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedCategories, selectedIds }) {
-    console.log(paginatedCategories);
-    
+    // console.log(paginatedCategories);
+    const { user } = useContext(BookContext);
+    const role = user?.role;
+    // console.log("CategoryTable:", role);
+
     return (
         <table className="min-w-full text-sm">
             <thead>
@@ -19,7 +23,9 @@ function CategoryTable({ isAllSelected, toggleSelectAll, toggleSelect, paginated
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Title</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Total Books</th>
-                    <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
+                    {role != "student" &&
+                        <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
+                    }
                 </tr>
             </thead>
             <tbody>
@@ -40,14 +46,15 @@ function CategoryTable({ isAllSelected, toggleSelectAll, toggleSelect, paginated
                                         className="h-4 w-4 rounded border-gray-300"
                                     />
                                 </td>
-                          
+
                                 <td className="px-4 py-3 text-gray-900 font-medium">{book.name}</td>
                                 <td className="px-4 py-3 text-gray-900 font-medium">{book.totalBooks}</td>
-                               
-                                <td className="px-4 py-3 text-right">
-                                    <button className="text-lg text-blue-600 hover:underline mr-3"><RiEdit2Fill /></button>
-                                    <button className="text-lg text-red-600 hover:underline"><MdDelete /></button>
-                                </td>
+                                {role != "student" &&
+                                    <td className="px-4 py-3 text-right">
+                                        <button className="text-lg text-blue-600 hover:underline mr-3"><RiEdit2Fill /></button>
+                                        <button className="text-lg text-red-600 hover:underline"><MdDelete /></button>
+                                    </td>
+                                }
                             </tr>
                         );
                     })

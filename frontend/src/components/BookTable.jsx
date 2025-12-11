@@ -1,8 +1,13 @@
 import axios from 'axios';
 import { MdDelete } from 'react-icons/md';
 import { RiEdit2Fill } from 'react-icons/ri';
+import { BookContext } from '../context/School';
+import { useContext } from 'react';
 
 function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBooks, selectedIds }) {
+    const { user } = useContext(BookContext);
+    const role = user?.role;
+    // console.log("BookTable:", role);
 
     // console.log("paginatedBooks: ", paginatedBooks);
 
@@ -10,7 +15,8 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
         try {
             if (confirm("Do you want to delete this Book!")) {
                 const res = await axios.delete(`/api/book/${id}`);
-                console.log("Delete Book", res.data);
+                // console.log("Delete Book", res.data);
+                alert("Book has been deleted successfully!")
             }
         } catch (error) {
             console.error("Delete error:", error);
@@ -31,7 +37,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Category</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Price (₹)</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Stock</th>
-                    <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
+                    {role != "student" && <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>}
                 </tr>
             </thead>
             <tbody>
@@ -76,16 +82,18 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
                                         }
                                     >{book.stock} in stock</span>
                                 </td>
-                                <td className="px-4 py-3 text-right">
-                                    <button className="text-lg text-blue-600 hover:underline mr-3"><RiEdit2Fill /></button>
-                                    <button className="text-lg text-red-600 hover:underline" onClick={() => deleteBook(book.id)}><MdDelete /></button>
-                                </td>
+                                {role != "student" &&
+                                    <td className="px-4 py-3 text-right">
+                                        <button className="text-lg text-blue-600 hover:underline mr-3"><RiEdit2Fill /></button>
+                                        <button className="text-lg text-red-600 hover:underline" onClick={() => deleteBook(book.id)}><MdDelete /></button>
+                                    </td>
+                                }
                             </tr>
                         );
                     })
                 )}
             </tbody>
-        </table>
+        </table >
     )
 }
 

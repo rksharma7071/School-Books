@@ -50,11 +50,11 @@ function AddBook() {
                 fd.append("images", file);
             });
 
-            console.log("🔍 FormData preview (without files):");
+            // console.log("🔍 FormData preview (without files):");
             for (const [k, v] of fd.entries()) {
                 if (k !== "images") console.log(k, "=>", v);
             }
-            console.log("📷 Images count being sent:", images.length);
+            // console.log("📷 Images count being sent:", images.length);
 
             const res = await axios.post("/api/book", fd, {
                 headers: {
@@ -62,7 +62,7 @@ function AddBook() {
                 },
             });
 
-            console.log("✅ Book created:", res.data);
+            // console.log("✅ Book created:", res.data);
 
             // Reset form
             setForm({

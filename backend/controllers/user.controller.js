@@ -1,4 +1,5 @@
-import User from "../models/user.model.js";
+import mongoose from "mongoose";
+import { User, Permission } from "../models/user.model.js";
 
 async function handleGetAllUsers(req, res) {
     const users = await User.find({});
@@ -29,7 +30,6 @@ async function handleCreateNewUser(req, res) {
             role: "author",
         });
 
-        console.log("Result: ", result);
         return res
             .status(201)
             .json({ msg: "User created successfully", user: result });
@@ -89,10 +89,122 @@ async function handleDeleteUserUsingId(req, res) {
     });
 }
 
+const permissionFields = [
+    "createUser",
+    "updateUser",
+    "deleteUser",
+    "readUser",
+    "createBook",
+    "updateBook",
+    "deleteBook",
+    "readBook",
+];
+
+const toBool = (v) => v === true || v === "true" || v === 1 || v === "1";
+
+async function handleUpdatePermission(req, res) {
+    try {
+        const body = req.body;
+        const userId = body.userId;
+
+        if (!userId) {
+            return res.status(400).json({ msg: "userId is required" });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ msg: "Invalid userId format" });
+        }
+
+        const updateFields = {};
+        permissionFields.forEach((k) => {
+            if (body[k] !== undefined && body[k] !== null) {
+                updateFields[k] = toBool(body[k]);
+            }
+        });
+        const existing = await Permission.findOne({ userId }).lean();
+
+        if (existing) {
+            if (Object.keys(updateFields).length === 0) {
+                return res
+                    .status(400)
+                    .json({ msg: "No permission fields provided to update" });
+            }
+
+            const updated = await Permission.findOneAndUpdate(
+                { userId },
+                { $set: updateFields },
+                { new: true }
+            ).lean();
+
+            return res.status(200).json({
+                msg: "Permission updated successfully",
+                permission: updated,
+            });
+        }
+
+        const payload = { userId };
+        permissionFields.forEach((k) => {
+            if (updateFields[k] !== undefined) {
+                payload[k] = updateFields[k];
+            } else if (body[k] !== undefined && body[k] !== null) {
+                payload[k] = toBool(body[k]);
+            } else {
+                payload[k] = false;
+            }
+        });
+
+        const created = await Permission.create(payload);
+
+        return res.status(201).json({
+            msg: "Permission created successfully",
+            permission: created,
+        });
+    } catch (error) {
+        console.error("handleUpdatePermission error:", error);
+        return res.status(500).json({ msg: "Internal Server Error" });
+    }
+}
+
+async function handleAllPermission(req, res) {
+    return res.send("Hello World");
+    const permission = await Permission.find({});
+    return res.json(permission);
+}
+
+async function handleGetPermissionUsingId(req, res) {
+    try {
+        const userId = req.params.id;
+
+        if (!userId) {
+            return res.status(400).json({ msg: "User ID is required" });
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ msg: "Invalid User ID format" });
+        }
+
+        const permission = await Permission.findOne({ userId }).lean();
+
+        if (!permission) {
+            return res
+                .status(404)
+                .json({ msg: "Permission not found for this user" });
+        }
+
+        return res.status(200).json(permission);
+    } catch (error) {
+        console.error("Error fetching permission:", error);
+        return res.status(500).json({ msg: "Internal Server Error" });
+    }
+}
+
 export {
     handleGetAllUsers,
     handleCreateNewUser,
     handleGetUserUinsgId,
     handleUpdateUserUsingId,
     handleDeleteUserUsingId,
+    handleGetPermissionUsingId,
+    handleUpdatePermission,
+    handleAllPermission,
 };

@@ -1,47 +1,64 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import PermissionForm from "../components/PermissionForm";
+import { useLoaderData } from "react-router-dom";
 
-function AddUser() {
+function EditUser() {
+    const loaderData = useLoaderData();
+    const [user, setUser] = useState(null);
+    const [loadingUser, setLoadingUser] = useState(true);
+
     const [form, setForm] = useState({
         username: "",
         first_name: "",
         last_name: "",
         email: "",
-        password: "",
         role: "customer",
-    });
-    const [user, setUser] = useState({
-        createUser: false,
-        updateUser: false,
-        deleteUser: false,
-        readUser: false,
-        createBook: false,
-        updateBook: false,
-        deleteBook: false,
-        readBook: false,
     });
 
     const [error, setError] = useState("");
-    const [usernameTouched, setUsernameTouched] = useState(false);
 
     useEffect(() => {
-        if (form.first_name && form.last_name && !usernameTouched) {
-            const base = `${form.first_name}.${form.last_name}`
-                .toLowerCase()
-                .replace(/\s/g, "");
+        const load = async () => {
+            setLoadingUser(true);
+            try {
+                if (loaderData && (loaderData.username || loaderData.email || loaderData._id || loaderData.id)) {
+                    const u = loaderData.username ? loaderData : (loaderData.user ?? loaderData);
+                    setUser(u);
+                } else if (loaderData) {
+                    const id = typeof loaderData === "string" || typeof loaderData === "number"
+                        ? loaderData
+                        : loaderData.id;
+                    if (!id) throw new Error("Invalid loader data for user.");
+                    const res = await axios.get(`/api/user/${id}`);
+                    setUser(res.data);
+                } else {
+                    setUser(null);
+                }
+            } catch (err) {
+                console.error("Failed to load user:", err);
+                setError(err.response?.data?.message || err.message || "Failed to load user");
+            } finally {
+                setLoadingUser(false);
+            }
+        };
 
-            const random = Math.floor(100 + Math.random() * 900);
-            setForm((prev) => ({ ...prev, username: `${base}${random}` }));
+        load();
+    }, [loaderData]);
+
+    useEffect(() => {
+        if (user) {
+            setForm({
+                username: user.username ?? "",
+                first_name: user.first_name ?? "",
+                last_name: user.last_name ?? "",
+                email: user.email ?? "",
+                role: user.role ?? "customer",
+            });
         }
-    }, [form.first_name, form.last_name, usernameTouched]);
+    }, [user]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
-
-        if (name === "username") {
-            setUsernameTouched(true);
-        }
 
         setForm((prev) => ({
             ...prev,
@@ -54,52 +71,52 @@ function AddUser() {
         setError("");
 
         try {
-            // console.log("User:", form);
-
-            const res = await axios.post("/api/auth/signup", form);
-            // console.log("user permission: ", { userId: res.data?.user?.id, user });
-            // const res = "";
-            user.userId = res.data?.user?.id;
-            const payload = {
-                userId: res.data?.user?.id,
-                ...user
+            const uid = (user && (user._id || user.id)) || (typeof loaderData === "string" || typeof loaderData === "number" ? loaderData : loaderData?.id);
+            if (!uid) {
+                throw new Error("User id not found.");
             }
-            const res1 = await axios.post("/api/user/permission", payload);
-            console.log("res1: ", res1);
 
-            alert("User created successfully!");
+            const payload = {
+                username: form.username,
+                first_name: form.first_name,
+                last_name: form.last_name,
+                email: form.email,
+                role: form.role,
+            };
+            // console.log("payload: ", { payload, uid });
 
+            const res = await axios.patch(`/api/user/${uid}`, payload);
+
+            alert("User updated successfully!");
+
+            const updated = res.data.user || payload;
+            // console.log("updated: ", updated);
+
+            setUser(updated);
             setForm({
-                username: "",
-                first_name: "",
-                last_name: "",
-                email: "",
-                password: "",
-                role: "",
+                username: updated.username ?? payload.username,
+                first_name: updated.first_name ?? payload.first_name,
+                last_name: updated.last_name ?? payload.last_name,
+                email: updated.email ?? payload.email,
+                role: updated.role ?? payload.role,
             });
-            setUser({
-                createUser: false,
-                updateUser: false,
-                deleteUser: false,
-                readUser: false,
-                createBook: false,
-                updateBook: false,
-                deleteBook: false,
-                readBook: false,
-            })
-            setUsernameTouched(false);
+
         } catch (err) {
-            console.error("Error creating user:", err);
-            setError(err.response?.data?.message || "Failed to create user");
+            console.error("Error updating user:", err);
+            setError(err.response?.data?.message || err.message || "Failed to update user");
         }
     };
+
+    if (loadingUser) {
+        return <div className="max-w-7xl mx-auto p-6">Loading user...</div>;
+    }
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        Add User
+                        Edit User
                     </h2>
                 </div>
             </div>
@@ -115,7 +132,6 @@ function AddUser() {
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">First Name <span className="text-red-500">*</span></label>
                                 <input
@@ -160,18 +176,6 @@ function AddUser() {
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
-                                <input
-                                    name="password"
-                                    value={form.password}
-                                    onChange={handleChange}
-                                    type="password"
-                                    required
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
                                 <label className="block text-sm font-medium text-gray-700">Role</label>
                                 <select
                                     name="role"
@@ -185,7 +189,7 @@ function AddUser() {
                                 </select>
                             </div>
                         </div>
-                        <PermissionForm user={user} setUser={setUser} />
+
                         <button
                             type="submit"
                             className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
@@ -199,4 +203,4 @@ function AddUser() {
     );
 }
 
-export default AddUser;
+export default EditUser;

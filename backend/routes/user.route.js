@@ -5,6 +5,9 @@ import {
     handleGetUserUinsgId,
     handleUpdateUserUsingId,
     handleDeleteUserUsingId,
+    handleUpdatePermission,
+    handleGetPermissionUsingId,
+    handleAllPermission,
 } from "../controllers/user.controller.js";
 
 const router = express.Router();
@@ -16,5 +19,11 @@ router
     .get(handleGetUserUinsgId)
     .patch(handleUpdateUserUsingId)
     .delete(handleDeleteUserUsingId);
+
+router.route("/permission/:id").get(handleGetPermissionUsingId);
+
+router.route("/permission")
+    .get(handleAllPermission)
+    .post(handleUpdatePermission)
 
 export default router;

@@ -1,9 +1,18 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useContext } from "react";
 import { LuUserRound } from "react-icons/lu";
+import { BookContext } from "../context/School";
+import { Link, useNavigate } from "react-router-dom";
 
 function Header() {
     const [open, setOpen] = useState(false);
     const menuRef = useRef(null);
+    const { user, adminLogout } = useContext(BookContext);
+    const navigate = useNavigate();
+
+    const logout = () => {
+        adminLogout();
+        navigate('/login');
+    }
 
     useEffect(() => {
         const handleClick = (e) => menuRef.current && !menuRef.current.contains(e.target) && setOpen(false);
@@ -42,9 +51,11 @@ function Header() {
                             onClick={() => setOpen((prev) => !prev)}
                             className="flex items-center gap-2 cursor-pointer"
                         >
-                            <span className="hidden md:inline text-sm text-blue-100 font-medium">Admin</span>
+                            <span className="hidden md:inline text-sm text-blue-100 font-medium">{user && user.first_name}</span>
                             {/* <LuUserRound className="size-8 rounded-full border border-gray-300 p-1 text-white" /> */}
-                            <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">A</div>
+                            <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">
+                                {user && user.first_name[0].toUpperCase()}
+                            </div>
                         </button>
 
                         {open && (
@@ -52,21 +63,21 @@ function Header() {
                                 {/* Top user info */}
                                 <div className="px-4 py-3 bg-slate-50 border-b border-gray-100">
                                     {/* <p className="text-xs text-gray-500">Signed in as</p> */}
-                                    <p className="text-sm font-semibold text-gray-900">Admin</p>
-                                    <p className="text-xs text-gray-500 truncate">admin@schoolbook.com</p>
+                                    <p className="text-sm font-semibold text-gray-900">{user && user.username.toUpperCase()}</p>
+                                    <p className="text-xs text-gray-500 truncate">{user && user.email}</p>
                                 </div>
 
                                 {/* Menu items */}
                                 <div className="py-1">
-                                    <a
+                                    <Link
                                         href="/profile"
                                         className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                                     >
-                                        <LuUserRound className="h-4 w-4 text-gray-500" />My Profile</a>
+                                        <LuUserRound className="h-4 w-4 text-gray-500" />My Profile</Link>
 
-                                    <a href="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+                                    <Link href="/settings" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
                                         Account Settings
-                                    </a>
+                                    </Link>
                                 </div>
 
                                 {/* Footer / logout */}
@@ -74,7 +85,8 @@ function Header() {
                                     <button
                                         type="button"
                                         className="w-full flex items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                                        onClick={() => (window.location.href = "/logout")}
+                                        // onClick={() => (window.location.href = "/logout")}
+                                        onClick={() => logout()}
                                     >Logout</button>
                                 </div>
                             </div>

@@ -416,7 +416,7 @@ export const deleteBook = async (req, res) => {
         }
 
         const book = await Book.findById(id).exec();
-        console.log("Book:", book);
+        // console.log("Book:", book);
 
         if (!book) {
             return res
@@ -428,7 +428,7 @@ export const deleteBook = async (req, res) => {
             .map((img) => img.publicId)
             .filter(Boolean);
 
-        console.log("publicIds:", publicIds);
+        // console.log("publicIds:", publicIds);
 
         let cloudinaryResults = [];
 
@@ -450,7 +450,7 @@ export const deleteBook = async (req, res) => {
 
             cloudinaryResults = await Promise.all(deletionPromises);
         }
-        console.log("cloudinaryResults:", cloudinaryResults);
+        // console.log("cloudinaryResults:", cloudinaryResults);
 
         await Book.deleteOne({ _id: id });
 

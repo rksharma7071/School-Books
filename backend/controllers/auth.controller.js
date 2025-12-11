@@ -1,14 +1,14 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import User from "../models/user.model.js";
+import {User} from "../models/user.model.js";
 
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
 async function handleAuthSignUp(req, res) {
-    const { username, email, password, first_name, last_name } = req.body;
+    const { username, email, password, first_name, last_name, role } = req.body;
 
     try {
         // Check if user already exists
@@ -32,6 +32,7 @@ async function handleAuthSignUp(req, res) {
             password: hashedPassword,
             first_name,
             last_name,
+            role : role || "customer"
         });
 
         await newUser.save();
@@ -44,7 +45,7 @@ async function handleAuthSignUp(req, res) {
                 expiresIn: "1d",
             }
         );
-        console.log("Generated Token:", token);
+        // console.log("Generated Token:", token);
         res.json({
             token,
             user: {
@@ -65,7 +66,7 @@ async function handleAuthSignUp(req, res) {
 async function handleAuthLogin(req, res) {
     const { email, password } = req.body;
 
-    console.log("Login attempt:", { email }); // ✅ Debug log
+    // console.log("Login attempt:", { email }); // ✅ Debug log
 
     if (!email || !password) {
         return res
@@ -77,14 +78,14 @@ async function handleAuthLogin(req, res) {
         // 1. Find user by email
         const user = await User.findOne({ email });
         if (!user) {
-            console.log("User not found:", email);
+            // console.log("User not found:", email);
             return res.status(400).json({ msg: "User not found." });
         }
 
         // 2. Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            console.log("Incorrect password for:", email);
+            // console.log("Incorrect password for:", email);
             return res.status(400).json({ msg: "Password is incorrect." });
         }
 
