@@ -15,15 +15,19 @@ const router = express.Router();
 router.route("/").get(handleGetAllUsers).post(handleCreateNewUser);
 
 router
+    .route("/permission")
+    .get(handleAllPermission)
+    .post(handleUpdatePermission);
+
+router
+    .route("/permission/:id")
+    .get(handleGetPermissionUsingId)
+    .patch(handleUpdatePermission);
+
+router
     .route("/:id")
     .get(handleGetUserUinsgId)
     .patch(handleUpdateUserUsingId)
     .delete(handleDeleteUserUsingId);
-
-router.route("/permission/:id").get(handleGetPermissionUsingId);
-
-router.route("/permission")
-    .get(handleAllPermission)
-    .post(handleUpdatePermission)
 
 export default router;

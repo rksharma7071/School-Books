@@ -3,9 +3,10 @@ import React, { useState, useRef, useEffect } from "react";
 import { IoClose } from "react-icons/io5";
 
 function ImageGridManager({ onImagesChange }) {
-  const [files, setFiles] = useState([]); // File[]
+  const [files, setFiles] = useState([]);
   const fileInputRef = useRef(null);
   const [dragIndex, setDragIndex] = useState(null);
+  console.log("files: ", files);
 
   // Generate preview URLs from File[]
   const [previews, setPreviews] = useState([]);
@@ -14,7 +15,6 @@ function ImageGridManager({ onImagesChange }) {
     const urls = files.map((file) => URL.createObjectURL(file));
     setPreviews(urls);
 
-    // Cleanup old URLs on change/unmount
     return () => {
       urls.forEach((url) => URL.revokeObjectURL(url));
     };

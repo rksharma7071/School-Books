@@ -7,7 +7,6 @@ import SideMenu from './components/SideMenu'
 import Main from './components/Main'
 
 function App() {
-  const [count, setCount] = useState(0)
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">

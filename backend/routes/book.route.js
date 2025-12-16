@@ -4,6 +4,7 @@ import {
     deleteBook,
     getAllBooks,
     getAllCategories,
+    getBookById,
     updateBook,
 } from "../controllers/book.controller.js";
 import upload from "../config/multer.js";
@@ -13,7 +14,8 @@ const router = express.Router();
 router.get("/", getAllBooks);
 router.get("/category", getAllCategories);
 router.post("/", upload.fields([{ name: "images", maxCount: 10 }]), createBook);
-router.put("/:id",upload.fields([{ name: "images", maxCount: 10 }]),updateBook);
+router.patch("/:id",upload.fields([{ name: "images", maxCount: 10 }]),updateBook);
+router.get("/:id", getBookById);
 router.delete("/:id", deleteBook);
 
 export default router;

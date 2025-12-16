@@ -18,6 +18,21 @@ export const getAllBooks = async (req, res) => {
     }
 };
 
+export const getBookById = async (req, res) => {
+    try {
+        const books = await Book.findById(req.params.id);
+        return res.status(200).json({
+            success: true,
+            data: books,
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: false,
+            message: "Server error while fetching books",
+        });
+    }
+};
+
 export const createBook = async (req, res) => {
     try {
         const {
@@ -33,6 +48,7 @@ export const createBook = async (req, res) => {
             subject,
             language,
             stockQty,
+            isActive,
             coverImage,
         } = req.body;
 
@@ -116,7 +132,7 @@ export const createBook = async (req, res) => {
             stockQty: isNaN(parsedStockQty) ? 0 : parsedStockQty,
             coverImage: finalCoverImage,
             images,
-            isActive: true,
+            isActive: isActive,
         };
 
         const created = await Book.create(bookData);
@@ -148,245 +164,131 @@ export const createBook = async (req, res) => {
 };
 
 export const updateBook = async (req, res) => {
-    try {
-        const bookId = req.params.id;
-        if (!mongoose.Types.ObjectId.isValid(bookId)) {
-            return res
-                .status(400)
-                .json({ success: false, message: "Invalid book id." });
-        }
-
-        const book = await Book.findById(bookId).exec();
-        if (!book)
-            return res
-                .status(404)
-                .json({ success: false, message: "Book not found." });
-
-        const safeTrim = (v) =>
-            v === undefined || v === null ? undefined : String(v).trim();
-
-        const {
-            name,
-            description,
-            price,
-            cost,
-            isbn,
-            author,
-            publisher,
-            category,
-            classLevel,
-            subject,
-            language,
-            stockQty,
-            coverImage,
-            removeImagePublicIds,
-        } = req.body;
-
-        let categoryId = undefined;
-        if (
-            category !== undefined &&
-            category !== null &&
-            String(category).trim() !== ""
-        ) {
-            if (mongoose.Types.ObjectId.isValid(category)) {
-                const found = await Category.findById(category).exec();
-                if (!found)
-                    return res.status(400).json({
-                        success: false,
-                        message: "Category id provided does not exist.",
-                    });
-                categoryId = found._id;
-            } else {
-                const nameTrim = String(category).trim();
-                let existing = await Category.findOne({
-                    name: nameTrim,
-                }).exec();
-                if (!existing) {
-                    try {
-                        existing = await Category.create({ name: nameTrim });
-                    } catch (err) {
-                        if (err.code === 11000) {
-                            existing = await Category.findOne({
-                                name: nameTrim,
-                            }).exec();
-                        } else {
-                            throw err;
-                        }
-                    }
-                }
-                categoryId = existing._id;
-            }
-        }
-
-        // Normalize req.files
-        const filesObjOrArray = req.files || [];
-        let files = [];
-        if (Array.isArray(filesObjOrArray)) {
-            files = filesObjOrArray;
-        } else if (
-            typeof filesObjOrArray === "object" &&
-            filesObjOrArray !== null
-        ) {
-            for (const key of Object.keys(filesObjOrArray)) {
-                if (Array.isArray(filesObjOrArray[key]))
-                    files = files.concat(filesObjOrArray[key]);
-            }
-        }
-
-        // Map uploaded files to images
-        const newImages = files
-            .map((file, idx) => {
-                const url =
-                    file.path ||
-                    file.secure_url ||
-                    file.url ||
-                    file.location ||
-                    (file?.uploads && file.uploads?.[0]?.path) ||
-                    null;
-                const publicId =
-                    file.filename ||
-                    file.public_id ||
-                    file.publicId ||
-                    file.key ||
-                    null;
-                if (!url) return null;
-                return {
-                    url,
-                    publicId,
-                    position: book.images.length + idx + 1,
-                };
-            })
-            .filter(Boolean);
-
-        // Parse removeImagePublicIds
-        let removeIds = [];
-        if (removeImagePublicIds) {
-            try {
-                if (typeof removeImagePublicIds === "string") {
-                    const trimmed = removeImagePublicIds.trim();
-                    if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
-                        removeIds = JSON.parse(trimmed);
-                    } else {
-                        removeIds = trimmed
-                            .split(",")
-                            .map((s) => s.trim())
-                            .filter(Boolean);
-                    }
-                } else if (Array.isArray(removeImagePublicIds)) {
-                    removeIds = removeImagePublicIds;
-                }
-            } catch (err) {
-                removeIds = String(removeImagePublicIds)
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean);
-            }
-        }
-
-        // --- Delete from Cloudinary (if removeIds provided) ---
-        let cloudinaryResults = [];
-        if (removeIds.length > 0) {
-            // Only attempt to delete publicIds that actually exist on the book record
-            const toRemove = book.images
-                .filter(
-                    (img) =>
-                        img.publicId && removeIds.includes(String(img.publicId))
-                )
-                .map((img) => String(img.publicId));
-
-            if (toRemove.length > 0) {
-                // run deletions in parallel but don't fail entire request if some fail
-                const deletionPromises = toRemove.map((publicId) =>
-                    cloudinary.uploader
-                        .destroy(publicId, { invalidate: true })
-                        .then((res) => ({
-                            publicId,
-                            status: "fulfilled",
-                            result: res,
-                        }))
-                        .catch((err) => ({
-                            publicId,
-                            status: "rejected",
-                            error: err?.message || err,
-                        }))
-                );
-
-                cloudinaryResults = await Promise.all(deletionPromises);
-
-                // Remove those images from the book.images array (DB-level)
-                const removedSet = new Set(toRemove);
-                book.images = book.images.filter(
-                    (img) =>
-                        !img.publicId || !removedSet.has(String(img.publicId))
-                );
-            }
-        }
-
-        // --- Update fields when provided ---
-        if (name !== undefined) book.name = safeTrim(name) || book.name;
-        if (description !== undefined) book.description = safeTrim(description);
-        if (price !== undefined) book.price = Number(price ?? 0) || 0;
-        if (cost !== undefined) book.cost = Number(cost ?? 0) || 0;
-        if (isbn !== undefined) book.isbn = safeTrim(isbn);
-        if (author !== undefined) book.author = safeTrim(author) || book.author;
-        if (publisher !== undefined) book.publisher = safeTrim(publisher);
-        if (categoryId !== undefined) book.category = categoryId;
-        if (classLevel !== undefined) book.classLevel = safeTrim(classLevel);
-        if (subject !== undefined) book.subject = safeTrim(subject);
-        if (language !== undefined) book.language = safeTrim(language);
-        if (stockQty !== undefined) book.stockQty = Number(stockQty ?? 0) || 0;
-
-        if (newImages.length > 0) book.images = book.images.concat(newImages);
-
-        if (
-            coverImage !== undefined &&
-            coverImage !== null &&
-            String(coverImage).trim() !== ""
-        ) {
-            book.coverImage = String(coverImage).trim();
-        } else {
-            const uploadedCoverFile =
-                (req.files &&
-                    req.files.coverImage &&
-                    req.files.coverImage[0]) ||
-                null;
-            if (uploadedCoverFile) {
-                const coverUrl =
-                    uploadedCoverFile.path ||
-                    uploadedCoverFile.secure_url ||
-                    uploadedCoverFile.url ||
-                    uploadedCoverFile.location ||
-                    null;
-                if (coverUrl) book.coverImage = coverUrl;
-            } else if (!book.coverImage && book.images.length > 0) {
-                book.coverImage = book.images[0].url;
-            }
-        }
-
-        const saved = await book.save();
-        await saved.populate("category", "name description");
-
-        return res.status(200).json({
-            success: true,
-            message: "Book updated",
-            book: saved,
-            cloudinaryResults,
-        });
-    } catch (err) {
-        console.error("updateBook error:", err);
-        if (err.name === "ValidationError") {
-            return res.status(400).json({
-                success: false,
-                message: err.message,
-                errors: err.errors,
-            });
-        }
-        return res.status(500).json({
-            success: false,
-            message: "Failed to update book",
-            error: err.message,
-        });
+  try {
+    const bookId = req.params.id;
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+      return res.status(400).json({ success: false, message: "Invalid book id" });
     }
+
+    const book = await Book.findById(bookId);
+    if (!book) {
+      return res.status(404).json({ success: false, message: "Book not found" });
+    }
+
+    const {
+      name,
+      description,
+      price,
+      cost,
+      isbn,
+      author,
+      publisher,
+      category,
+      classLevel,
+      subject,
+      language,
+      stockQty,
+      isActive,
+      removeImagePublicIds,
+      imagesOrder,
+    } = req.body;
+
+    /* ------------------ CATEGORY ------------------ */
+    if (category) {
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        book.category = category;
+      } else {
+        let cat = await Category.findOne({ name: category.trim() });
+        if (!cat) cat = await Category.create({ name: category.trim() });
+        book.category = cat._id;
+      }
+    }
+
+    /* ------------------ DELETE IMAGES ------------------ */
+    let removeIds = [];
+    if (removeImagePublicIds) {
+      removeIds = Array.isArray(removeImagePublicIds)
+        ? removeImagePublicIds
+        : [removeImagePublicIds];
+    }
+
+    if (removeIds.length) {
+      await Promise.all(
+        removeIds.map((id) =>
+          cloudinary.uploader.destroy(id, { invalidate: true })
+        )
+      );
+
+      book.images = book.images.filter(
+        (img) => !removeIds.includes(String(img.publicId))
+      );
+    }
+
+    /* ------------------ NEW UPLOADS ------------------ */
+    const uploadedFiles = [];
+    if (req.files?.images) {
+      for (const file of req.files.images) {
+        uploadedFiles.push({
+          url: file.path,
+          publicId: file.filename,
+          position: book.images.length + uploadedFiles.length + 1,
+        });
+      }
+    }
+
+    if (uploadedFiles.length) {
+      book.images.push(...uploadedFiles);
+    }
+
+    /* ------------------ IMAGE ORDER ------------------ */
+    if (imagesOrder) {
+      const order = JSON.parse(imagesOrder);
+      const map = new Map(
+        order.filter(o => o.publicId).map(o => [o.publicId, o.position])
+      );
+
+      book.images = book.images.map(img => ({
+        ...img.toObject(),
+        position: map.get(String(img.publicId)) || img.position
+      }));
+
+      book.images.sort((a, b) => a.position - b.position);
+    }
+
+    /* ------------------ FIELDS ------------------ */
+    if (name) book.name = name.trim();
+    if (description) book.description = description.trim();
+    if (price !== undefined) book.price = Number(price);
+    if (cost !== undefined) book.cost = Number(cost);
+    if (isbn) book.isbn = isbn.trim();
+    if (author) book.author = author.trim();
+    if (publisher) book.publisher = publisher.trim();
+    if (classLevel) book.classLevel = classLevel;
+    if (subject) book.subject = subject;
+    if (language) book.language = language;
+    if (stockQty !== undefined) book.stockQty = Number(stockQty);
+    if (isActive !== undefined) book.isActive = isActive;
+
+    /* ------------------ COVER IMAGE ------------------ */
+    if (!book.coverImage && book.images.length) {
+      book.coverImage = book.images[0].url;
+    }
+
+    await book.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Book updated successfully",
+      book,
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update book",
+      error: err.message,
+    });
+  }
 };
 
 export const getAllCategories = async (req, res) => {

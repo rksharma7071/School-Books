@@ -1,10 +1,11 @@
-import axios from 'axios';
-import React, { useEffect, useMemo, useState } from 'react'
-import UserTable from '../components/UserTable';
+import React, { useState, useMemo, useEffect } from "react";
+import { useLoaderData } from "react-router-dom";
+import ReviewTable from "../components/ReviewTable.jsx";
+import { getReview1 } from "../data/review.js";
 
-function User() {
-
-    const [users, setUsers] = useState([]);
+function Review() {
+    const loader = useLoaderData();
+    const [reviews, setReviews] = useState(loader || []);
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -12,57 +13,38 @@ function User() {
     const [render, setRender] = useState(false);
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const res = await axios.get("/api/user");
-                const apiUsers = res.data || [];
-                // console.log("res.data: ", res.data)
-                // const mapped = apiUsers.map((b) => ({
-                //     id: b._id,
-                //     username: b.username,
-                //     author: b.author,
-                //     category: b.subject || "N/A",
-                //     price: b.price,
-                //     stock: b.stockQty ?? 0,
-                //     coverImage: b.coverImage ?? "",
-                // }));
+        async function fetchReview() {
+            const data = await getReview1();
+            setReviews(data);
+            setRender(false);
+        }
 
-                setUsers(apiUsers);
-            } catch (error) {
-                console.error("Error fetching users:", error.message);
-            }
-        };
+        if (render) {
+            fetchReview();
+        }
+    }, [render]);
 
-        fetchUsers();
-    }, []);
 
-    // console.log("users: ", users)
 
-    const filteredUsers = useMemo(() => {
+    const filteredReviews = useMemo(() => {
         const term = search.toLowerCase();
-        return users
-            .filter((user) => user.role !== "admin")
-            .filter(
-                (b) =>
-                    b.username?.toLowerCase().includes(term) ||
-                    b.email?.toLowerCase().includes(term) ||
-                    b.first_name?.toLowerCase().includes(term) ||
-                    b.last_name?.toLowerCase().includes(term)
-            );
-    }, [users, search]);
+        return reviews.filter(
+            (b) =>
+                b.title.toLowerCase().includes(term) ||
+                b.body.toLowerCase().includes(term) ||
+                b.userId.toLowerCase().includes(term)
+        );
+    }, [reviews, search]);
 
+    const totalPages = Math.max(1, Math.ceil(filteredReviews.length / rowsPerPage));
 
-    // 📄 Pagination calculations
-    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / rowsPerPage));
-
-    const paginatedUsers = useMemo(() => {
+    const paginatedReviews = useMemo(() => {
         const safePage = Math.min(currentPage, totalPages);
         const start = (safePage - 1) * rowsPerPage;
-        return filteredUsers.slice(start, start + rowsPerPage);
-    }, [filteredUsers, currentPage, rowsPerPage, totalPages]);
+        return filteredReviews.slice(start, start + rowsPerPage);
+    }, [filteredReviews, currentPage, rowsPerPage, totalPages]);
 
-    // ✅ Selection (checkboxes)
-    const allVisibleIds = paginatedUsers.map((b) => b._id);
+    const allVisibleIds = paginatedReviews.map((b) => b.id);
     const isAllSelected =
         allVisibleIds.length > 0 &&
         allVisibleIds.every((id) => selectedIds.includes(id));
@@ -95,15 +77,15 @@ function User() {
         setCurrentPage((prev) => Math.min(totalPages, prev + 1));
     };
 
-    const startIndex = filteredUsers.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const endIndex = Math.min(currentPage * rowsPerPage, filteredUsers.length);
+    const startIndex = filteredReviews.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const endIndex = Math.min(currentPage * rowsPerPage, filteredReviews.length);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">User</h2>
-                    <p className="text-sm text-gray-500">Manage all school customers.</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Review</h2>
+                    {/* <p className="text-sm text-gray-500">Manage all school books and inventory.</p> */}
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto bg-white">
@@ -124,7 +106,7 @@ function User() {
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 {selectedIds.length > 0 && (
                     <div className="px-4 py-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
-                        <span>{selectedIds.length} book(s) selected</span>
+                        <span>{selectedIds.length} Review(s) selected</span>
                         <button
                             className="text-blue-600 hover:underline"
                             onClick={() => setSelectedIds([])}
@@ -136,7 +118,7 @@ function User() {
 
                 {/* Table */}
                 <div className="overflow-x-auto">
-                    <UserTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedUsers={paginatedUsers} selectedIds={selectedIds} toggleSelect={toggleSelect} />
+                    <ReviewTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedReviews={paginatedReviews} selectedIds={selectedIds} toggleSelect={toggleSelect} />
                 </div>
 
                 {/* Pagination footer */}
@@ -154,8 +136,8 @@ function User() {
                             <option value={30}>30 rows</option>
                         </select>
                         <span className="hidden sm:inline">
-                            {filteredUsers.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredUsers.length} books`
+                            {filteredReviews.length > 0
+                                ? `Showing ${startIndex}–${endIndex} of ${filteredReviews.length} books`
                                 : "Showing 0 of 0 books"}
                         </span>
                     </div>
@@ -193,7 +175,7 @@ function User() {
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
-export default User
+export default Review;

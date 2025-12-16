@@ -3,13 +3,14 @@ import { MdDelete } from 'react-icons/md';
 import { RiEdit2Fill } from 'react-icons/ri';
 import { BookContext } from '../context/School';
 import { useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 
 function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBooks, selectedIds }) {
     const { user } = useContext(BookContext);
     const role = user?.role;
-    // console.log("BookTable:", role);
-
-    // console.log("paginatedBooks: ", paginatedBooks);
+    const [files, setFiles] = useState([]);
+    const navigate = useNavigate();
 
     const deleteBook = async (id) => {
         try {
@@ -23,6 +24,9 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
         }
     };
 
+    const editBook = async (id) => {        
+        navigate(`/edit-book/${id}`)
+    }
 
     return (
         <table className="min-w-full text-sm">
@@ -84,7 +88,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
                                 </td>
                                 {role != "student" &&
                                     <td className="px-4 py-3 text-right">
-                                        <button className="text-lg text-blue-600 hover:underline mr-3"><RiEdit2Fill /></button>
+                                        <button className="text-lg text-blue-600 hover:underline mr-3" onClick={() => editBook(book.id)}><RiEdit2Fill /></button>
                                         <button className="text-lg text-red-600 hover:underline" onClick={() => deleteBook(book.id)}><MdDelete /></button>
                                     </td>
                                 }

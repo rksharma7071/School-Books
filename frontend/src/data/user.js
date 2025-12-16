@@ -2,10 +2,19 @@ import axios from "axios";
 
 export const editUser = async ({ params }) => {
     try {
-        const res = await axios.get(`/api/user/${params.id}`);
-        return res.data || {};
+        const [userRes, permisssionRes] = await Promise.all([
+            axios.get(`/api/user/${params.id}`),
+            axios.get(`/api/user/permission/${params.id}`),
+        ]);
+        console.log({ user: userRes.data, permission: permisssionRes.data });
+
+        return {
+            user: userRes.data,
+            permission: permisssionRes.data,
+        };
     } catch (error) {
-        // console.log("Edit User Error: ", error);
-        return error;
+        console.error("Edit User Error:", error);
+
+        throw error?.response?.data || { message: "Failed to fetch user data" };
     }
 };

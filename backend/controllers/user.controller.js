@@ -166,7 +166,6 @@ async function handleUpdatePermission(req, res) {
 }
 
 async function handleAllPermission(req, res) {
-    return res.send("Hello World");
     const permission = await Permission.find({});
     return res.json(permission);
 }
@@ -197,6 +196,8 @@ async function handleGetPermissionUsingId(req, res) {
         return res.status(500).json({ msg: "Internal Server Error" });
     }
 }
+
+
 
 export {
     handleGetAllUsers,

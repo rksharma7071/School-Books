@@ -9,7 +9,6 @@ function UserTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedUser
     const navigate = useNavigate();
     const { user } = useContext(BookContext);
     const role = user?.role;
-    console.log("UserTable:", role);
     const deleteUser = async (id) => {
         try {
             if (window.confirm("Do you want to delete this User?")) {

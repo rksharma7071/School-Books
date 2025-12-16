@@ -80,14 +80,6 @@ function SideMenu() {
 
 
                 <div>
-                    {/* <button
-                        onClick={() => toggleMenu("users")}
-                        className="w-full flex items-center justify-between px-4 py-2 text-gray-800 hover:bg-gray-100 rounded-lg hover:cursor-pointer"
-                    >
-                        <span className="flex items-center gap-3"><FaUser size={18} />User</span>
-
-                        {openMenu === "users" ? (<FaChevronDown size={16} />) : (<FaChevronRight size={16} />)}
-                    </button> */}
                     <button onClick={() => toggleMenu("users")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                         <span className="flex items-center gap-3">
                             <span className="h-6 w-6 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">U</span>
@@ -97,7 +89,6 @@ function SideMenu() {
 
                     {openMenu === "users" && (
                         <div className="mt-2 space-y-1 text-sm border-l border-gray-200 ml-5 pl-3 animate-slideDown">
-                            {/* All User */}
                             <NavLink
                                 to="/users"
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-emerald-700" : "text-gray-600 hover:bg-indigo-100 hover:text-emerald-700"}`}
@@ -112,9 +103,7 @@ function SideMenu() {
                                     </>
                                 )}
                             </NavLink>
-                            {/* Add User */}
-                            {
-                                role != "student" &&
+                            {role != "student" &&
                                 <NavLink
                                     to="/add-user"
                                     className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-emerald-700" : "text-gray-600 hover:bg-indigo-100 hover:text-emerald-700"}`}
@@ -136,6 +125,48 @@ function SideMenu() {
                 </div>
 
                 <div>
+                    <button onClick={() => toggleMenu("review")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                        <span className="flex items-center gap-3">
+                            <span className="h-6 w-6 rounded bg-amber-50 text-cyan-600 flex items-center justify-center text-xs">S</span>
+                            Reviews
+                        </span>
+                    </button>
+
+                    {openMenu === "review" && (
+                        <div className="mt-2 space-y-1 text-sm border-l border-gray-200 ml-5 pl-3 animate-slideDown">
+                            <NavLink
+                                to="/review"
+                                className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-cyan-700" : "text-gray-600 hover:bg-indigo-100 hover:text-cyan-700"}`}
+                            >
+                                {({ isActive }) => (
+                                    <>
+                                        <span className="flex items-center gap-2">
+                                            <span className={`h-1.5 w-1.5 rounded-full transition-colors ${isActive ? "bg-cyan-500" : "bg-gray-300 group-hover:bg-cyan-500"}`} />
+                                            All Review
+                                        </span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-cyan-700  group-hover:bg-indigo-200">New</span>
+                                    </>
+                                )}
+                            </NavLink>
+                            <NavLink
+                                to="/review-status"
+                                className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-cyan-700" : "text-gray-600 hover:bg-indigo-100 hover:text-cyan-700"}`}
+                            >
+                                {({ isActive }) => (
+                                    <>
+                                        <span className="flex items-center gap-2">
+                                            <span className={`h-1.5 w-1.5 rounded-full transition-colors ${isActive ? "bg-cyan-500" : "bg-gray-300 group-hover:bg-cyan-500"}`} />
+                                            Review Status
+                                        </span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-cyan-700  group-hover:bg-indigo-200">New</span>
+                                    </>
+                                )}
+                            </NavLink>
+                        </div>
+                    )}
+                </div>
+
+                <div>
                     <button onClick={() => toggleMenu("settings")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                         <span className="flex items-center gap-3">
                             <span className="h-6 w-6 rounded bg-amber-50 text-amber-600 flex items-center justify-center text-xs">S</span>
@@ -145,43 +176,35 @@ function SideMenu() {
 
                     {openMenu === "settings" && (
                         <div className="mt-2 space-y-1 text-sm border-l border-gray-200 ml-5 pl-3 animate-slideDown">
-
-                            {/* All Users */}
-                            <Link
+                            <NavLink
                                 to="/general"
-                                className="group flex items-center justify-between rounded-lg px-3 py-2 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                                className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-amber-700" : "text-gray-600 hover:bg-indigo-100 hover:text-amber-700"}`}
                             >
-                                <span className="flex items-center gap-2">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-gray-300 group-hover:bg-emerald-500" />
-                                    General
-                                </span>
-
-                                {/* <span className="text-[10px] px-2 py-0.5 rounded-full bg-gray-100 text-gray-500 group-hover:bg-emerald-100 group-hover:text-emerald-700">
-                                    312
-                                </span> */}
-                            </Link>
-
-                            {/* Add User */}
-                            <Link
+                                {({ isActive }) => (
+                                    <>
+                                        <span className="flex items-center gap-2">
+                                            <span className={`h-1.5 w-1.5 rounded-full transition-colors ${isActive ? "bg-amber-500" : "bg-gray-300 group-hover:bg-amber-500"}`} />
+                                            General
+                                        </span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-amber-700  group-hover:bg-indigo-200">New</span>
+                                    </>
+                                )}
+                            </NavLink>
+                            <NavLink
                                 to="/roles"
-                                className="group flex items-center justify-between rounded-lg px-3 py-2 text-gray-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
+                                className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-amber-700" : "text-gray-600 hover:bg-indigo-100 hover:text-amber-700"}`}
                             >
-                                <span className="flex items-center gap-2">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-gray-300 group-hover:bg-emerald-500" />
-                                    Role
-                                </span>
-
-                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 group-hover:bg-emerald-100">
-                                    New
-                                </span>
-                            </Link>
-
+                                {({ isActive }) => (
+                                    <>
+                                        <span className="flex items-center gap-2">
+                                            <span className={`h-1.5 w-1.5 rounded-full transition-colors ${isActive ? "bg-amber-500" : "bg-gray-300 group-hover:bg-amber-500"}`} />
+                                            Role
+                                        </span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-amber-700  group-hover:bg-indigo-200">New</span>
+                                    </>
+                                )}
+                            </NavLink>
                         </div>
-                        // <div className="pl-10 mt-1 space-y-1 animate-slideDown">
-                        //     <Link to={"/general"} className="block py-1 text-gray-600 hover:text-gray-900">General</Link>
-                        //     {/* <Link to={"/users"} className="block py-1 text-gray-600 hover:text-gray-900">Users</Link> */}
-                        //     <Link to={"/roles"} className="block py-1 text-gray-600 hover:text-gray-900">Roles</Link>
-                        // </div>
                     )}
                 </div>
             </nav>

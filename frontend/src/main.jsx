@@ -18,6 +18,10 @@ import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import Register from './pages/Register.jsx'
 import EditUser from './pages/EditUser.jsx'
 import { editUser } from './data/user.js'
+import EditBook from './pages/EditBook.jsx'
+import { getBookById } from './data/book.js'
+import Review from './pages/Review.jsx'
+import { getReview, getReview1 } from './data/review.js'
 
 const router = createBrowserRouter([
   {
@@ -48,6 +52,11 @@ const router = createBrowserRouter([
             element: <AddBook />
           },
           {
+            path: "edit-book/:id",
+            element: <EditBook />,
+            loader: getBookById
+          },
+          {
             path: "categories",
             element: <Category />
           },
@@ -71,7 +80,16 @@ const router = createBrowserRouter([
           {
             path: "roles",
             element: <Role />
-          }
+          },
+          {
+            path: "review",
+            element: <Review />,
+            loader: getReview1
+          },
+          {
+            path: "review-status",
+            element: <Review />
+          },
         ]
       }
     ]

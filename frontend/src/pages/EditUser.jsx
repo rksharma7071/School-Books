@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useLoaderData } from "react-router-dom";
+import PermissionForm from "../components/PermissionForm";
 
 function EditUser() {
-    const loaderData = useLoaderData();
-    const [user, setUser] = useState(null);
-    const [loadingUser, setLoadingUser] = useState(true);
+    const { user: loadedUser, permission: loadedPermission } = useLoaderData();
 
     const [form, setForm] = useState({
         username: "",
@@ -15,55 +14,51 @@ function EditUser() {
         role: "customer",
     });
 
+    let [permission, setPermission] = useState({
+        userId: loadedUser._id,
+        createUser: false,
+        readUser: false,
+        updateUser: false,
+        deleteUser: false,
+        createBook: false,
+        readBook: false,
+        updateBook: false,
+        deleteBook: false,
+    });
+
     const [error, setError] = useState("");
 
     useEffect(() => {
-        const load = async () => {
-            setLoadingUser(true);
-            try {
-                if (loaderData && (loaderData.username || loaderData.email || loaderData._id || loaderData.id)) {
-                    const u = loaderData.username ? loaderData : (loaderData.user ?? loaderData);
-                    setUser(u);
-                } else if (loaderData) {
-                    const id = typeof loaderData === "string" || typeof loaderData === "number"
-                        ? loaderData
-                        : loaderData.id;
-                    if (!id) throw new Error("Invalid loader data for user.");
-                    const res = await axios.get(`/api/user/${id}`);
-                    setUser(res.data);
-                } else {
-                    setUser(null);
-                }
-            } catch (err) {
-                console.error("Failed to load user:", err);
-                setError(err.response?.data?.message || err.message || "Failed to load user");
-            } finally {
-                setLoadingUser(false);
-            }
-        };
-
-        load();
-    }, [loaderData]);
-
-    useEffect(() => {
-        if (user) {
+        if (loadedUser) {
             setForm({
-                username: user.username ?? "",
-                first_name: user.first_name ?? "",
-                last_name: user.last_name ?? "",
-                email: user.email ?? "",
-                role: user.role ?? "customer",
+                username: loadedUser.username ?? "",
+                first_name: loadedUser.first_name ?? "",
+                last_name: loadedUser.last_name ?? "",
+                email: loadedUser.email ?? "",
+                role: loadedUser.role ?? "customer",
             });
         }
-    }, [user]);
+    }, [loadedUser]);
+
+    // Populate permissions
+    useEffect(() => {
+        if (loadedPermission) {
+            setPermission({
+                createUser: !!loadedPermission.createUser,
+                readUser: !!loadedPermission.readUser,
+                updateUser: !!loadedPermission.updateUser,
+                deleteUser: !!loadedPermission.deleteUser,
+                createBook: !!loadedPermission.createBook,
+                readBook: !!loadedPermission.readBook,
+                updateBook: !!loadedPermission.updateBook,
+                deleteBook: !!loadedPermission.deleteBook,
+            });
+        }
+    }, [loadedPermission]);
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-
-        setForm((prev) => ({
-            ...prev,
-            [name]: type === "checkbox" ? checked : value,
-        }));
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
@@ -71,45 +66,19 @@ function EditUser() {
         setError("");
 
         try {
-            const uid = (user && (user._id || user.id)) || (typeof loaderData === "string" || typeof loaderData === "number" ? loaderData : loaderData?.id);
-            if (!uid) {
-                throw new Error("User id not found.");
-            }
+            const userId = loadedUser._id || loadedUser.id;
+            console.log({ userId, ...permission });
 
-            const payload = {
-                username: form.username,
-                first_name: form.first_name,
-                last_name: form.last_name,
-                email: form.email,
-                role: form.role,
-            };
-            // console.log("payload: ", { payload, uid });
+            await axios.patch(`/api/user/${userId}`, form);
+            await axios.patch(`/api/user/permission/${userId}`, { userId, ...permission });
 
-            const res = await axios.patch(`/api/user/${uid}`, payload);
-
-            alert("User updated successfully!");
-
-            const updated = res.data.user || payload;
-            // console.log("updated: ", updated);
-
-            setUser(updated);
-            setForm({
-                username: updated.username ?? payload.username,
-                first_name: updated.first_name ?? payload.first_name,
-                last_name: updated.last_name ?? payload.last_name,
-                email: updated.email ?? payload.email,
-                role: updated.role ?? payload.role,
-            });
-
+            alert("User and permissions updated successfully!");
         } catch (err) {
-            console.error("Error updating user:", err);
-            setError(err.response?.data?.message || err.message || "Failed to update user");
+            console.log("err", err);
+
+            setError(err.message || "Update failed");
         }
     };
-
-    if (loadingUser) {
-        return <div className="max-w-7xl mx-auto p-6">Loading user...</div>;
-    }
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
@@ -120,7 +89,6 @@ function EditUser() {
                     </h2>
                 </div>
             </div>
-
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="overflow-x-auto">
                     <form onSubmit={handleSubmit} className="max-w-5xl mx-auto bg-white p-6 space-y-6">
@@ -142,7 +110,6 @@ function EditUser() {
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Last Name</label>
                                 <input
@@ -153,7 +120,6 @@ function EditUser() {
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Username <span className="text-red-500">*</span></label>
                                 <input
@@ -163,7 +129,6 @@ function EditUser() {
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
                                 <input
@@ -190,16 +155,18 @@ function EditUser() {
                             </div>
                         </div>
 
+                        <PermissionForm user={permission} setUser={setPermission} />
+
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                            className="w-full bg-blue-600 text-white py-2 rounded-lg"
                         >
-                            Submit
+                            Update User
                         </button>
                     </form>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 
