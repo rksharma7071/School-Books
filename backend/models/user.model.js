@@ -26,7 +26,7 @@ const userSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-    const Permission = mongoose.model("Permission", permissionSchema);
+const Permission = mongoose.model("Permission", permissionSchema);
 const User = mongoose.model("User", userSchema);
 
 export { User, Permission };

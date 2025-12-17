@@ -53,6 +53,7 @@ async function createReview(req, res) {
         return res.status(500).json({ msg: "Internal Server Error" });
     }
 }
+
 async function updateReview(req, res) {
     try {
         const { id } = req.params;

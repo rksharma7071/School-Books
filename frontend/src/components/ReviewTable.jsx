@@ -1,12 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom';
 import { BookContext } from '../context/School';
-import { RiEdit2Fill } from 'react-icons/ri';
 import { MdDelete } from 'react-icons/md';
 import axios from "axios";
 
 function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggleSelect, paginatedReviews, selectedIds }) {
-    const navigate = useNavigate();
     const { user } = useContext(BookContext);
     const role = user?.role;
 
@@ -73,17 +70,13 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
                                             <button
                                                 onClick={() => publishReview(user._id)}
                                                 className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                            >
-                                                Publish
-                                            </button>
+                                            >Publish</button>
                                         }
                                         {user.approved == true &&
                                             <button
                                                 onClick={() => unpublishReview(user._id)}
                                                 className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                                            >
-                                                Unpublish
-                                            </button>
+                                            >Unpublish</button>
                                         }
                                         <button
                                             onClick={() => deleteReview(user._id)}

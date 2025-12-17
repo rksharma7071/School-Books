@@ -44,7 +44,7 @@ function Review() {
         return filteredReviews.slice(start, start + rowsPerPage);
     }, [filteredReviews, currentPage, rowsPerPage, totalPages]);
 
-    const allVisibleIds = paginatedReviews.map((b) => b.id);
+    const allVisibleIds = paginatedReviews.map((b) => b._id || b._id);
     const isAllSelected =
         allVisibleIds.length > 0 &&
         allVisibleIds.every((id) => selectedIds.includes(id));

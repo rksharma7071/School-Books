@@ -17,11 +17,19 @@ import Login from './pages/Login.jsx'
 import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import Register from './pages/Register.jsx'
 import EditUser from './pages/EditUser.jsx'
-import { editUser } from './data/user.js'
 import EditBook from './pages/EditBook.jsx'
-import { getBookById } from './data/book.js'
 import Review from './pages/Review.jsx'
-import { getReview, getReview1 } from './data/review.js'
+import Cart from './pages/Cart.jsx'
+import CartById from './pages/CartById.jsx'
+import Discount from './pages/Discount.jsx'
+import DiscountById from './pages/DiscountById.jsx'
+import { editUser } from './data/user.js'
+import { getBookById } from './data/book.js'
+import { getCart, getCartById } from './data/cart.js'
+import { getReview1 } from './data/review.js'
+import { getDiscount, getDiscountById } from './data/discount.js'
+import AdddDiscount from './pages/AddDiscount.jsx'
+import AddDiscount from './pages/AddDiscount.jsx'
 
 const router = createBrowserRouter([
   {
@@ -87,8 +95,28 @@ const router = createBrowserRouter([
             loader: getReview1
           },
           {
-            path: "review-status",
-            element: <Review />
+            path: "cart",
+            element: <Cart />,
+            loader: getCart
+          },
+          {
+            path: "cart/:id",
+            element: <CartById />,
+            loader: getCartById
+          },
+          {
+            path: "discount",
+            element: <Discount />,
+            loader: getDiscount
+          },
+          {
+            path: "discount/:id",
+            element: <DiscountById />,
+            loader: getDiscountById
+          },
+          {
+            path: "add-discount",
+            element: <AddDiscount />,
           },
         ]
       }

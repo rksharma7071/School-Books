@@ -16,17 +16,6 @@ function User() {
             try {
                 const res = await axios.get("/api/user");
                 const apiUsers = res.data || [];
-                // console.log("res.data: ", res.data)
-                // const mapped = apiUsers.map((b) => ({
-                //     id: b._id,
-                //     username: b.username,
-                //     author: b.author,
-                //     category: b.subject || "N/A",
-                //     price: b.price,
-                //     stock: b.stockQty ?? 0,
-                //     coverImage: b.coverImage ?? "",
-                // }));
-
                 setUsers(apiUsers);
             } catch (error) {
                 console.error("Error fetching users:", error.message);

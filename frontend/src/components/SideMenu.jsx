@@ -127,7 +127,7 @@ function SideMenu() {
                 <div>
                     <button onClick={() => toggleMenu("review")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                         <span className="flex items-center gap-3">
-                            <span className="h-6 w-6 rounded bg-amber-50 text-cyan-600 flex items-center justify-center text-xs">S</span>
+                            <span className="h-6 w-6 rounded bg-cyan-50 text-cyan-600 flex items-center justify-center text-xs">R</span>
                             Reviews
                         </span>
                     </button>
@@ -148,7 +148,7 @@ function SideMenu() {
                                     </>
                                 )}
                             </NavLink>
-                            <NavLink
+                            {/* <NavLink
                                 to="/review-status"
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-cyan-700" : "text-gray-600 hover:bg-indigo-100 hover:text-cyan-700"}`}
                             >
@@ -161,11 +161,60 @@ function SideMenu() {
                                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-cyan-700  group-hover:bg-indigo-200">New</span>
                                     </>
                                 )}
-                            </NavLink>
+                            </NavLink> */}
                         </div>
                     )}
                 </div>
 
+                <div>
+                    <NavLink to={'/cart'} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                        <span className="flex items-center gap-3">
+                            <span className="h-6 w-6 rounded bg-violet-50 text-violet-600 flex items-center justify-center text-xs">C</span>
+                            Cart
+                        </span>
+                    </NavLink>
+                </div>
+                <div>
+                    <button onClick={() => toggleMenu("discount")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                        <span className="flex items-center gap-3">
+                            <span className="h-6 w-6 rounded bg-cyan-50 text-cyan-600 flex items-center justify-center text-xs">R</span>
+                            Discount
+                        </span>
+                    </button>
+
+                    {openMenu === "discount" && (
+                        <div className="mt-2 space-y-1 text-sm border-l border-gray-200 ml-5 pl-3 animate-slideDown">
+                            <NavLink
+                                to="/discount"
+                                className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-cyan-700" : "text-gray-600 hover:bg-indigo-100 hover:text-cyan-700"}`}
+                            >
+                                {({ isActive }) => (
+                                    <>
+                                        <span className="flex items-center gap-2">
+                                            <span className={`h-1.5 w-1.5 rounded-full transition-colors ${isActive ? "bg-cyan-500" : "bg-gray-300 group-hover:bg-cyan-500"}`} />
+                                            All Discount
+                                        </span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-cyan-700  group-hover:bg-indigo-200">New</span>
+                                    </>
+                                )}
+                            </NavLink>
+                            <NavLink
+                                to="/add-discount"
+                                className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-cyan-700" : "text-gray-600 hover:bg-indigo-100 hover:text-cyan-700"}`}
+                            >
+                                {({ isActive }) => (
+                                    <>
+                                        <span className="flex items-center gap-2">
+                                            <span className={`h-1.5 w-1.5 rounded-full transition-colors ${isActive ? "bg-cyan-500" : "bg-gray-300 group-hover:bg-cyan-500"}`} />
+                                            Add Discount
+                                        </span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-cyan-700  group-hover:bg-indigo-200">New</span>
+                                    </>
+                                )}
+                            </NavLink>
+                        </div>
+                    )}
+                </div>
                 <div>
                     <button onClick={() => toggleMenu("settings")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                         <span className="flex items-center gap-3">
@@ -207,6 +256,7 @@ function SideMenu() {
                         </div>
                     )}
                 </div>
+
             </nav>
         </aside>
     )

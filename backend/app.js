@@ -5,6 +5,9 @@ import bookRouter from "./routes/book.route.js";
 import userRouter from "./routes/user.route.js";
 import authRouter from "./routes/auth.route.js";
 import reviewRouter from "./routes/review.route.js";
+import cartRouter from "./routes/cart.route.js";
+import paymentRouter from "./routes/payment.route.js";
+import discountRouter from "./routes/discount.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -16,6 +19,9 @@ app.use("/api/book", bookRouter);
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/review", reviewRouter);
+app.use("/api/cart", cartRouter);
+app.use("/api/payment", paymentRouter);
+app.use("/api/discount", discountRouter);
 
 app.get("/", (req, res) => {
     res.status(200).json({
@@ -25,6 +31,9 @@ app.get("/", (req, res) => {
         "/api/user/id": "Specific User",
         "/api/auth": "Auth",
         "/api/review": "Review",
+        "/api/cart": "Cart",
+        "/api/discount": "Discount",
+        "/api/payment": "Payment",
     });
 });
 
