@@ -1,7 +1,7 @@
-// src/pages/AddBook.jsx
 import React, { useState } from "react";
 import axios from "axios";
 import ImageGridManager from "../components/ImageGridManager";
+import { useNavigate } from "react-router-dom";
 
 function AddBook() {
     const [form, setForm] = useState({
@@ -20,9 +20,9 @@ function AddBook() {
         description: "",
         isActive: true,
     });
-
-    // Will hold File[]
     const [images, setImages] = useState([]);
+    const navigate = useNavigate();
+
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
@@ -36,35 +36,30 @@ function AddBook() {
         e.preventDefault();
 
         try {
-            const fd = new FormData();
+            const formData = new FormData();
 
-            // Append text fields
             Object.entries(form).forEach(([key, value]) => {
                 if (value !== undefined && value !== null && value !== "") {
-                    fd.append(key, value);
+                    formData.append(key, value);
                 }
             });
 
-            // Append files as "images" (multer upload.fields([{ name: "images" }]))
             images.forEach((file) => {
-                fd.append("images", file);
+                formData.append("images", file);
             });
 
-            // console.log("🔍 FormData preview (without files):");
-            for (const [k, v] of fd.entries()) {
+            for (const [k, v] of formData.entries()) {
                 if (k !== "images") console.log(k, "=>", v);
             }
-            // console.log("📷 Images count being sent:", images.length);
 
-            const res = await axios.post("/api/book", fd, {
+            const res = await axios.post("/api/book", formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },
             });
-
+            navigate("/books")
             // console.log("✅ Book created:", res.data);
 
-            // Reset form
             setForm({
                 name: "",
                 author: "",
@@ -82,8 +77,7 @@ function AddBook() {
                 isActive: true,
             });
             setImages([]);
-
-            alert("Book created successfully!");
+            // alert("Book created successfully!");
         } catch (err) {
             console.error("❌ Error creating book:", err);
             alert(

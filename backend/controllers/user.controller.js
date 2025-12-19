@@ -18,7 +18,7 @@ async function handleCreateNewUser(req, res) {
             !body.last_name ||
             !body.role
         ) {
-            return res.status(400).json({ msg: "All fields are required..." });
+            return res.status(400).json({ message: "All fields are required..." });
         }
 
         const result = await User.create({
@@ -32,10 +32,10 @@ async function handleCreateNewUser(req, res) {
 
         return res
             .status(201)
-            .json({ msg: "User created successfully", user: result });
+            .json({ message: "User created successfully", user: result });
     } catch (error) {
         console.error("Error creating user:", error);
-        return res.status(500).json({ msg: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
@@ -51,7 +51,7 @@ async function handleUpdateUserUsingId(req, res) {
 
         const user = await User.findById(id);
         if (!user) {
-            return res.status(404).json({ msg: "User not found" });
+            return res.status(404).json({ message: "User not found" });
         }
 
         if (username) user.username = username;
@@ -77,7 +77,7 @@ async function handleUpdateUserUsingId(req, res) {
         });
     } catch (error) {
         console.error("Error updating user:", error);
-        return res.status(500).json({ msg: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
@@ -108,11 +108,11 @@ async function handleUpdatePermission(req, res) {
         const userId = body.userId;
 
         if (!userId) {
-            return res.status(400).json({ msg: "userId is required" });
+            return res.status(400).json({ message: "userId is required" });
         }
 
         if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ msg: "Invalid userId format" });
+            return res.status(400).json({ message: "Invalid userId format" });
         }
 
         const updateFields = {};
@@ -127,7 +127,7 @@ async function handleUpdatePermission(req, res) {
             if (Object.keys(updateFields).length === 0) {
                 return res
                     .status(400)
-                    .json({ msg: "No permission fields provided to update" });
+                    .json({ message: "No permission fields provided to update" });
             }
 
             const updated = await Permission.findOneAndUpdate(
@@ -137,7 +137,7 @@ async function handleUpdatePermission(req, res) {
             ).lean();
 
             return res.status(200).json({
-                msg: "Permission updated successfully",
+                message: "Permission updated successfully",
                 permission: updated,
             });
         }
@@ -156,12 +156,12 @@ async function handleUpdatePermission(req, res) {
         const created = await Permission.create(payload);
 
         return res.status(201).json({
-            msg: "Permission created successfully",
+            message: "Permission created successfully",
             permission: created,
         });
     } catch (error) {
         console.error("handleUpdatePermission error:", error);
-        return res.status(500).json({ msg: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
@@ -175,11 +175,11 @@ async function handleGetPermissionUsingId(req, res) {
         const userId = req.params.id;
 
         if (!userId) {
-            return res.status(400).json({ msg: "User ID is required" });
+            return res.status(400).json({ message: "User ID is required" });
         }
 
         if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ msg: "Invalid User ID format" });
+            return res.status(400).json({ message: "Invalid User ID format" });
         }
 
         const permission = await Permission.findOne({ userId }).lean();
@@ -187,13 +187,13 @@ async function handleGetPermissionUsingId(req, res) {
         if (!permission) {
             return res
                 .status(404)
-                .json({ msg: "Permission not found for this user" });
+                .json({ message: "Permission not found for this user" });
         }
 
         return res.status(200).json(permission);
     } catch (error) {
         console.error("Error fetching permission:", error);
-        return res.status(500).json({ msg: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 

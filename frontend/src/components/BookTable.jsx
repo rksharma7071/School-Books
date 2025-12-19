@@ -24,7 +24,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
         }
     };
 
-    const editBook = async (id) => {        
+    const editBook = async (id) => {
         navigate(`/edit-book/${id}`)
     }
 
@@ -72,7 +72,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
                                         />
                                     </div>
                                 </td>
-                                <td className="px-4 py-3 text-gray-900 font-medium">{book.title}</td>
+                                <td className="px-4 py-3 text-gray-900 font-medium cursor-pointer" onClick={() => editBook(book.id)}>{book.title}</td>
                                 <td className="px-4 py-3 text-gray-700">{book.author}</td>
                                 <td className="px-4 py-3 text-gray-700">{book.category}</td>
                                 <td className="px-4 py-3 text-gray-700">{book.price}</td>

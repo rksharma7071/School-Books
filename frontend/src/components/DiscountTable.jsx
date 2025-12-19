@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import { BookContext } from '../context/School';
 import { MdDelete } from 'react-icons/md';
 import axios from "axios";
+import { Link } from 'react-router-dom';
 
 function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, toggleSelect, paginatedDiscount, selectedIds }) {
   const { user } = useContext(BookContext);
@@ -23,11 +24,11 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
     }
   };
 
-  const deleteReview = async (id) => {
+  const deleteDiscount = async (id) => {  
     if (window.confirm("Do you want to delete this Review?")) {
-      await axios.delete(`/api/review/${id}`);
+      await axios.delete(`/api/discount/${id}`);
       setRender(true);
-      alert("Review has been deleted successfully!");
+      alert("Discount has been deleted successfully!");
     }
   };
 
@@ -41,7 +42,7 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
           <th className="px-4 py-3 text-left font-semibold text-gray-700">Discount Type</th>
           <th className="px-4 py-3 text-left font-semibold text-gray-700">Amount</th>
           <th className="px-4 py-3 text-left font-semibold text-gray-700">Status</th>
-          {/* <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th> */}
+          <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -55,7 +56,9 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
             return (
               <tr key={discount._id} className="border-t border-gray-100 hover:bg-gray-50">
                 <td className="px-4 py-3"><input type="checkbox" checked={isSelected} onChange={() => toggleSelect(discount._id)} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" /></td>
-                <td className="px-4 py-3 text-gray-900 font-medium">{discount?.discount_code || "Loading..."}</td>
+                <td className="px-4 py-3 text-gray-900 font-medium">
+                  <Link to={discount._id}>{discount?.discount_code || "Loading..."}</Link>
+                </td>
                 <td className="px-4 py-3 text-gray-700">
                   {discount?.discount_type[0].toUpperCase() + discount?.discount_type.slice(1) || "Loading..."}
                 </td>
@@ -69,9 +72,9 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
                     {discount.active ? "Active" : "Draft"}
                   </span>
                 </td>
-                {/* <td className="px-4 py-3 w-30 text-right">
+                <td className="px-4 py-3 w-30 text-right">
                   <div className="flex items-center justify-end gap-3">
-                    {discount.active == true &&
+                    {/* {discount.active == true &&
                       <button
                         onClick={() => publishReview(user._id)}
                         className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
@@ -82,16 +85,16 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
                         onClick={() => unpublishReview(user._id)}
                         className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
                       >Unpublish</button>
-                    }
+                    } */}
                     <button
-                      onClick={() => deleteReview(user._id)}
+                      onClick={() => deleteDiscount(discount._id)}
                       className="inline-flex items-center justify-center rounded-md p-1.5 text-red-600 transition hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-400"
                       aria-label="Delete review"
                     >
                       <MdDelete className="text-base" />
                     </button>
                   </div>
-                </td> */}
+                </td>
 
               </tr>
             );

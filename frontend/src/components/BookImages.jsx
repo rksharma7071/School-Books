@@ -1,151 +1,179 @@
-import React, { useState, useRef, useEffect } from "react";
-import { IoClose } from "react-icons/io5";
+import React, { useEffect, useState } from "react";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  useSortable,
+  rectSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
-function BookImages({
-    existingImages = [],
-    onImagesChange,
-    onMetaChange
-}) {
-    const fileInputRef = useRef(null);
+/* ---------------- SORTABLE ITEM ---------------- */
+function SortableImage({ img, index, onRemove }) {
+  const { attributes, listeners, setNodeRef, transform, transition } =
+    useSortable({
+      id: img.publicId || img.tempId,
+    });
 
-    const [images, setImages] = useState([]);
-    const [dragIndex, setDragIndex] = useState(null);
-    const [removedPublicIds, setRemovedPublicIds] = useState([]);
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
 
-    // 🔹 Load existing images
-    useEffect(() => {
-        if (existingImages.length) {
-            setImages(
-                existingImages.map((img) => ({
-                    ...img,
-                    isExisting: true,
-                }))
-            );
-        }
-    }, [existingImages]);
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="group relative cursor-grab rounded-xl overflow-hidden border border-gray-400 bg-white shadow-sm active:cursor-grabbing"
+    >
+      <img
+        src={img.url || img.preview}
+        className="h-36 w-full object-contain bg-gray-50"
+      />
 
-    // 🔹 Send NEW files to parent
-    useEffect(() => {
-        const newFiles = images
-            .filter((img) => !img.isExisting)
-            .map((img) => img.file);
+      {/* Remove Button */}
+      <button
+        type="button"
+        onClick={() => onRemove(img)}
+        className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full opacity-0 group-hover:opacity-100 transition"
+      >
+        ✕
+      </button>
 
-        onImagesChange?.(newFiles);
-    }, [images]);
+      {/* Position */}
+      <span className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded-full">
+        #{index + 1}
+      </span>
+    </div>
+  );
+}
 
-    // 🔹 Send meta (removed ids + order)
-    useEffect(() => {
-        const order = images.map((img) =>
-            img.isExisting ? img.publicId : null
-        );
+/* ---------------- MAIN COMPONENT ---------------- */
+function BookImages({ existingImages, onImagesChange, onMetaChange }) {
+  const [images, setImages] = useState([]);
 
-        onMetaChange?.({
-            removedPublicIds,
-            order,
-        });
-    }, [images, removedPublicIds]);
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
 
-    const handleAddClick = () => fileInputRef.current?.click();
+  useEffect(() => {
+    const mapped = existingImages.map((img) => ({
+      ...img,
+      isNew: false,
+    }));
+    setImages(mapped);
+  }, [existingImages]);
 
-    const handleFileChange = (e) => {
-        const files = Array.from(e.target.files || []);
+  /* ---------------- ADD NEW IMAGES ---------------- */
+  const handleNewImages = (e) => {
+    const files = Array.from(e.target.files);
 
-        const newImages = files.map((file) => ({
-            file,
-            preview: URL.createObjectURL(file),
-            isExisting: false,
-        }));
+    const previews = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+      tempId: crypto.randomUUID(),
+      isNew: true,
+    }));
 
-        setImages((prev) => [...prev, ...newImages]);
-        e.target.value = "";
-    };
+    setImages((prev) => [...prev, ...previews]);
+    onImagesChange(files);
+  };
 
-    const handleDelete = (index) => {
-        setImages((prev) => {
-            const img = prev[index];
+  /* ---------------- REMOVE IMAGE ---------------- */
+  const removeImage = (img) => {
+    setImages((prev) => prev.filter((i) => i !== img));
 
-            if (img.isExisting && img.publicId) {
-                setRemovedPublicIds((ids) => [...ids, img.publicId]);
-            }
+    if (!img.isNew) {
+      onMetaChange((prev) => ({
+        ...prev,
+        removedPublicIds: [...prev.removedPublicIds, img.publicId],
+      }));
+    }
+  };
 
-            if (!img.isExisting) {
-                URL.revokeObjectURL(img.preview);
-            }
+  /* ---------------- DRAG END ---------------- */
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
 
-            return prev.filter((_, i) => i !== index);
-        });
-    };
+    setImages((prev) => {
+      const oldIndex = prev.findIndex(
+        (i) => (i.publicId || i.tempId) === active.id
+      );
+      const newIndex = prev.findIndex(
+        (i) => (i.publicId || i.tempId) === over.id
+      );
 
-    const handleDragStart = (index) => setDragIndex(index);
+      const updated = arrayMove(prev, oldIndex, newIndex);
 
-    const handleDrop = (index) => {
-        if (dragIndex === null || dragIndex === index) return;
+      const order = updated.map((img, index) => ({
+        publicId: img.publicId || img.tempId,
+        position: index + 1,
+      }));
 
-        setImages((prev) => {
-            const updated = [...prev];
-            const [moved] = updated.splice(dragIndex, 1);
-            updated.splice(index, 0, moved);
-            return updated;
-        });
+      onMetaChange((prevMeta) => ({ ...prevMeta, order }));
+      return updated;
+    });
+  };
 
-        setDragIndex(null);
-    };
+  return (
+    <div>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
+        <label className="text-sm font-semibold text-gray-700">
+          Book Images
+        </label>
+        <span className="text-xs text-gray-400">
+          Drag & drop to reorder
+        </span>
+      </div>
 
-    return (
-        <div className="w-full bg-white rounded-2xl border border-gray-300 p-5">
-            <div className="flex items-center gap-3 mb-3">
-                <h2 className="text-lg font-semibold">Images</h2>
-                <p className="text-xs text-gray-500">
-                    Drag to reorder, click × to remove
-                </p>
-            </div>
+      {/* Upload Area */}
+      <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
+        <input
+          type="file"
+          multiple
+          onChange={handleNewImages}
+          className="hidden"
+        />
+        <p className="text-sm font-medium text-gray-600">
+          Click to upload images
+        </p>
+        <p className="text-xs text-gray-400">PNG, JPG</p>
+      </label>
 
-            <div className="grid gap-3 grid-cols-2 sm:grid-cols-3 md:grid-cols-5">
-                {images.map((img, index) => (
-                    <div
-                        key={img.publicId || index}
-                        draggable
-                        onDragStart={() => handleDragStart(index)}
-                        onDragOver={(e) => e.preventDefault()}
-                        onDrop={() => handleDrop(index)}
-                        className="relative aspect-square rounded-xl border overflow-hidden"
-                    >
-                        <img
-                            src={img.isExisting ? img.url : img.preview}
-                            className="w-full h-full object-cover"
-                            alt=""
-                        />
-
-                        <button
-                            type="button"
-                            onClick={() => handleDelete(index)}
-                            className="absolute top-1 right-1 bg-rose-600 text-white rounded-full w-6 h-6 flex items-center justify-center"
-                        >
-                            <IoClose />
-                        </button>
-                    </div>
-                ))}
-
-                <button
-                    type="button"
-                    onClick={handleAddClick}
-                    className="aspect-square rounded-xl border-dashed border-2 flex flex-col items-center justify-center text-gray-400"
-                >
-                    <span className="text-3xl">＋</span>
-                    <span className="text-xs">Add</span>
-                </button>
-            </div>
-
-            <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                hidden
-                onChange={handleFileChange}
-            />
-        </div>
-    );
+      {/* Drag Grid */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={images.map((i) => i.publicId || i.tempId)}
+          strategy={rectSortingStrategy}
+        >
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-5">
+            {images.map((img, index) => (
+              <SortableImage
+                key={img.publicId || img.tempId}
+                img={img}
+                index={index}
+                onRemove={removeImage}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+    </div>
+  );
 }
 
 export default BookImages;

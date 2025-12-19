@@ -30,6 +30,9 @@ import { getReview1 } from './data/review.js'
 import { getDiscount, getDiscountById } from './data/discount.js'
 import AdddDiscount from './pages/AddDiscount.jsx'
 import AddDiscount from './pages/AddDiscount.jsx'
+import Payment from './pages/Payment.jsx'
+import PaymentById from './pages/PaymentById.jsx'
+import { getPayment, getPaymentById } from './data/payment.js'
 
 const router = createBrowserRouter([
   {
@@ -113,6 +116,16 @@ const router = createBrowserRouter([
             path: "discount/:id",
             element: <DiscountById />,
             loader: getDiscountById
+          },
+          {
+            path: "payment",
+            element: <Payment />,
+            loader: getPayment
+          },
+          {
+            path: "payment/:id",
+            element: <PaymentById />,
+            loader: getPaymentById
           },
           {
             path: "add-discount",

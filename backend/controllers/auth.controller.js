@@ -18,7 +18,7 @@ async function handleAuthSignUp(req, res) {
         if (existingUser) {
             return res
                 .status(400)
-                .json({ msg: "Email or username already in use" });
+                .json({ message: "Email or username already in use" });
         }
 
         // Hash password
@@ -59,7 +59,7 @@ async function handleAuthSignUp(req, res) {
         });
     } catch (err) {
         console.error(err.message);
-        res.status(500).json({ msg: "Server error" });
+        res.status(500).json({ message: "Server error" });
     }
 }
 
@@ -71,7 +71,7 @@ async function handleAuthLogin(req, res) {
     if (!email || !password) {
         return res
             .status(400)
-            .json({ msg: "Please provide email and password." });
+            .json({ message: "Please provide email and password." });
     }
 
     try {
@@ -79,20 +79,20 @@ async function handleAuthLogin(req, res) {
         const user = await User.findOne({ email });
         if (!user) {
             // console.log("User not found:", email);
-            return res.status(400).json({ msg: "User not found." });
+            return res.status(400).json({ message: "User not found." });
         }
 
         // 2. Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             // console.log("Incorrect password for:", email);
-            return res.status(400).json({ msg: "Password is incorrect." });
+            return res.status(400).json({ message: "Password is incorrect." });
         }
 
         // 3. Generate JWT token
         if (!process.env.JWT_SECRET) {
             console.error("JWT_SECRET is not defined in .env file");
-            return res.status(500).json({ msg: "Server config error." });
+            return res.status(500).json({ message: "Server config error." });
         }
 
         const token = jwt.sign(
@@ -115,7 +115,7 @@ async function handleAuthLogin(req, res) {
         });
     } catch (err) {
         console.error("Login Error:", err);
-        return res.status(500).json({ msg: "Server error" });
+        return res.status(500).json({ message: "Server error" });
     }
 }
 
@@ -124,7 +124,7 @@ async function handleAuthChangePassword(req, res) {
 
     if (!email || !oldPassword || !newPassword) {
         return res.status(400).json({
-            msg: "Please provide email, old password, and new password.",
+            message: "Please provide email, old password, and new password.",
         });
     }
 
@@ -132,13 +132,13 @@ async function handleAuthChangePassword(req, res) {
         // Find user by email
         const user = await User.findOne({ email });
         if (!user) {
-            return res.status(400).json({ msg: "User not found." });
+            return res.status(400).json({ message: "User not found." });
         }
 
         // Compare old password
         const isMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isMatch) {
-            return res.status(400).json({ msg: "Old password is incorrect." });
+            return res.status(400).json({ message: "Old password is incorrect." });
         }
 
         // Hash new password
@@ -149,10 +149,10 @@ async function handleAuthChangePassword(req, res) {
         user.password = hashedNewPassword;
         await user.save();
 
-        res.json({ msg: "Password changed successfully." });
+        res.json({ message: "Password changed successfully." });
     } catch (err) {
         console.error(err.message);
-        res.status(500).json({ msg: "Server error" });
+        res.status(500).json({ message: "Server error" });
     }
 }
 

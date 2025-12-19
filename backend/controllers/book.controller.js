@@ -163,132 +163,264 @@ export const createBook = async (req, res) => {
     }
 };
 
+// export const updateBook = async (req, res) => {
+//   try {
+//     const bookId = req.params.id;
+//     if (!mongoose.Types.ObjectId.isValid(bookId)) {
+//       return res.status(400).json({ success: false, message: "Invalid book id" });
+//     }
+
+//     const book = await Book.findById(bookId);
+//     if (!book) {
+//       return res.status(404).json({ success: false, message: "Book not found" });
+//     }
+
+//     const {
+//       name,
+//       description,
+//       price,
+//       cost,
+//       isbn,
+//       author,
+//       publisher,
+//       category,
+//       classLevel,
+//       subject,
+//       language,
+//       stockQty,
+//       isActive,
+//       removeImagePublicIds,
+//       imagesOrder,
+//     } = req.body;
+
+//     /* ------------------ CATEGORY ------------------ */
+//     if (category) {
+//       if (mongoose.Types.ObjectId.isValid(category)) {
+//         book.category = category;
+//       } else {
+//         let cat = await Category.findOne({ name: category.trim() });
+//         if (!cat) cat = await Category.create({ name: category.trim() });
+//         book.category = cat._id;
+//       }
+//     }
+
+//     /* ------------------ DELETE IMAGES ------------------ */
+//     let removeIds = [];
+//     if (removeImagePublicIds) {
+//       removeIds = Array.isArray(removeImagePublicIds)
+//         ? removeImagePublicIds
+//         : [removeImagePublicIds];
+//     }
+
+//     if (removeIds.length) {
+//       await Promise.all(
+//         removeIds.map((id) =>
+//           cloudinary.uploader.destroy(id, { invalidate: true })
+//         )
+//       );
+
+//       book.images = book.images.filter(
+//         (img) => !removeIds.includes(String(img.publicId))
+//       );
+//     }
+
+//     /* ------------------ NEW UPLOADS ------------------ */
+//     const uploadedFiles = [];
+//     if (req.files?.images) {
+//       for (const file of req.files.images) {
+//         uploadedFiles.push({
+//           url: file.path,
+//           publicId: file.filename,
+//           position: book.images.length + uploadedFiles.length + 1,
+//         });
+//       }
+//     }
+
+//     if (uploadedFiles.length) {
+//       book.images.push(...uploadedFiles);
+//     }
+
+//     /* ------------------ IMAGE ORDER ------------------ */
+//     if (imagesOrder) {
+//       const order = JSON.parse(imagesOrder);
+//       const map = new Map(
+//         order.filter(o => o.publicId).map(o => [o.publicId, o.position])
+//       );
+
+//       book.images = book.images.map(img => ({
+//         ...img.toObject(),
+//         position: map.get(String(img.publicId)) || img.position
+//       }));
+
+//       book.images.sort((a, b) => a.position - b.position);
+//     }
+
+//     /* ------------------ FIELDS ------------------ */
+//     if (name) book.name = name.trim();
+//     if (description) book.description = description.trim();
+//     if (price !== undefined) book.price = Number(price);
+//     if (cost !== undefined) book.cost = Number(cost);
+//     if (isbn) book.isbn = isbn.trim();
+//     if (author) book.author = author.trim();
+//     if (publisher) book.publisher = publisher.trim();
+//     if (classLevel) book.classLevel = classLevel;
+//     if (subject) book.subject = subject;
+//     if (language) book.language = language;
+//     if (stockQty !== undefined) book.stockQty = Number(stockQty);
+//     if (isActive !== undefined) book.isActive = isActive;
+
+//     /* ------------------ COVER IMAGE ------------------ */
+//     if (!book.coverImage && book.images.length) {
+//       book.coverImage = book.images[0].url;
+//     }
+
+//     await book.save();
+
+//     res.status(200).json({
+//       success: true,
+//       message: "Book updated successfully",
+//       book,
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to update book",
+//       error: err.message,
+//     });
+//   }
+// };
+
 export const updateBook = async (req, res) => {
-  try {
-    const bookId = req.params.id;
-    if (!mongoose.Types.ObjectId.isValid(bookId)) {
-      return res.status(400).json({ success: false, message: "Invalid book id" });
-    }
+    try {
+        const bookId = req.params.id;
+        if (!mongoose.Types.ObjectId.isValid(bookId)) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Invalid book id" });
+        }
 
-    const book = await Book.findById(bookId);
-    if (!book) {
-      return res.status(404).json({ success: false, message: "Book not found" });
-    }
+        const book = await Book.findById(bookId);
+        if (!book) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Book not found" });
+        }
 
-    const {
-      name,
-      description,
-      price,
-      cost,
-      isbn,
-      author,
-      publisher,
-      category,
-      classLevel,
-      subject,
-      language,
-      stockQty,
-      isActive,
-      removeImagePublicIds,
-      imagesOrder,
-    } = req.body;
+        const {
+            name,
+            description,
+            price,
+            cost,
+            isbn,
+            author,
+            publisher,
+            category,
+            classLevel,
+            subject,
+            language,
+            stockQty,
+            isActive,
+            removeImagePublicIds,
+            imagesOrder,
+        } = req.body;
 
-    /* ------------------ CATEGORY ------------------ */
-    if (category) {
-      if (mongoose.Types.ObjectId.isValid(category)) {
-        book.category = category;
-      } else {
-        let cat = await Category.findOne({ name: category.trim() });
-        if (!cat) cat = await Category.create({ name: category.trim() });
-        book.category = cat._id;
-      }
-    }
+        /* ---------------- CATEGORY ---------------- */
+        if (category) {
+            if (mongoose.Types.ObjectId.isValid(category)) {
+                book.category = category;
+            } else {
+                let cat = await Category.findOne({ name: category.trim() });
+                if (!cat)
+                    cat = await Category.create({ name: category.trim() });
+                book.category = cat._id;
+            }
+        }
 
-    /* ------------------ DELETE IMAGES ------------------ */
-    let removeIds = [];
-    if (removeImagePublicIds) {
-      removeIds = Array.isArray(removeImagePublicIds)
-        ? removeImagePublicIds
-        : [removeImagePublicIds];
-    }
+        /* ---------------- DELETE IMAGES ---------------- */
+        let removeIds = [];
+        if (removeImagePublicIds) {
+            removeIds = Array.isArray(removeImagePublicIds)
+                ? removeImagePublicIds
+                : [removeImagePublicIds];
+        }
 
-    if (removeIds.length) {
-      await Promise.all(
-        removeIds.map((id) =>
-          cloudinary.uploader.destroy(id, { invalidate: true })
-        )
-      );
+        if (removeIds.length) {
+            await Promise.all(
+                removeIds.map((id) =>
+                    cloudinary.uploader.destroy(id, { invalidate: true })
+                )
+            );
 
-      book.images = book.images.filter(
-        (img) => !removeIds.includes(String(img.publicId))
-      );
-    }
+            book.images = book.images.filter(
+                (img) => !removeIds.includes(String(img.publicId))
+            );
+        }
 
-    /* ------------------ NEW UPLOADS ------------------ */
-    const uploadedFiles = [];
-    if (req.files?.images) {
-      for (const file of req.files.images) {
-        uploadedFiles.push({
-          url: file.path,
-          publicId: file.filename,
-          position: book.images.length + uploadedFiles.length + 1,
+        /* ---------------- NEW UPLOADS (NO POSITION) ---------------- */
+        if (req.files?.images) {
+            for (const file of req.files.images) {
+                book.images.push({
+                    url: file.path,
+                    publicId: file.filename,
+                });
+            }
+        }
+
+        /* ---------------- FINAL IMAGE ORDER (KEY FIX) ---------------- */
+        if (imagesOrder) {
+            const order = JSON.parse(imagesOrder);
+
+            const positionMap = new Map(
+                order.map((o) => [String(o.publicId), o.position])
+            );
+
+            book.images = book.images
+                .map((img) => ({
+                    ...img.toObject(),
+                    position: positionMap.get(String(img.publicId)) ?? 9999,
+                }))
+                .sort((a, b) => a.position - b.position)
+                .map((img, index) => ({
+                    ...img,
+                    position: index + 1,
+                }));
+        }
+
+        /* ---------------- FIELDS ---------------- */
+        if (name) book.name = name.trim();
+        if (description) book.description = description.trim();
+        if (price !== undefined) book.price = Number(price);
+        if (cost !== undefined) book.cost = Number(cost);
+        if (isbn) book.isbn = isbn.trim();
+        if (author) book.author = author.trim();
+        if (publisher) book.publisher = publisher.trim();
+        if (classLevel) book.classLevel = classLevel;
+        if (subject) book.subject = subject;
+        if (language) book.language = language;
+        if (stockQty !== undefined) book.stockQty = Number(stockQty);
+        if (isActive !== undefined) book.isActive = isActive;
+
+        /* ---------------- COVER IMAGE ---------------- */
+        if (book.images.length) {
+            book.coverImage = book.images[0].url;
+        }
+
+        await book.save();
+
+        return res.status(200).json({
+            success: true,
+            message: "Book updated successfully",
+            book,
         });
-      }
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to update book",
+            error: err.message,
+        });
     }
-
-    if (uploadedFiles.length) {
-      book.images.push(...uploadedFiles);
-    }
-
-    /* ------------------ IMAGE ORDER ------------------ */
-    if (imagesOrder) {
-      const order = JSON.parse(imagesOrder);
-      const map = new Map(
-        order.filter(o => o.publicId).map(o => [o.publicId, o.position])
-      );
-
-      book.images = book.images.map(img => ({
-        ...img.toObject(),
-        position: map.get(String(img.publicId)) || img.position
-      }));
-
-      book.images.sort((a, b) => a.position - b.position);
-    }
-
-    /* ------------------ FIELDS ------------------ */
-    if (name) book.name = name.trim();
-    if (description) book.description = description.trim();
-    if (price !== undefined) book.price = Number(price);
-    if (cost !== undefined) book.cost = Number(cost);
-    if (isbn) book.isbn = isbn.trim();
-    if (author) book.author = author.trim();
-    if (publisher) book.publisher = publisher.trim();
-    if (classLevel) book.classLevel = classLevel;
-    if (subject) book.subject = subject;
-    if (language) book.language = language;
-    if (stockQty !== undefined) book.stockQty = Number(stockQty);
-    if (isActive !== undefined) book.isActive = isActive;
-
-    /* ------------------ COVER IMAGE ------------------ */
-    if (!book.coverImage && book.images.length) {
-      book.coverImage = book.images[0].url;
-    }
-
-    await book.save();
-
-    res.status(200).json({
-      success: true,
-      message: "Book updated successfully",
-      book,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({
-      success: false,
-      message: "Failed to update book",
-      error: err.message,
-    });
-  }
 };
 
 export const getAllCategories = async (req, res) => {

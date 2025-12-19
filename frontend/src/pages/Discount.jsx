@@ -139,28 +139,20 @@ function Discount() {
             <button
               onClick={handlePrevPage}
               disabled={currentPage === 1}
-              className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                }`}
+              className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               Prev
             </button>
             <span>
               Page{" "}
-              <span className="font-semibold text-gray-700">
-                {Math.min(currentPage, totalPages)}
-              </span>{" "}
+              <span className="font-semibold text-gray-700">{Math.min(currentPage, totalPages)}</span>{" "}
               of{" "}
-              <span className="font-semibold text-gray-700">
-                {totalPages}
-              </span>
+              <span className="font-semibold text-gray-700">{totalPages}</span>
             </span>
             <button
               onClick={handleNextPage}
               disabled={currentPage >= totalPages}
-              className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
-                ? "opacity-50 cursor-not-allowed"
-                : ""
-                }`}
+              className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages? "opacity-50 cursor-not-allowed": ""}`}
             >
               Next
             </button>

@@ -8,6 +8,7 @@ import reviewRouter from "./routes/review.route.js";
 import cartRouter from "./routes/cart.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import discountRouter from "./routes/discount.route.js";
+import orderRouter from "./routes/order.route.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -22,6 +23,7 @@ app.use("/api/review", reviewRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/discount", discountRouter);
+app.use("/api/order", orderRouter);
 
 app.get("/", (req, res) => {
     res.status(200).json({
@@ -34,6 +36,7 @@ app.get("/", (req, res) => {
         "/api/cart": "Cart",
         "/api/discount": "Discount",
         "/api/payment": "Payment",
+        "/api/order": "Order",
     });
 });
 

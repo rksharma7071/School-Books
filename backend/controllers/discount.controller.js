@@ -6,19 +6,19 @@ async function getAllDiscount(req, res) {
         const discount = await Discount.find({});
         return res.status(200).json(discount || []);
     } catch (error) {
-        return res.status(500).json({ msg: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
 async function getDiscountById(req, res) {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ msg: "Invalid Discount ID" });
+        return res.status(400).json({ message: "Invalid Discount ID" });
     }
 
     const discount = await Discount.findById(id);
     if (!discount) {
-        return res.status(404).json({ msg: "Discount not found" });
+        return res.status(404).json({ message: "Discount not found" });
     }
     return res.status(200).json(discount);
 }
@@ -39,7 +39,7 @@ async function createDiscount(req, res) {
             return res
                 .status(400)
                 .json({
-                    msg: "discount_code, discount_type and amount are required",
+                    message: "discount_code, discount_type and amount are required",
                 });
         }
 
@@ -47,7 +47,7 @@ async function createDiscount(req, res) {
         if (existingDiscount) {
             return res
                 .status(409)
-                .json({ msg: "Discount code already exists" });
+                .json({ message: "Discount code already exists" });
         }
 
         const discount = await Discount.create({
@@ -62,10 +62,10 @@ async function createDiscount(req, res) {
 
         return res
             .status(201)
-            .json({ msg: "Discount successfully created", discount });
+            .json({ message: "Discount successfully created", discount });
     } catch (error) {
         console.error("Discount create error:", error);
-        return res.status(500).json({ msg: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
@@ -74,12 +74,12 @@ async function updateDiscount(req, res) {
         const { id } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ msg: "Invalid Discount ID" });
+            return res.status(400).json({ message: "Invalid Discount ID" });
         }
 
         const discount = await Discount.findById(id);
         if (!discount) {
-            return res.status(404).json({ msg: "Discount not found" });
+            return res.status(404).json({ message: "Discount not found" });
         }
 
         Object.keys(req.body).forEach((key) => {
@@ -91,12 +91,12 @@ async function updateDiscount(req, res) {
         await discount.save();
 
         return res.status(200).json({
-            msg: "Discount code updated successfully",
+            message: "Discount code updated successfully",
             discount
         });
     } catch (error) {
         console.error("Discount update error:", error);
-        return res.status(500).json({ msg: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
@@ -105,18 +105,18 @@ async function deleteDiscount(req, res) {
         const { id } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ msg: "Invalid Discount ID" });
+            return res.status(400).json({ message: "Invalid Discount ID" });
         }
 
         const discount = await Discount.findByIdAndDelete(id);
         if (!discount) {
-            return res.status(404).json({ msg: "Discount not found" });
+            return res.status(404).json({ message: "Discount not found" });
         }
 
-        return res.status(200).json({ msg: "Discount deleted successfully" });
+        return res.status(200).json({ message: "Discount deleted successfully" });
     } catch (error) {
         console.error("Discount delete error:", error);
-        return res.status(500).json({ msg: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 

@@ -10,7 +10,7 @@ function EditBook() {
         order: [],
     });
 
-    const loadedBook = useLoaderData(); // 👈 from loader
+    const loadedBook = useLoaderData();
     const navigate = useNavigate();
 
     const [form, setForm] = useState({

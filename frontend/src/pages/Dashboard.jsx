@@ -1,24 +1,68 @@
-import React from 'react'
+import React from "react";
+import { Link } from "react-router-dom";
 
 function Dashboard() {
-    return (
-        <div className="w-full h-full p-4 sm:p-6 bg-white">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
-                <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Dashboard</h2>
-                    {/* <p className="text-sm text-gray-500">Manage all school books and inventory.</p> */}
-                </div>
+    const stats = [
+        { title: "Books", value: 128, url: "books", color: "bg-blue-500" },
+        { title: "Users", value: 542, url: "users", color: "bg-indigo-500" },
+        { title: "Orders", value: 76, url: "orders", color: "bg-emerald-500" },
+        { title: "Cart Items", value: 34, url: "cart", color: "bg-cyan-500" },
+        { title: "Discounts", value: 12, url: "discount", color: "bg-violet-500" },
+        { title: "Payments", value: "₹1,24,500", url: "payment", color: "bg-fuchsia-500" },
+        { title: "Reviews", value: 98, url: "review", color: "bg-green-500" },
+    ];
 
-                
+    return (
+        <div className="p-6 bg-white">
+            {/* Header */}
+            <h1 className="text-2xl font-bold text-gray-800 mb-6">
+                Dashboard Overview
+            </h1>
+
+            {/* Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {stats.map((item, index) => (
+                    <Link
+                    to={`/${item.url}`}
+                        key={index}
+                        className="bg-gray-100 rounded-xl shadow p-5 flex items-center justify-between"
+                    >
+                        <div>
+                            <p className="text-gray-500 text-sm">
+                                {item.title}
+                            </p>
+                            <p className="text-2xl font-semibold text-gray-800">
+                                {item.value}
+                            </p>
+                        </div>
+
+                        <div
+                            className={`w-12 h-12 rounded-full flex items-center justify-center text-white ${item.color}`}
+                        >
+                            {/* Icon placeholder */}
+                            <span className="text-lg font-bold">
+                                {item.title[0]}
+                            </span>
+                        </div>
+                    </Link>
+                ))}
             </div>
 
-            <div className="bg-white border border-gray-200">
-                <div className="overflow-x-auto">
-                    
-                </div>
+            {/* Recent Activity (Optional Section) */}
+            <div className="mt-10 bg-gray-100 rounded-xl shadow p-6">
+                <h2 className="text-lg font-semibold text-gray-800 mb-4">
+                    Recent Activity
+                </h2>
+
+                <ul className="space-y-3 text-sm text-gray-600">
+                    <li>📘 New book added</li>
+                    <li>🛒 Order #1023 placed</li>
+                    <li>💳 Payment received</li>
+                    <li>⭐ New review submitted</li>
+                </ul>
             </div>
         </div>
-    )
+    );
 }
 
-export default Dashboard
+export default Dashboard;

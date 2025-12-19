@@ -8,7 +8,7 @@ const ProtectedRoute = () => {
         return <Navigate to="/login" replace />;
     }
 
-    if (user.role !== "admin" && user.role !== "student") {
+    if (user.role !== "admin") {
         return <Navigate to="/login" replace />;
     }
 
