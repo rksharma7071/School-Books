@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { useLoaderData } from 'react-router-dom'
-import { getCart } from '../data/cart';
-import CartTable from '../components/CartTable';
+import { getCart } from '../../data/cart';
+import CartTable from '../../components/admin/CartTable';
 
 function Cart() {
     const loader = useLoaderData();

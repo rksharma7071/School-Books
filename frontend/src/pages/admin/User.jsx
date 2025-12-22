@@ -1,11 +1,10 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { useLoaderData } from "react-router-dom";
-import ReviewTable from "../components/ReviewTable.jsx";
-import { getReview1 } from "../data/review.js";
+import axios from 'axios';
+import React, { useEffect, useMemo, useState } from 'react'
+import UserTable from '../../components/admin/UserTable';
+import { Link } from 'react-router-dom';
 
-function Review() {
-    const loader = useLoaderData();
-    const [reviews, setReviews] = useState(loader || []);
+function User() {
+    const [users, setUsers] = useState([]);
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -13,41 +12,42 @@ function Review() {
     const [render, setRender] = useState(false);
 
     useEffect(() => {
-        async function fetchReview() {
-            const data = await getReview1();
-            setReviews(data);
-            setRender(false);
-        }
+        const fetchUsers = async () => {
+            try {
+                const res = await axios.get("/api/user");
+                const apiUsers = res.data || [];
+                setUsers(apiUsers);
+            } catch (error) {
+                console.error("Error fetching users:", error.message);
+            }
+        };
 
-        if (render) {
-            fetchReview();
-        }
-    }, [render]);
+        fetchUsers();
+    }, []);
 
-
-
-    const filteredReviews = useMemo(() => {
+    const filteredUsers = useMemo(() => {
         const term = search.toLowerCase();
-        return reviews.filter(
-            (b) =>
-                b.title.toLowerCase().includes(term) ||
-                b.body.toLowerCase().includes(term) ||
-                b.userId.toLowerCase().includes(term)
-        );
-    }, [reviews, search]);
+        return users
+            .filter((user) => user.role !== "admin")
+            .filter(
+                (b) =>
+                    b.username?.toLowerCase().includes(term) ||
+                    b.email?.toLowerCase().includes(term) ||
+                    b.first_name?.toLowerCase().includes(term) ||
+                    b.last_name?.toLowerCase().includes(term)
+            );
+    }, [users, search]);
 
-    const totalPages = Math.max(1, Math.ceil(filteredReviews.length / rowsPerPage));
+    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / rowsPerPage));
 
-    const paginatedReviews = useMemo(() => {
+    const paginatedUsers = useMemo(() => {
         const safePage = Math.min(currentPage, totalPages);
         const start = (safePage - 1) * rowsPerPage;
-        return filteredReviews.slice(start, start + rowsPerPage);
-    }, [filteredReviews, currentPage, rowsPerPage, totalPages]);
+        return filteredUsers.slice(start, start + rowsPerPage);
+    }, [filteredUsers, currentPage, rowsPerPage, totalPages]);
 
-    const allVisibleIds = paginatedReviews.map((b) => b._id || b._id);
-    const isAllSelected =
-        allVisibleIds.length > 0 &&
-        allVisibleIds.every((id) => selectedIds.includes(id));
+    const allVisibleIds = paginatedUsers.map((b) => b._id);
+    const isAllSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.includes(id));
 
     const toggleSelect = (id) => {
         setSelectedIds((prev) =>
@@ -77,36 +77,34 @@ function Review() {
         setCurrentPage((prev) => Math.min(totalPages, prev + 1));
     };
 
-    const startIndex = filteredReviews.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const endIndex = Math.min(currentPage * rowsPerPage, filteredReviews.length);
+    const startIndex = filteredUsers.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const endIndex = Math.min(currentPage * rowsPerPage, filteredUsers.length);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Review</h2>
-                    {/* <p className="text-sm text-gray-500">Manage all school books and inventory.</p> */}
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">User</h2>
+                    <p className="text-sm text-gray-500">Manage all school customers.</p>
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto bg-white">
                     <input
                         type="search"
                         value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setCurrentPage(1);
-                        }}
+                        onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                         placeholder="Search by title, author, category..."
                         className="flex-1 sm:w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {/* <Link to={'/add-book'} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Add Book</Link> */}
+                    <Link to={`/${import.meta.env.VITE_ADMIN}/add-user`} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Add Book</Link>
                 </div>
+
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 {selectedIds.length > 0 && (
                     <div className="px-4 py-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
-                        <span>{selectedIds.length} Review(s) selected</span>
+                        <span>{selectedIds.length} book(s) selected</span>
                         <button
                             className="text-blue-600 hover:underline"
                             onClick={() => setSelectedIds([])}
@@ -116,12 +114,10 @@ function Review() {
                     </div>
                 )}
 
-                {/* Table */}
                 <div className="overflow-x-auto">
-                    <ReviewTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedReviews={paginatedReviews} selectedIds={selectedIds} toggleSelect={toggleSelect} />
+                    <UserTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedUsers={paginatedUsers} selectedIds={selectedIds} toggleSelect={toggleSelect} />
                 </div>
 
-                {/* Pagination footer */}
                 <div className="border-t border-gray-100 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
                     <div className="flex items-center gap-2">
                         <span>Rows per page:</span>
@@ -136,8 +132,8 @@ function Review() {
                             <option value={30}>30 rows</option>
                         </select>
                         <span className="hidden sm:inline">
-                            {filteredReviews.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredReviews.length} books`
+                            {filteredUsers.length > 0
+                                ? `Showing ${startIndex}–${endIndex} of ${filteredUsers.length} books`
                                 : "Showing 0 of 0 books"}
                         </span>
                     </div>
@@ -175,7 +171,7 @@ function Review() {
                 </div>
             </div>
         </div>
-    );
+    )
 }
 
-export default Review;
+export default User

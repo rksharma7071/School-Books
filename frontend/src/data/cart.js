@@ -42,10 +42,12 @@ export const getCartById = async ({ params }) => {
     try {
         const id = params.id;
         const carts = await getCart();
+
         const cart = carts.find((cart) => cart._id === id);
 
         if (!cart) {
-            throw { message: "Cart not found" };
+            // throw { message: "Cart not found" };
+            return [];
         }
 
         return cart;

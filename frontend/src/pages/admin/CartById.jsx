@@ -24,15 +24,13 @@ function CartById() {
                 console.log("Res: ", res.data);
                 
                 alert("Cart has been deleted successfully!");
-                navigate("/cart")
+                navigate(`/${import.meta.env.VITE_ADMIN}/cart`)
+                
             }
         } catch (error) {
             console.log("Cart Delete Error: ", error);
 
         }
-
-
-
     }
 
     return (

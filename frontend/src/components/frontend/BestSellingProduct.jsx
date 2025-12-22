@@ -1,0 +1,32 @@
+import React, { useContext } from 'react'
+import { BookContext } from '../../context/School';
+import ProductCard from './ProductCard';
+
+function BestSellingProduct() {
+    const { user, adminLogout, search, setSearch, books, cartItems, setCartItems, addToCart } = useContext(BookContext);
+
+    return (
+        <div className="bg-slate-50 py-12">
+            <div className="max-w-7xl mx-auto px-4">
+                <div className="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 className="text-2xl font-bold text-gray-900">Best Selling Books</h2>
+                        <p className="text-sm text-gray-500 mt-1">Most loved books by our readers</p>
+                    </div>
+
+                    <a href="/best-sellers" className="text-sm font-medium text-blue-600 hover:text-blue-700">View All →</a>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                    {books.length > 0 &&
+                        books.slice(0, 10).map((book) => (
+                            <ProductCard key={book._id} book={book} addToCart={addToCart} cartItems={cartItems} setCartItems={setCartItems} />
+                        ))}
+                </div>
+            </div>
+        </div>
+
+    )
+}
+
+export default BestSellingProduct

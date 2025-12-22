@@ -1,12 +1,11 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useLoaderData } from "react-router-dom";
-import { getPayment } from "../data/payment.js";
-import PaymentTable from "../components/PaymentTable.jsx";
+import ReviewTable from "../../components/admin/ReviewTable.jsx";
+import { getReview1 } from "../../data/review.js";
 
-
-function Payment() {
+function Review() {
     const loader = useLoaderData();
-    const [payments, setPayments] = useState(loader || []);
+    const [reviews, setReviews] = useState(loader || []);
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -14,34 +13,38 @@ function Payment() {
     const [render, setRender] = useState(false);
 
     useEffect(() => {
-        async function fetchPayment() {
-            const data = await getPayment();
-            setPayments(data);
+        async function fetchReview() {
+            const data = await getReview1();
+            setReviews(data);
             setRender(false);
         }
 
         if (render) {
-            fetchPayment();
+            fetchReview();
         }
     }, [render]);
 
-    const filteredPayments = useMemo(() => {
+
+
+    const filteredReviews = useMemo(() => {
         const term = search.toLowerCase();
-        return payments.filter((payment) => payment.orderId.toLowerCase().includes(term)
-            || payment.provider.toLowerCase().includes(term)
-            || payment.amount.toLowerCase().includes(term)
+        return reviews.filter(
+            (b) =>
+                b.title.toLowerCase().includes(term) ||
+                b.body.toLowerCase().includes(term) ||
+                b.userId.toLowerCase().includes(term)
         );
-    }, [payments, search]);
+    }, [reviews, search]);
 
-    const totalPages = Math.max(1, Math.ceil(filteredPayments.length / rowsPerPage));
+    const totalPages = Math.max(1, Math.ceil(filteredReviews.length / rowsPerPage));
 
-    const paginatedPayment = useMemo(() => {
+    const paginatedReviews = useMemo(() => {
         const safePage = Math.min(currentPage, totalPages);
         const start = (safePage - 1) * rowsPerPage;
-        return filteredPayments.slice(start, start + rowsPerPage);
-    }, [filteredPayments, currentPage, rowsPerPage, totalPages]);
+        return filteredReviews.slice(start, start + rowsPerPage);
+    }, [filteredReviews, currentPage, rowsPerPage, totalPages]);
 
-    const allVisibleIds = paginatedPayment.map((b) => b._id || b._id);
+    const allVisibleIds = paginatedReviews.map((b) => b._id || b._id);
     const isAllSelected =
         allVisibleIds.length > 0 &&
         allVisibleIds.every((id) => selectedIds.includes(id));
@@ -74,14 +77,14 @@ function Payment() {
         setCurrentPage((prev) => Math.min(totalPages, prev + 1));
     };
 
-    const startIndex = filteredPayments.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const endIndex = Math.min(currentPage * rowsPerPage, filteredPayments.length);
+    const startIndex = filteredReviews.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const endIndex = Math.min(currentPage * rowsPerPage, filteredReviews.length);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Payment</h2>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Review</h2>
                     {/* <p className="text-sm text-gray-500">Manage all school books and inventory.</p> */}
                 </div>
 
@@ -115,7 +118,7 @@ function Payment() {
 
                 {/* Table */}
                 <div className="overflow-x-auto">
-                    <PaymentTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedPayment={paginatedPayment} selectedIds={selectedIds} toggleSelect={toggleSelect} />
+                    <ReviewTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedReviews={paginatedReviews} selectedIds={selectedIds} toggleSelect={toggleSelect} />
                 </div>
 
                 {/* Pagination footer */}
@@ -133,8 +136,8 @@ function Payment() {
                             <option value={30}>30 rows</option>
                         </select>
                         <span className="hidden sm:inline">
-                            {filteredPayments.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredPayments.length} books`
+                            {filteredReviews.length > 0
+                                ? `Showing ${startIndex}–${endIndex} of ${filteredReviews.length} books`
                                 : "Showing 0 of 0 books"}
                         </span>
                     </div>
@@ -143,20 +146,28 @@ function Payment() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+                                }`}
                         >
                             Prev
                         </button>
                         <span>
                             Page{" "}
-                            <span className="font-semibold text-gray-700">{Math.min(currentPage, totalPages)}</span>{" "}
+                            <span className="font-semibold text-gray-700">
+                                {Math.min(currentPage, totalPages)}
+                            </span>{" "}
                             of{" "}
-                            <span className="font-semibold text-gray-700">{totalPages}</span>
+                            <span className="font-semibold text-gray-700">
+                                {totalPages}
+                            </span>
                         </span>
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                                }`}
                         >
                             Next
                         </button>
@@ -167,4 +178,4 @@ function Payment() {
     );
 }
 
-export default Payment;
+export default Review;

@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import axios from "axios";
-import BookImages from "../components/BookImages";
+import BookImages from "../../components/admin/BookImages";
 
 function EditBook() {
     const [imageMeta, setImageMeta] = useState({
@@ -31,7 +31,6 @@ function EditBook() {
 
     const [images, setImages] = useState([]);
 
-    // ✅ Populate form when loader data arrives
     useEffect(() => {
         if (loadedBook) {
             setForm({
@@ -87,7 +86,8 @@ function EditBook() {
             await axios.patch(`/api/book/${loadedBook._id}`, formData);
 
             alert("Book updated successfully!");
-            navigate("/books");
+            navigate(`/${import.meta.env.VITE_ADMIN}/books`);
+            
         } catch (error) {
             console.error("Edit Book Error:", error);
             alert(error.response?.data?.message || "Failed to update book");
@@ -98,12 +98,8 @@ function EditBook() {
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="mb-4">
-                <h2 className="text-2xl font-semibold text-gray-900">
-                    Edit Book
-                </h2>
-                <p className="text-sm text-gray-500">
-                    Update the book details below.
-                </p>
+                <h2 className="text-2xl font-semibold text-gray-900">Edit Book</h2>
+                <p className="text-sm text-gray-500">Update the book details below.</p>
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white">
@@ -125,15 +121,12 @@ function EditBook() {
                         <Input label="Publisher" name="publisher" value={form.publisher} onChange={handleChange} />
                         <Input label="Stock Quantity" name="stockQty" type="number" value={form.stockQty} onChange={handleChange} />
 
-                        {/* Existing + New Images */}
                         <div className="md:col-span-2">
                             <BookImages
                                 existingImages={loadedBook.images || []}
                                 onImagesChange={setImages}
                                 onMetaChange={setImageMeta}
                             />
-
-
 
                         </div>
 

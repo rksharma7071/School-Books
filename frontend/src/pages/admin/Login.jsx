@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { BookContext } from "../context/School";
+import { BookContext } from "../../context/School";
 
 function Login() {
     const { user, setUser } = useContext(BookContext);
@@ -34,7 +34,7 @@ function Login() {
             localStorage.setItem("token", token);
             localStorage.setItem("user", JSON.stringify(user));
 
-            navigate("/", { replace: true });
+            navigate(`/${import.meta.env.VITE_ADMIN}`, { replace: true });
 
         } catch (error) {
             // console.log("Admin Login Error:", error);

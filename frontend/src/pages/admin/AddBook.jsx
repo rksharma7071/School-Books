@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import ImageGridManager from "../components/ImageGridManager";
+import ImageGridManager from "../../components/admin/ImageGridManager";
 import { useNavigate } from "react-router-dom";
 
 function AddBook() {
@@ -57,9 +57,8 @@ function AddBook() {
                     "Content-Type": "multipart/form-data",
                 },
             });
-            navigate("/books")
-            // console.log("✅ Book created:", res.data);
-
+            navigate(`/${import.meta.env.VITE_ADMIN}/books`)
+            
             setForm({
                 name: "",
                 author: "",

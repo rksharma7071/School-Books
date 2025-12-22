@@ -3,13 +3,13 @@ import { Link } from "react-router-dom";
 
 function Dashboard() {
     const stats = [
-        { title: "Books", value: 128, url: "books", color: "bg-blue-500" },
-        { title: "Users", value: 542, url: "users", color: "bg-indigo-500" },
-        { title: "Orders", value: 76, url: "orders", color: "bg-emerald-500" },
-        { title: "Cart Items", value: 34, url: "cart", color: "bg-cyan-500" },
-        { title: "Discounts", value: 12, url: "discount", color: "bg-violet-500" },
-        { title: "Payments", value: "₹1,24,500", url: "payment", color: "bg-fuchsia-500" },
-        { title: "Reviews", value: 98, url: "review", color: "bg-green-500" },
+        { title: "Books", value: 128, url: "admin/books", color: "bg-blue-500" },
+        { title: "Users", value: 542, url: "admin/users", color: "bg-indigo-500" },
+        { title: "Orders", value: 76, url: "admin/order", color: "bg-emerald-500" },
+        { title: "Cart Items", value: 34, url: "admin/cart", color: "bg-cyan-500" },
+        { title: "Discounts", value: 12, url: "admin/discount", color: "bg-violet-500" },
+        { title: "Payments", value: "₹1,24,500", url: "admin/payment", color: "bg-fuchsia-500" },
+        { title: "Reviews", value: 98, url: "admin/review", color: "bg-green-500" },
     ];
 
     return (

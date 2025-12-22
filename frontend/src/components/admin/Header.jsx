@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { LuUserRound } from "react-icons/lu";
-import { BookContext } from "../context/School";
+import { BookContext } from "../../context/School";
 import { Link, useNavigate } from "react-router-dom";
 
 function Header() {
@@ -45,7 +45,7 @@ function Header() {
 
                 {/* Right: Profile */}
                 <div className="flex items-center gap-3">
-                    <button className="hidden sm:inline-flex items-center rounded-full border border-blue-700 px-3 py-1.5 text-xs font-medium text-blue-100 hover:bg-blue-800/60 transition">View Storefront</button>
+                    <Link to={"/"} className="hidden sm:inline-flex items-center rounded-full border border-blue-700 px-3 py-1.5 text-xs font-medium text-blue-100 hover:bg-blue-800/60 transition">View Storefront</Link>
                     <div className="relative" ref={menuRef}>
                         <button
                             onClick={() => setOpen((prev) => !prev)}

@@ -1,52 +1,64 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import PermissionForm from "../components/PermissionForm";
+import { useLoaderData } from "react-router-dom";
+import PermissionForm from "../../components/admin/PermissionForm";
 
-function AddUser() {
+function EditUser() {
+    const { user: loadedUser, permission: loadedPermission } = useLoaderData();
+
     const [form, setForm] = useState({
         username: "",
         first_name: "",
         last_name: "",
         email: "",
-        password: "",
         role: "customer",
     });
-    const [user, setUser] = useState({
+
+    let [permission, setPermission] = useState({
+        userId: loadedUser._id,
         createUser: false,
+        readUser: false,
         updateUser: false,
         deleteUser: false,
-        readUser: false,
         createBook: false,
+        readBook: false,
         updateBook: false,
         deleteBook: false,
-        readBook: false,
     });
 
     const [error, setError] = useState("");
-    const [usernameTouched, setUsernameTouched] = useState(false);
 
     useEffect(() => {
-        if (form.first_name && form.last_name && !usernameTouched) {
-            const base = `${form.first_name}.${form.last_name}`
-                .toLowerCase()
-                .replace(/\s/g, "");
-
-            const random = Math.floor(100 + Math.random() * 900);
-            setForm((prev) => ({ ...prev, username: `${base}${random}` }));
+        if (loadedUser) {
+            setForm({
+                username: loadedUser.username ?? "",
+                first_name: loadedUser.first_name ?? "",
+                last_name: loadedUser.last_name ?? "",
+                email: loadedUser.email ?? "",
+                role: loadedUser.role ?? "customer",
+            });
         }
-    }, [form.first_name, form.last_name, usernameTouched]);
+    }, [loadedUser]);
+
+    // Populate permissions
+    useEffect(() => {
+        if (loadedPermission) {
+            setPermission({
+                createUser: !!loadedPermission.createUser,
+                readUser: !!loadedPermission.readUser,
+                updateUser: !!loadedPermission.updateUser,
+                deleteUser: !!loadedPermission.deleteUser,
+                createBook: !!loadedPermission.createBook,
+                readBook: !!loadedPermission.readBook,
+                updateBook: !!loadedPermission.updateBook,
+                deleteBook: !!loadedPermission.deleteBook,
+            });
+        }
+    }, [loadedPermission]);
 
     const handleChange = (e) => {
-        const { name, value, type, checked } = e.target;
-
-        if (name === "username") {
-            setUsernameTouched(true);
-        }
-
-        setForm((prev) => ({
-            ...prev,
-            [name]: type === "checkbox" ? checked : value,
-        }));
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
     };
 
     const handleSubmit = async (e) => {
@@ -54,43 +66,17 @@ function AddUser() {
         setError("");
 
         try {
-            // console.log("User:", form);
+            const userId = loadedUser._id || loadedUser.id;
+            console.log({ userId, ...permission });
 
-            const res = await axios.post("/api/auth/signup", form);
-            // console.log("user permission: ", { userId: res.data?.user?.id, user });
-            // const res = "";
-            user.userId = res.data?.user?.id;
-            const payload = {
-                userId: res.data?.user?.id,
-                ...user
-            }
-            const res1 = await axios.post("/api/user/permission", payload);
-            console.log("res1: ", res1);
+            await axios.patch(`/api/user/${userId}`, form);
+            await axios.patch(`/api/user/permission/${userId}`, { userId, ...permission });
 
-            alert("User created successfully!");
-
-            setForm({
-                username: "",
-                first_name: "",
-                last_name: "",
-                email: "",
-                password: "",
-                role: "",
-            });
-            setUser({
-                createUser: false,
-                updateUser: false,
-                deleteUser: false,
-                readUser: false,
-                createBook: false,
-                updateBook: false,
-                deleteBook: false,
-                readBook: false,
-            })
-            setUsernameTouched(false);
+            alert("User and permissions updated successfully!");
         } catch (err) {
-            console.error("Error creating user:", err);
-            setError(err.response?.data?.message || "Failed to create user");
+            console.log("err", err);
+
+            setError(err.message || "Update failed");
         }
     };
 
@@ -99,11 +85,10 @@ function AddUser() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        Add User
+                        Edit User
                     </h2>
                 </div>
             </div>
-
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="overflow-x-auto">
                     <form onSubmit={handleSubmit} className="max-w-5xl mx-auto bg-white p-6 space-y-6">
@@ -115,7 +100,6 @@ function AddUser() {
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">First Name <span className="text-red-500">*</span></label>
                                 <input
@@ -126,7 +110,6 @@ function AddUser() {
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Last Name</label>
                                 <input
@@ -137,7 +120,6 @@ function AddUser() {
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Username <span className="text-red-500">*</span></label>
                                 <input
@@ -147,7 +129,6 @@ function AddUser() {
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
                                 <input
@@ -155,18 +136,6 @@ function AddUser() {
                                     value={form.email}
                                     onChange={handleChange}
                                     type="email"
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
-                                <input
-                                    name="password"
-                                    value={form.password}
-                                    onChange={handleChange}
-                                    type="password"
-                                    required
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
@@ -185,18 +154,20 @@ function AddUser() {
                                 </select>
                             </div>
                         </div>
-                        <PermissionForm user={user} setUser={setUser} />
+
+                        <PermissionForm user={permission} setUser={setPermission} />
+
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
+                            className="w-full bg-blue-600 text-white py-2 rounded-lg"
                         >
-                            Submit
+                            Update User
                         </button>
                     </form>
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
 
-export default AddUser;
+export default EditUser;

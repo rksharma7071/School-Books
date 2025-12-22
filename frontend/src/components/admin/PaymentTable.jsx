@@ -1,5 +1,5 @@
 import React, { useContext } from 'react'
-import { BookContext } from '../context/School';
+import { BookContext } from '../../context/School';
 import { Link } from 'react-router-dom';
 
 function PaymentTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedPayment, selectedIds }) {

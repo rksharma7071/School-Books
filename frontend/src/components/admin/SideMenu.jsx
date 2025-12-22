@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom';
-import { BookContext } from '../context/School';
+import { BookContext } from '../../context/School';
 
 function SideMenu() {
 
@@ -31,7 +31,7 @@ function SideMenu() {
                     {openMenu === "books" && (
                         <div className="mt-2 space-y-1 text-sm">
                             <NavLink
-                                to="/books"
+                                to={`/${import.meta.env.VITE_ADMIN}/books`}
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-10 py-2 transition-all duration-200 ${isActive ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-indigo-100 hover:text-indigo-700"}`}
                             >
                                 {({ isActive }) => (
@@ -43,7 +43,7 @@ function SideMenu() {
                             </NavLink>
                             {role != "student" &&
                                 <NavLink
-                                    to="/add-book"
+                                    to={`/${import.meta.env.VITE_ADMIN}/add-book`}
                                     className={({ isActive }) => `group flex items-center justify-between rounded-lg px-10 py-2 transition-all duration-200 ${isActive ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-indigo-100 hover:text-indigo-700"}`}
                                 >
                                     {({ isActive }) => (
@@ -55,7 +55,7 @@ function SideMenu() {
                                 </NavLink>
                             }
                             <NavLink
-                                to="/categories"
+                                to={`/${import.meta.env.VITE_ADMIN}/categories`}
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-10 py-2 transition-all duration-200 ${isActive ? "bg-indigo-100 text-indigo-700" : "text-gray-600 hover:bg-indigo-100 hover:text-indigo-700"}`}
                             >
                                 {({ isActive }) => (
@@ -87,7 +87,7 @@ function SideMenu() {
                     {openMenu === "users" && (
                         <div className="mt-2 space-y-1 text-sm border-l border-gray-200 ml-5 pl-3 animate-slideDown">
                             <NavLink
-                                to="/users"
+                                to={`/${import.meta.env.VITE_ADMIN}/users`}
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-emerald-700" : "text-gray-600 hover:bg-indigo-100 hover:text-emerald-700"}`}
                             >
                                 {({ isActive }) => (
@@ -102,7 +102,7 @@ function SideMenu() {
                             </NavLink>
                             {role != "student" &&
                                 <NavLink
-                                    to="/add-user"
+                                    to={`/${import.meta.env.VITE_ADMIN}/add-user`}
                                     className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-emerald-700" : "text-gray-600 hover:bg-indigo-100 hover:text-emerald-700"}`}
                                 >
                                     {({ isActive }) => (
@@ -131,7 +131,7 @@ function SideMenu() {
                     {openMenu === "review" && (
                         <div className="mt-2 space-y-1 text-sm border-l border-gray-200 ml-5 pl-3 animate-slideDown">
                             <NavLink
-                                to="/review"
+                                to={`/${import.meta.env.VITE_ADMIN}/review`}
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-cyan-700" : "text-gray-600 hover:bg-indigo-100 hover:text-cyan-700"}`}
                             >
                                 {({ isActive }) => (
@@ -144,26 +144,12 @@ function SideMenu() {
                                     </>
                                 )}
                             </NavLink>
-                            {/* <NavLink
-                                to="/review-status"
-                                className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-cyan-700" : "text-gray-600 hover:bg-indigo-100 hover:text-cyan-700"}`}
-                            >
-                                {({ isActive }) => (
-                                    <>
-                                        <span className="flex items-center gap-2">
-                                            <span className={`h-1.5 w-1.5 rounded-full transition-colors ${isActive ? "bg-cyan-500" : "bg-gray-300 group-hover:bg-cyan-500"}`} />
-                                            Review Status
-                                        </span>
-                                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-indigo-200 text-cyan-700  group-hover:bg-indigo-200">New</span>
-                                    </>
-                                )}
-                            </NavLink> */}
                         </div>
                     )}
                 </div>
 
                 <div>
-                    <NavLink to={'/cart'} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                    <NavLink to={`/${import.meta.env.VITE_ADMIN}/cart`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                         <span className="flex items-center gap-3">
                             <span className="h-6 w-6 rounded bg-violet-50 text-violet-600 flex items-center justify-center text-xs">C</span>
                             Cart
@@ -171,7 +157,7 @@ function SideMenu() {
                     </NavLink>
                 </div>
                 <div>
-                    <NavLink to={'/payment'} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                    <NavLink to={`/${import.meta.env.VITE_ADMIN}/payment`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                         <span className="flex items-center gap-3">
                             <span className="h-6 w-6 rounded bg-violet-50 text-violet-600 flex items-center justify-center text-xs">C</span>
                             Payment
@@ -189,7 +175,7 @@ function SideMenu() {
                     {openMenu === "discount" && (
                         <div className="mt-2 space-y-1 text-sm border-l border-gray-200 ml-5 pl-3 animate-slideDown">
                             <NavLink
-                                to="/discount"
+                                to={`/${import.meta.env.VITE_ADMIN}/discount`}
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-cyan-700" : "text-gray-600 hover:bg-indigo-100 hover:text-cyan-700"}`}
                             >
                                 {({ isActive }) => (
@@ -203,7 +189,7 @@ function SideMenu() {
                                 )}
                             </NavLink>
                             <NavLink
-                                to="/add-discount"
+                                to={`/${import.meta.env.VITE_ADMIN}/add-discount`}
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-cyan-700" : "text-gray-600 hover:bg-indigo-100 hover:text-cyan-700"}`}
                             >
                                 {({ isActive }) => (
@@ -230,7 +216,7 @@ function SideMenu() {
                     {openMenu === "settings" && (
                         <div className="mt-2 space-y-1 text-sm border-l border-gray-200 ml-5 pl-3 animate-slideDown">
                             <NavLink
-                                to="/general"
+                                to={`/${import.meta.env.VITE_ADMIN}/general`}
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-amber-700" : "text-gray-600 hover:bg-indigo-100 hover:text-amber-700"}`}
                             >
                                 {({ isActive }) => (
@@ -244,7 +230,7 @@ function SideMenu() {
                                 )}
                             </NavLink>
                             <NavLink
-                                to="/roles"
+                                to={`/${import.meta.env.VITE_ADMIN}/roles`}
                                 className={({ isActive }) => `group flex items-center justify-between rounded-lg px-3 py-2 transition-all duration-200 ${isActive ? "bg-indigo-50 text-amber-700" : "text-gray-600 hover:bg-indigo-100 hover:text-amber-700"}`}
                             >
                                 {({ isActive }) => (
@@ -260,7 +246,6 @@ function SideMenu() {
                         </div>
                     )}
                 </div>
-
             </nav>
         </aside>
     )

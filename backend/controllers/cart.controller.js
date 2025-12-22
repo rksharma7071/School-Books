@@ -15,41 +15,62 @@ async function createOrUpdateCart(req, res) {
     try {
         const { userId, items = [] } = req.body;
 
-        if (!userId) {
-            return res.status(400).json({ message: "userId is required" });
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ message: "Invalid userId" });
         }
 
-        const existingCart = await Cart.findOne({ userId });
+        if (!Array.isArray(items)) {
+            return res.status(400).json({ message: "Items must be an array" });
+        }
 
-        if (existingCart && items.length === 0) {
+        let cart = await Cart.findOne({ userId });
+
+        if (cart && items.length === 0) {
             await Cart.deleteOne({ userId });
-            return res
-                .status(200)
-                .json({ message: "Cart removed because items are empty" });
+            return res.status(200).json({
+                message: "Cart removed because items are empty",
+            });
         }
 
-        if (existingCart) {
-            existingCart.items = items;
-            await existingCart.save();
-            return res
-                .status(200)
-                .json({
-                    message: "Cart updated successfully",
-                    cart: existingCart,
+        if (!cart) {
+            if (items.length === 0) {
+                return res.status(400).json({
+                    message: "Cannot create an empty cart",
                 });
+            }
+
+            cart = await Cart.create({ userId, items });
+            return res.status(201).json({
+                message: "Cart created successfully",
+                cart,
+            });
         }
 
-        if (items.length > 0) {
-            const cart = await Cart.create({ userId, items });
-            return res
-                .status(201)
-                .json({ message: "Cart created successfully", cart });
+        for (const newItem of items) {
+            const existingItem = cart.items.find(
+                (i) => String(i.bookId) === String(newItem.bookId)
+            );
+
+            if (existingItem) {
+                existingItem.quantity += newItem.quantity || 1;
+            } else {
+                cart.items.push({
+                    bookId: newItem.bookId,
+                    quantity: newItem.quantity || 1,
+                });
+            }
         }
 
-        return res.status(400).json({ message: "Cannot create an empty cart" });
+        await cart.save();
+
+        return res
+            .status(200)
+            .json({ message: "Cart updated successfully", cart });
     } catch (error) {
         console.error("Cart Error:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        return res.status(500).json({
+            message: "Internal server error",
+        });
     }
 }
 

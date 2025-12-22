@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useLoaderData } from "react-router-dom";
-import DiscountTable from "../components/DiscountTable.jsx";
-import { getDiscount } from "../data/discount.js";
+import DiscountTable from "../../components/admin/DiscountTable.jsx";
+import { getDiscount } from "../../data/discount.js";
 
 function Discount() {
   const loader = useLoaderData();

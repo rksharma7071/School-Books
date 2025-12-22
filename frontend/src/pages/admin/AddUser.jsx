@@ -1,64 +1,52 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useLoaderData } from "react-router-dom";
-import PermissionForm from "../components/PermissionForm";
+import PermissionForm from "../../components/admin/PermissionForm";
 
-function EditUser() {
-    const { user: loadedUser, permission: loadedPermission } = useLoaderData();
-
+function AddUser() {
     const [form, setForm] = useState({
         username: "",
         first_name: "",
         last_name: "",
         email: "",
+        password: "",
         role: "customer",
     });
-
-    let [permission, setPermission] = useState({
-        userId: loadedUser._id,
+    const [user, setUser] = useState({
         createUser: false,
-        readUser: false,
         updateUser: false,
         deleteUser: false,
+        readUser: false,
         createBook: false,
-        readBook: false,
         updateBook: false,
         deleteBook: false,
+        readBook: false,
     });
 
     const [error, setError] = useState("");
+    const [usernameTouched, setUsernameTouched] = useState(false);
 
     useEffect(() => {
-        if (loadedUser) {
-            setForm({
-                username: loadedUser.username ?? "",
-                first_name: loadedUser.first_name ?? "",
-                last_name: loadedUser.last_name ?? "",
-                email: loadedUser.email ?? "",
-                role: loadedUser.role ?? "customer",
-            });
-        }
-    }, [loadedUser]);
+        if (form.first_name && form.last_name && !usernameTouched) {
+            const base = `${form.first_name}.${form.last_name}`
+                .toLowerCase()
+                .replace(/\s/g, "");
 
-    // Populate permissions
-    useEffect(() => {
-        if (loadedPermission) {
-            setPermission({
-                createUser: !!loadedPermission.createUser,
-                readUser: !!loadedPermission.readUser,
-                updateUser: !!loadedPermission.updateUser,
-                deleteUser: !!loadedPermission.deleteUser,
-                createBook: !!loadedPermission.createBook,
-                readBook: !!loadedPermission.readBook,
-                updateBook: !!loadedPermission.updateBook,
-                deleteBook: !!loadedPermission.deleteBook,
-            });
+            const random = Math.floor(100 + Math.random() * 900);
+            setForm((prev) => ({ ...prev, username: `${base}${random}` }));
         }
-    }, [loadedPermission]);
+    }, [form.first_name, form.last_name, usernameTouched]);
 
     const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
+        const { name, value, type, checked } = e.target;
+
+        if (name === "username") {
+            setUsernameTouched(true);
+        }
+
+        setForm((prev) => ({
+            ...prev,
+            [name]: type === "checkbox" ? checked : value,
+        }));
     };
 
     const handleSubmit = async (e) => {
@@ -66,17 +54,43 @@ function EditUser() {
         setError("");
 
         try {
-            const userId = loadedUser._id || loadedUser.id;
-            console.log({ userId, ...permission });
+            // console.log("User:", form);
 
-            await axios.patch(`/api/user/${userId}`, form);
-            await axios.patch(`/api/user/permission/${userId}`, { userId, ...permission });
+            const res = await axios.post("/api/auth/signup", form);
+            // console.log("user permission: ", { userId: res.data?.user?.id, user });
+            // const res = "";
+            user.userId = res.data?.user?.id;
+            const payload = {
+                userId: res.data?.user?.id,
+                ...user
+            }
+            const res1 = await axios.post("/api/user/permission", payload);
+            console.log("res1: ", res1);
 
-            alert("User and permissions updated successfully!");
+            alert("User created successfully!");
+
+            setForm({
+                username: "",
+                first_name: "",
+                last_name: "",
+                email: "",
+                password: "",
+                role: "",
+            });
+            setUser({
+                createUser: false,
+                updateUser: false,
+                deleteUser: false,
+                readUser: false,
+                createBook: false,
+                updateBook: false,
+                deleteBook: false,
+                readBook: false,
+            })
+            setUsernameTouched(false);
         } catch (err) {
-            console.log("err", err);
-
-            setError(err.message || "Update failed");
+            console.error("Error creating user:", err);
+            setError(err.response?.data?.message || "Failed to create user");
         }
     };
 
@@ -85,10 +99,11 @@ function EditUser() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        Edit User
+                        Add User
                     </h2>
                 </div>
             </div>
+
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="overflow-x-auto">
                     <form onSubmit={handleSubmit} className="max-w-5xl mx-auto bg-white p-6 space-y-6">
@@ -100,6 +115,7 @@ function EditUser() {
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">First Name <span className="text-red-500">*</span></label>
                                 <input
@@ -110,6 +126,7 @@ function EditUser() {
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Last Name</label>
                                 <input
@@ -120,6 +137,7 @@ function EditUser() {
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Username <span className="text-red-500">*</span></label>
                                 <input
@@ -129,6 +147,7 @@ function EditUser() {
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
                                 <input
@@ -136,6 +155,18 @@ function EditUser() {
                                     value={form.email}
                                     onChange={handleChange}
                                     type="email"
+                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700">Password <span className="text-red-500">*</span></label>
+                                <input
+                                    name="password"
+                                    value={form.password}
+                                    onChange={handleChange}
+                                    type="password"
+                                    required
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
@@ -154,20 +185,18 @@ function EditUser() {
                                 </select>
                             </div>
                         </div>
-
-                        <PermissionForm user={permission} setUser={setPermission} />
-
+                        <PermissionForm user={user} setUser={setUser} />
                         <button
                             type="submit"
-                            className="w-full bg-blue-600 text-white py-2 rounded-lg"
+                            className="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700"
                         >
-                            Update User
+                            Submit
                         </button>
                     </form>
                 </div>
             </div>
-        </div >
+        </div>
     );
 }
 
-export default EditUser;
+export default AddUser;

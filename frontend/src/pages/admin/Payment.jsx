@@ -1,10 +1,12 @@
-import axios from 'axios';
-import React, { useEffect, useMemo, useState } from 'react'
-import UserTable from '../components/UserTable';
+import React, { useState, useMemo, useEffect } from "react";
+import { useLoaderData } from "react-router-dom";
+import { getPayment } from "../../data/payment.js";
+import PaymentTable from "../../components/admin/PaymentTable.jsx";
 
-function User() {
 
-    const [users, setUsers] = useState([]);
+function Payment() {
+    const loader = useLoaderData();
+    const [payments, setPayments] = useState(loader || []);
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -12,46 +14,34 @@ function User() {
     const [render, setRender] = useState(false);
 
     useEffect(() => {
-        const fetchUsers = async () => {
-            try {
-                const res = await axios.get("/api/user");
-                const apiUsers = res.data || [];
-                setUsers(apiUsers);
-            } catch (error) {
-                console.error("Error fetching users:", error.message);
-            }
-        };
+        async function fetchPayment() {
+            const data = await getPayment();
+            setPayments(data);
+            setRender(false);
+        }
 
-        fetchUsers();
-    }, []);
+        if (render) {
+            fetchPayment();
+        }
+    }, [render]);
 
-    // console.log("users: ", users)
-
-    const filteredUsers = useMemo(() => {
+    const filteredPayments = useMemo(() => {
         const term = search.toLowerCase();
-        return users
-            .filter((user) => user.role !== "admin")
-            .filter(
-                (b) =>
-                    b.username?.toLowerCase().includes(term) ||
-                    b.email?.toLowerCase().includes(term) ||
-                    b.first_name?.toLowerCase().includes(term) ||
-                    b.last_name?.toLowerCase().includes(term)
-            );
-    }, [users, search]);
+        return payments.filter((payment) => payment.orderId.toLowerCase().includes(term)
+            || payment.provider.toLowerCase().includes(term)
+            || payment.amount.toLowerCase().includes(term)
+        );
+    }, [payments, search]);
 
+    const totalPages = Math.max(1, Math.ceil(filteredPayments.length / rowsPerPage));
 
-    // 📄 Pagination calculations
-    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / rowsPerPage));
-
-    const paginatedUsers = useMemo(() => {
+    const paginatedPayment = useMemo(() => {
         const safePage = Math.min(currentPage, totalPages);
         const start = (safePage - 1) * rowsPerPage;
-        return filteredUsers.slice(start, start + rowsPerPage);
-    }, [filteredUsers, currentPage, rowsPerPage, totalPages]);
+        return filteredPayments.slice(start, start + rowsPerPage);
+    }, [filteredPayments, currentPage, rowsPerPage, totalPages]);
 
-    // ✅ Selection (checkboxes)
-    const allVisibleIds = paginatedUsers.map((b) => b._id);
+    const allVisibleIds = paginatedPayment.map((b) => b._id || b._id);
     const isAllSelected =
         allVisibleIds.length > 0 &&
         allVisibleIds.every((id) => selectedIds.includes(id));
@@ -84,15 +74,15 @@ function User() {
         setCurrentPage((prev) => Math.min(totalPages, prev + 1));
     };
 
-    const startIndex = filteredUsers.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const endIndex = Math.min(currentPage * rowsPerPage, filteredUsers.length);
+    const startIndex = filteredPayments.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const endIndex = Math.min(currentPage * rowsPerPage, filteredPayments.length);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">User</h2>
-                    <p className="text-sm text-gray-500">Manage all school customers.</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Payment</h2>
+                    {/* <p className="text-sm text-gray-500">Manage all school books and inventory.</p> */}
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto bg-white">
@@ -113,7 +103,7 @@ function User() {
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 {selectedIds.length > 0 && (
                     <div className="px-4 py-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
-                        <span>{selectedIds.length} book(s) selected</span>
+                        <span>{selectedIds.length} Review(s) selected</span>
                         <button
                             className="text-blue-600 hover:underline"
                             onClick={() => setSelectedIds([])}
@@ -125,7 +115,7 @@ function User() {
 
                 {/* Table */}
                 <div className="overflow-x-auto">
-                    <UserTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedUsers={paginatedUsers} selectedIds={selectedIds} toggleSelect={toggleSelect} />
+                    <PaymentTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedPayment={paginatedPayment} selectedIds={selectedIds} toggleSelect={toggleSelect} />
                 </div>
 
                 {/* Pagination footer */}
@@ -143,8 +133,8 @@ function User() {
                             <option value={30}>30 rows</option>
                         </select>
                         <span className="hidden sm:inline">
-                            {filteredUsers.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredUsers.length} books`
+                            {filteredPayments.length > 0
+                                ? `Showing ${startIndex}–${endIndex} of ${filteredPayments.length} books`
                                 : "Showing 0 of 0 books"}
                         </span>
                     </div>
@@ -153,28 +143,20 @@ function User() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             Prev
                         </button>
                         <span>
                             Page{" "}
-                            <span className="font-semibold text-gray-700">
-                                {Math.min(currentPage, totalPages)}
-                            </span>{" "}
+                            <span className="font-semibold text-gray-700">{Math.min(currentPage, totalPages)}</span>{" "}
                             of{" "}
-                            <span className="font-semibold text-gray-700">
-                                {totalPages}
-                            </span>
+                            <span className="font-semibold text-gray-700">{totalPages}</span>
                         </span>
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
-                                }`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             Next
                         </button>
@@ -182,7 +164,7 @@ function User() {
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
-export default User
+export default Payment;

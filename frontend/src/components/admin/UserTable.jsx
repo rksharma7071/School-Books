@@ -2,7 +2,7 @@ import axios from 'axios';
 import { MdDelete } from 'react-icons/md';
 import { RiEdit2Fill } from 'react-icons/ri';
 import { useNavigate } from 'react-router-dom';
-import { BookContext } from '../context/School';
+import { BookContext } from '../../context/School';
 import { useContext } from 'react';
 
 function UserTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedUsers, selectedIds }) {

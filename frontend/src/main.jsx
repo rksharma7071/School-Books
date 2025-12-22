@@ -3,38 +3,56 @@ import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import Book from './pages/Book.jsx'
-import AddBook from './pages/AddBook.jsx'
-import Category from './pages/Category.jsx'
-import General from './pages/General.jsx'
-import User from './pages/User.jsx'
-import Role from './pages/Role.jsx'
-import Dashboard from './pages/Dashboard.jsx'
-import AddUser from './pages/AddUser.jsx'
-import Test from './pages/Test.jsx'
+import Book from './pages/admin/Book.jsx'
+import AddBook from './pages/admin/AddBook.jsx'
+import Category from './pages/admin/Category.jsx'
+import General from './pages/admin/General.jsx'
+import User from './pages/admin/User.jsx'
+import AddUser from './pages/admin/AddUser.jsx'
+import Role from './pages/admin/Role.jsx'
+import Dashboard from './pages/admin/Dashboard.jsx'
 import { BookProvider } from './context/School.jsx'
-import Login from './pages/Login.jsx'
+import Login from './pages/admin/Login.jsx'
 import ProtectedRoute from './routes/ProtectedRoute.jsx'
-import Register from './pages/Register.jsx'
-import EditUser from './pages/EditUser.jsx'
-import EditBook from './pages/EditBook.jsx'
-import Review from './pages/Review.jsx'
-import Cart from './pages/Cart.jsx'
-import CartById from './pages/CartById.jsx'
-import Discount from './pages/Discount.jsx'
-import DiscountById from './pages/DiscountById.jsx'
+import Register from './pages/admin/Register.jsx'
+import EditUser from './pages/admin/EditUser.jsx'
+import EditBook from './pages/admin/EditBook.jsx'
+import Review from './pages/admin/Review.jsx'
+import Cart from './pages/admin/Cart.jsx'
+import CartById from './pages/admin/CartById.jsx'
+import Discount from './pages/admin/Discount.jsx'
+import DiscountById from './pages/admin/DiscountById.jsx'
 import { editUser } from './data/user.js'
 import { getBookById } from './data/book.js'
 import { getCart, getCartById } from './data/cart.js'
 import { getReview1 } from './data/review.js'
 import { getDiscount, getDiscountById } from './data/discount.js'
-import AdddDiscount from './pages/AddDiscount.jsx'
-import AddDiscount from './pages/AddDiscount.jsx'
-import Payment from './pages/Payment.jsx'
-import PaymentById from './pages/PaymentById.jsx'
+import AddDiscount from './pages/admin/AddDiscount.jsx'
+import Payment from './pages/admin/Payment.jsx'
+import PaymentById from './pages/admin/PaymentById.jsx'
 import { getPayment, getPaymentById } from './data/payment.js'
+import Base from './pages/frontend/Base.jsx'
+import Home from './pages/frontend/Home.jsx'
+import Contact from './pages/frontend/Contact.jsx'
+import Order from './pages/admin/Order.jsx'
+import { getOrder, getOrderById } from './data/order.js'
+import OrderById from './pages/admin/OrderById.jsx'
 
 const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <Base />,
+    children: [
+      {
+        path: "",
+        element: <Home />
+      },
+      {
+        path: "contact",
+        element: <Contact />
+      }
+    ]
+  },
   {
     path: "/login",
     element: <Login />
@@ -47,7 +65,7 @@ const router = createBrowserRouter([
     element: <ProtectedRoute />,
     children: [
       {
-        path: "/",
+        path: `/${import.meta.env.VITE_ADMIN}`,
         element: <App />,
         children: [
           {
@@ -113,6 +131,10 @@ const router = createBrowserRouter([
             loader: getDiscount
           },
           {
+            path: "add-discount",
+            element: <AddDiscount />,
+          },
+          {
             path: "discount/:id",
             element: <DiscountById />,
             loader: getDiscountById
@@ -128,9 +150,16 @@ const router = createBrowserRouter([
             loader: getPaymentById
           },
           {
-            path: "add-discount",
-            element: <AddDiscount />,
+            path: "order",
+            element: <Order />,
+            loader: getOrder
           },
+          {
+            path: "order/:id",
+            element: <OrderById />,
+            loader: getOrderById
+          },
+
         ]
       }
     ]

@@ -1,4 +1,3 @@
-// src/components/ImageGridManager.jsx
 import React, { useState, useRef, useEffect } from "react";
 import { IoClose } from "react-icons/io5";
 

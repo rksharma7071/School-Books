@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { BookContext } from '../context/School';
+import { BookContext } from '../../context/School';
 import { MdDelete } from 'react-icons/md';
 import axios from "axios";
 
@@ -42,7 +42,7 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Book Id</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Title</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Body</th>
-                    {role != "student" && <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>}
+                    <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -56,7 +56,8 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
                         return (
                             <tr key={user._id} className="border-t border-gray-100 hover:bg-gray-50">
                                 <td className="px-4 py-3"><input type="checkbox" checked={isSelected} onChange={() => toggleSelect(user._id)} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" /></td>
-                                <td className="px-4 py-3 text-gray-900 font-medium">{() => getUser(user.userId)}
+                                <td className="px-4 py-3 text-gray-900 font-medium">
+                                    {/* {getUser(user.userId)} */}
                                     {user?.user?.username || "Loading..."}
                                 </td>
                                 <td className="px-4 py-3 text-gray-700">
