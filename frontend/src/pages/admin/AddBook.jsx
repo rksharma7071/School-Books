@@ -76,7 +76,6 @@ function AddBook() {
                 isActive: true,
             });
             setImages([]);
-            // alert("Book created successfully!");
         } catch (err) {
             console.error("❌ Error creating book:", err);
             alert(

@@ -1,58 +1,100 @@
-import React from 'react'
+import axios from "axios";
+import React, { useContext, useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Review from "./review";
+import { getReview } from "../../data/review";
+import StatusMessage from "./StatusMessage";
+import { BookContext } from "../../context/School";
 
-function ProductCard({ book, addToCart, cartItems, setCartItems }) {
+function ProductCard({ user, book }) {
+    const { toastConfig, setToastConfig, showToast, cartItems, setCartItems, setShowToast, } = useContext(BookContext);
 
-    const updateCartItem = (bookId, quantity = 1) => {
-        setCartItems((prevItems) => {
-            const existingItem = prevItems.find(
-                (item) => item.bookId === bookId
-            );
 
-            if (existingItem) {
-                return prevItems.map((item) =>
-                    item.bookId === bookId
-                        ? { ...item, quantity: item.quantity + quantity }
-                        : item
-                );
-            }
+    const navigate = useNavigate();
+    const [avgRating, setAvgRating] = useState(null);
+    const [loading, setLoading] = useState(false);
 
-            return [...prevItems, { bookId, quantity }];
+    const handleAddToCart = async () => {
+        if (!user || loading) {
+            navigate('/login')
+            return;
+        }
+        setLoading(true);
+
+        setCartItems(prev => {
+            const item = prev.find(i => i.bookId === book._id);
+            return item
+                ? prev.map(i =>
+                    i.bookId === book._id
+                        ? { ...i, quantity: i.quantity + 1 }
+                        : i
+                )
+                : [...prev, { bookId: book._id, quantity: 1 }];
         });
+
+        try {
+            await axios.post("/api/cart", {
+                userId: user.id,
+                bookId: book._id,
+                quantity: 1
+            });
+            setToastConfig({
+                type: "success",
+                title: "Added to cart",
+                message: "The item has been successfully added to your cart.",
+            });
+        } finally {
+            setLoading(false);
+            setShowToast(true)
+        }
     };
 
-    // const handleAddToCart = async (bookId) => {
-    //     updateCartItem(bookId, 1);
-
-    //     setTimeout(() => {
-    //         addToCart(cartItems);
-    //     }, 0);
-    // };
-
-
+    useEffect(() => {
+        const fetchReview = async () => {
+            try {
+                const res = await getReview();
+                const result = res.review.filter((rev) => rev.bookId == book._id);
+                const avgRating = result.reduce((sum, r) => sum + Number(r.rating || 0), 0) / (result.length || 1);
+                setAvgRating(avgRating);
+            } catch (error) {
+                console.log("Fetch Review Error: ", error);
+            }
+        }
+        fetchReview()
+    }, [])
 
     return (
-        <div
-
-            className="group bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md transition overflow-hidden"
-        >
-            <div className="aspect-square bg-gray-100 overflow-hidden">
+        <div className="group bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
+            <Link to={`products/${book._id}`} className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
                 <img
                     src={book.coverImage}
                     alt={book.name}
-                    className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                    className="h-full w-full object-contain p-4 group-hover:scale-105 transition-transform duration-300"
                 />
-            </div>
 
-            <div className="p-4">
-                <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{book.name}</h3>
-                <p className="text-xs text-gray-500 mt-1">{book.author}</p>
-                <div className="flex items-center justify-between mt-3">
-                    <span className="text-sm font-bold text-gray-900">₹{book.price}</span>
-                    <button onClick={() => updateCartItem(book._id, 1)} className="text-xs px-3 py-1 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition">Add to Cart</button>
+                <span className="absolute top-3 left-3 text-[10px] font-semibold bg-green-600 text-white px-2 py-1 rounded-lg">
+                    Best Seller
+                </span>
+            </Link>
+
+            <div className="p-4 flex flex-col gap-2">
+
+                <Link to={`products/${book._id}`} className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug">{book.name}</Link>
+                <p className="text-xs text-gray-500 line-clamp-1">by {book.author}</p>
+                <Review rating={avgRating} showValue={false} />
+                <div className="mt-3 flex items-center justify-between">
+                    <span className="text-base font-bold text-gray-900">₹{book.price}</span>
+
+                    <button
+                        onClick={handleAddToCart}
+                        className="text-xs font-medium px-4 py-1.5 rounded-lg bg-blue-600 text-white hover:bg-blue-700 active:scale-95 transition"
+                    >
+                        Add to Cart
+                    </button>
                 </div>
             </div>
-        </div >
-    )
+        </div>
+    );
 }
 
-export default ProductCard
+export default ProductCard;

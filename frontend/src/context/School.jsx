@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from "react";
 import { getBook } from "../data/book";
-import { getCartById } from "../data/cart";
+import { getCart, getCartById } from "../data/cart";
 import axios from "axios";
 
 export const BookContext = createContext("");
@@ -10,38 +10,25 @@ export const BookProvider = ({ children }) => {
   const [search, setSearch] = useState("");
   const [books, setBooks] = useState([]);
   const [cartItems, setCartItems] = useState([]);
-
+  const [carts, setCarts] = useState([]);
+  const [orders, setOrders] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [discounts, setDiscounts] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [reviews, setReviews] = useState([]);
+  const [showToast, setShowToast] = useState(false);
+  const [update, setUpdate] = useState(false);
+  const [toastConfig, setToastConfig] = useState({
+    type: "success",
+    title: "",
+    message: "",
+  });
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
   }, []);
-
-  const addToCart = async (cartItems) => {
-    try {
-      const payload = {
-        userId: user.id,
-        items: cartItems,
-      };
-      console.log("payload: ", payload);
-
-      const res = await axios.post("/api/cart", payload);
-
-      setCartItems(res.data.cart.items);
-
-      return res.data;
-    } catch (error) {
-      console.error("Error Add to Cart:", error);
-    }
-  };
-
-  useEffect(() => {
-    if (!user || cartItems.length === 0) return;
-
-    addToCart(cartItems);
-  }, [cartItems]);
-
 
   const adminLogout = () => {
     localStorage.removeItem("token");
@@ -50,23 +37,51 @@ export const BookProvider = ({ children }) => {
   };
 
   useEffect(() => {
+
+  }, [toastConfig, toastConfig])
+  useEffect(() => {
     const fetchBooks = async () => {
       try {
-        const data = await getBook();
-        const cartItems = await getCartById({ params: { id: user.id } });
+        const items = await getCartById({ params: { id: user.id } });
+        setCartItems(items);
 
-        setBooks(data.data);
-        setCartItems(cartItems);
       } catch (err) {
         console.error("Error: ", err.message);
       }
     };
 
     fetchBooks();
-  }, [user]);
+  }, [user, update]);
+
+  useEffect(() => {
+    const fetchBooks = async () => {
+      try {
+        const bookData = await axios.get("/api/book");
+        const cartData = await axios.get("/api/cart");
+        const orderData = await axios.get("/api/order");
+        const userData = await axios.get("/api/user");
+        const discountData = await axios.get("/api/discount");
+        const paymentData = await axios.get("/api/payment");
+        const reviewData = await axios.get("/api/review");
+
+        setBooks(bookData.data.data);
+        setCarts(cartData.data)
+        setOrders(orderData.data)
+        setUsers(userData.data)
+        setDiscounts(discountData.data)
+        setPayments(paymentData.data)
+        setReviews(reviewData.data)
+
+      } catch (err) {
+        console.error("Error: ", err.message);
+      }
+    };
+
+    fetchBooks();
+  }, []);
 
   return (
-    <BookContext.Provider value={{ user, setUser, adminLogout, search, setSearch, books, cartItems, setCartItems, addToCart }}>
+    <BookContext.Provider value={{ toastConfig, update, setUpdate, setToastConfig, showToast, setShowToast, user, setUser, adminLogout, carts, search, setSearch, books, cartItems, setCartItems, orders, users, discounts, payments, reviews }}>
       {children}
     </BookContext.Provider>
   );

@@ -1,6 +1,6 @@
 import { Navigate, Outlet } from "react-router-dom";
 
-const ProtectedRoute = () => {
+const ProtectedLogin = () => {
     const token = localStorage.getItem("token");
     const user = JSON.parse(localStorage.getItem("user"));
 
@@ -8,13 +8,11 @@ const ProtectedRoute = () => {
         return <Navigate to="/login" replace />;
     }
 
-    if (user.role !== "admin") {
-        localStorage.removeItem("token");
-        localStorage.removeItem("user");
-        return <Navigate to="/login" replace />;
+    if (token || user) {
+        return <Navigate to="/" replace />;
     }
 
     return <Outlet />;
 };
 
-export default ProtectedRoute;
+export default ProtectedLogin;

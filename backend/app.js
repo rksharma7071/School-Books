@@ -9,10 +9,12 @@ import cartRouter from "./routes/cart.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import discountRouter from "./routes/discount.route.js";
 import orderRouter from "./routes/order.route.js";
+import cors from "cors";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+app.use(cors());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 

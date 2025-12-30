@@ -16,7 +16,6 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
         try {
             if (confirm("Do you want to delete this Book!")) {
                 const res = await axios.delete(`/api/book/${id}`);
-                // console.log("Delete Book", res.data);
                 alert("Book has been deleted successfully!")
             }
         } catch (error) {
@@ -25,7 +24,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
     };
 
     const editBook = async (id) => {
-        navigate(`/edit-book/${id}`)
+        navigate(`/${import.meta.env.VITE_ADMIN}/edit-book/${id}`)
     }
 
     return (

@@ -32,14 +32,13 @@ function SortableImage({ img, index, onRemove }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative cursor-grab rounded-xl overflow-hidden border border-gray-400 bg-white shadow-sm active:cursor-grabbing"
+      className="group relative cursor-grab rounded-lg overflow-hidden border border-gray-400 bg-white shadow-sm active:cursor-grabbing"
     >
       <img
         src={img.url || img.preview}
         className="h-36 w-full object-contain bg-gray-50"
       />
 
-      {/* Remove Button */}
       <button
         type="button"
         onClick={() => onRemove(img)}
@@ -48,7 +47,6 @@ function SortableImage({ img, index, onRemove }) {
         ✕
       </button>
 
-      {/* Position */}
       <span className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-0.5 rounded-full">
         #{index + 1}
       </span>
@@ -126,7 +124,6 @@ function BookImages({ existingImages, onImagesChange, onMetaChange }) {
 
   return (
     <div>
-      {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <label className="text-sm font-semibold text-gray-700">
           Book Images
@@ -136,7 +133,6 @@ function BookImages({ existingImages, onImagesChange, onMetaChange }) {
         </span>
       </div>
 
-      {/* Upload Area */}
       <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">
         <input
           type="file"
@@ -150,7 +146,6 @@ function BookImages({ existingImages, onImagesChange, onMetaChange }) {
         <p className="text-xs text-gray-400">PNG, JPG</p>
       </label>
 
-      {/* Drag Grid */}
       <DndContext
         sensors={sensors}
         collisionDetection={closestCenter}

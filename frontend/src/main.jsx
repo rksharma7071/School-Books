@@ -1,4 +1,3 @@
-import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.jsx'
@@ -19,6 +18,7 @@ import EditUser from './pages/admin/EditUser.jsx'
 import EditBook from './pages/admin/EditBook.jsx'
 import Review from './pages/admin/Review.jsx'
 import Cart from './pages/admin/Cart.jsx'
+import FCart from './pages/frontend/Cart.jsx'
 import CartById from './pages/admin/CartById.jsx'
 import Discount from './pages/admin/Discount.jsx'
 import DiscountById from './pages/admin/DiscountById.jsx'
@@ -37,6 +37,7 @@ import Contact from './pages/frontend/Contact.jsx'
 import Order from './pages/admin/Order.jsx'
 import { getOrder, getOrderById } from './data/order.js'
 import OrderById from './pages/admin/OrderById.jsx'
+import BookById from './pages/frontend/BookById.jsx'
 
 const router = createBrowserRouter([
   {
@@ -46,6 +47,15 @@ const router = createBrowserRouter([
       {
         path: "",
         element: <Home />
+      },
+      {
+        path: "cart",
+        element: <FCart />
+      },
+      {
+        path: "products/:id",
+        element: <BookById />,
+        loader: getBookById
       },
       {
         path: "contact",
@@ -166,10 +176,9 @@ const router = createBrowserRouter([
   }
 ]);
 
+
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <BookProvider>
-      <RouterProvider router={router}></RouterProvider>
-    </BookProvider>
-  </StrictMode>,
+  <BookProvider>
+    <RouterProvider router={router}></RouterProvider>
+  </BookProvider>
 )

@@ -2,11 +2,13 @@ import React, { useContext, useEffect, useState } from 'react'
 import { BookContext } from '../../context/School';
 import { MdDelete } from 'react-icons/md';
 import axios from "axios";
+import Review from '../frontend/Review';
 
 function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggleSelect, paginatedReviews, selectedIds }) {
     const { user } = useContext(BookContext);
     const role = user?.role;
-
+    console.log("paginatedReviews: ",paginatedReviews);
+    
 
     const publishReview = async (id) => {
         if (window.confirm("Do you want to update this Review?")) {
@@ -57,8 +59,8 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
                             <tr key={user._id} className="border-t border-gray-100 hover:bg-gray-50">
                                 <td className="px-4 py-3"><input type="checkbox" checked={isSelected} onChange={() => toggleSelect(user._id)} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" /></td>
                                 <td className="px-4 py-3 text-gray-900 font-medium">
-                                    {/* {getUser(user.userId)} */}
                                     {user?.user?.username || "Loading..."}
+                                    <Review rating={user.rating} />
                                 </td>
                                 <td className="px-4 py-3 text-gray-700">
                                     {user?.book?.name || "Loading..."}

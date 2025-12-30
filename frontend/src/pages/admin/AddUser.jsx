@@ -54,11 +54,7 @@ function AddUser() {
         setError("");
 
         try {
-            // console.log("User:", form);
-
             const res = await axios.post("/api/auth/signup", form);
-            // console.log("user permission: ", { userId: res.data?.user?.id, user });
-            // const res = "";
             user.userId = res.data?.user?.id;
             const payload = {
                 userId: res.data?.user?.id,

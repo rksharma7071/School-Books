@@ -4,7 +4,7 @@ import BookTable from "../../components/admin/BookTable";
 import { Link } from "react-router-dom";
 
 function Book() {
-    const [books, setBooks] = useState([]); // start empty, fill from API
+    const [books, setBooks] = useState([]);
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -45,7 +45,6 @@ function Book() {
         );
     }, [books, search]);
 
-    // 📄 Pagination calculations
     const totalPages = Math.max(1, Math.ceil(filteredBooks.length / rowsPerPage));
 
     const paginatedBooks = useMemo(() => {
@@ -54,7 +53,6 @@ function Book() {
         return filteredBooks.slice(start, start + rowsPerPage);
     }, [filteredBooks, currentPage, rowsPerPage, totalPages]);
 
-    // ✅ Selection (checkboxes)
     const allVisibleIds = paginatedBooks.map((b) => b.id);
     const isAllSelected =
         allVisibleIds.length > 0 &&

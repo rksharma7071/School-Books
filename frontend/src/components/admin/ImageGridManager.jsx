@@ -7,7 +7,6 @@ function ImageGridManager({ onImagesChange }) {
   const [dragIndex, setDragIndex] = useState(null);
   console.log("files: ", files);
 
-  // Generate preview URLs from File[]
   const [previews, setPreviews] = useState([]);
 
   useEffect(() => {
@@ -19,10 +18,9 @@ function ImageGridManager({ onImagesChange }) {
     };
   }, [files]);
 
-  // Inform parent whenever files change
   useEffect(() => {
     if (onImagesChange) {
-      onImagesChange(files); // File[]
+      onImagesChange(files);
     }
   }, [files, onImagesChange]);
 
@@ -99,7 +97,6 @@ function ImageGridManager({ onImagesChange }) {
           </div>
         ))}
 
-        {/* Add image box */}
         <button
           type="button"
           onClick={handleAddClick}
@@ -110,7 +107,6 @@ function ImageGridManager({ onImagesChange }) {
         </button>
       </div>
 
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"

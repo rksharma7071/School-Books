@@ -1,4 +1,3 @@
-import React from 'react'
 import BestSellingProduct from '../../components/frontend/BestSellingProduct'
 
 function Home() {

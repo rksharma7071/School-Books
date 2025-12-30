@@ -1,6 +1,6 @@
 import axios from "axios";
-import { useContext, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useEffect, useState } from "react";
+import { Navigate, useNavigate } from "react-router-dom";
 import { BookContext } from "../../context/School";
 
 function Login() {
@@ -24,20 +24,18 @@ function Login() {
             const res = await axios.post("/api/auth/login", form);
 
             const { token, user } = res.data;
-            // console.log({ token, user });
 
-            if (user.role !== "admin" && user.role !== "student") {
-                setError("Access denied. Admin only.");
-                return;
-            }
             setUser(user);
             localStorage.setItem("token", token);
             localStorage.setItem("user", JSON.stringify(user));
 
-            navigate(`/${import.meta.env.VITE_ADMIN}`, { replace: true });
+            if (user.role == "admin") {
+                navigate(`/${import.meta.env.VITE_ADMIN}`, { replace: true });
+            } else {
+                navigate(`/`, { replace: true });
+            }
 
         } catch (error) {
-            // console.log("Admin Login Error:", error);
             setError(error.response?.data?.message || "Invalid email or password");
 
         } finally {
@@ -55,6 +53,14 @@ function Login() {
 
         setForm((prev) => ({ ...prev, [name]: value }));
     };
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (token || user) {
+            navigate("/")
+        }
+    }, [])
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600">

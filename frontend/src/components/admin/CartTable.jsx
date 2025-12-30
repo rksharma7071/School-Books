@@ -45,64 +45,6 @@ function CartTable({ paginatedCarts }) {
                                 </p>
                             </div>
                         </div>
-
-                        {/* <div className="divide-y">
-                            {cart.items.map((item) => (
-                                <div
-                                    key={item._id}
-                                    className="flex gap-4 px-5 py-4"
-                                >
-                                    <img
-                                        src={item.book.coverImage}
-                                        alt={item.book.name}
-                                        className="w-16 h-20 object-cover rounded-md border border-gray-200"
-                                    />
-
-                                    <div className="flex-1">
-                                        <h4 className="text-sm font-semibold text-gray-900">
-                                            {item.book.name}
-                                        </h4>
-
-                                        <p className="text-xs text-gray-500">
-                                            {item.book.subject} • Class{" "}
-                                            {item.book.classLevel}
-                                        </p>
-
-                                        <div className="mt-1 flex items-center gap-3 text-xs text-gray-600">
-                                            <span>Qty: {item.quantity}</span>
-                                            <span>
-                                                ₹{item.book.price} each
-                                            </span>
-                                        </div>
-                                    </div>
-
-                                    <div className="text-right">
-                                        <p className="text-sm font-semibold">
-                                            ₹
-                                            {item.quantity *
-                                                item.book.price}
-                                        </p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div> */}
-
-                        {/* <div className="flex items-center justify-between px-5 py-3 border-t border-gray-200 bg-gray-50">
-                            <p className="text-xs text-gray-500">
-                                Created at{" "}
-                                {new Date(
-                                    cart.createdAt
-                                ).toLocaleString()}
-                            </p>
-
-                            <button
-                                onClick={() => onDelete(cart._id)}
-                                className="inline-flex items-center gap-1.5 text-sm text-red-600 hover:text-red-700"
-                            >
-                                <MdDelete />
-                                Delete Cart
-                            </button>
-                        </div> */}
                     </Link>
                 );
             })}

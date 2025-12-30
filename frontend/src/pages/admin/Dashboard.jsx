@@ -1,15 +1,19 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Link } from "react-router-dom";
+import { BookContext } from "../../context/School";
 
 function Dashboard() {
+    const { books, carts, orders, users, discounts, payments, reviews } = useContext(BookContext);
+    // console.log(payments);
+
     const stats = [
-        { title: "Books", value: 128, url: "admin/books", color: "bg-blue-500" },
-        { title: "Users", value: 542, url: "admin/users", color: "bg-indigo-500" },
-        { title: "Orders", value: 76, url: "admin/order", color: "bg-emerald-500" },
-        { title: "Cart Items", value: 34, url: "admin/cart", color: "bg-cyan-500" },
-        { title: "Discounts", value: 12, url: "admin/discount", color: "bg-violet-500" },
-        { title: "Payments", value: "₹1,24,500", url: "admin/payment", color: "bg-fuchsia-500" },
-        { title: "Reviews", value: 98, url: "admin/review", color: "bg-green-500" },
+        { title: "Books", value: books.length, url: `${import.meta.env.VITE_ADMIN}/books`, color: "bg-blue-500" },
+        { title: "Users", value: users.length, url: `${import.meta.env.VITE_ADMIN}/users`, color: "bg-indigo-500" },
+        { title: "Orders", value: orders.length, url: `${import.meta.env.VITE_ADMIN}/order`, color: "bg-emerald-500" },
+        { title: "Cart Items", value: carts.length, url: `${import.meta.env.VITE_ADMIN}/cart`, color: "bg-cyan-500" },
+        { title: "Discounts", value: discounts.length, url: `${import.meta.env.VITE_ADMIN}/discount`, color: "bg-violet-500" },
+        { title: "Payments", value: "₹1,24,500", url: `${import.meta.env.VITE_ADMIN}/payment`, color: "bg-fuchsia-500" },
+        { title: "Reviews", value: reviews.totalReview, url: `${import.meta.env.VITE_ADMIN}/review`, color: "bg-green-500" },
     ];
 
     return (
@@ -23,7 +27,7 @@ function Dashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                 {stats.map((item, index) => (
                     <Link
-                    to={`/${item.url}`}
+                        to={`/${item.url}`}
                         key={index}
                         className="bg-gray-100 rounded-xl shadow p-5 flex items-center justify-between"
                     >

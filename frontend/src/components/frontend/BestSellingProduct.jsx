@@ -3,7 +3,7 @@ import { BookContext } from '../../context/School';
 import ProductCard from './ProductCard';
 
 function BestSellingProduct() {
-    const { user, adminLogout, search, setSearch, books, cartItems, setCartItems, addToCart } = useContext(BookContext);
+    const { user, adminLogout, search, setSearch, books, cartItems, setCartItems } = useContext(BookContext);
 
     return (
         <div className="bg-slate-50 py-12">
@@ -19,9 +19,12 @@ function BestSellingProduct() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
                     {books.length > 0 &&
-                        books.slice(0, 10).map((book) => (
-                            <ProductCard key={book._id} book={book} addToCart={addToCart} cartItems={cartItems} setCartItems={setCartItems} />
-                        ))}
+                        books
+                            .filter(book => book.isActive === true)
+                            .slice(0, 10)
+                            .map((book) => (
+                                <ProductCard key={book._id} book={book} user={user} cartItems={cartItems} setCartItems={setCartItems} />
+                            ))}
                 </div>
             </div>
         </div>

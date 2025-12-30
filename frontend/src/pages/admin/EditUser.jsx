@@ -40,7 +40,6 @@ function EditUser() {
         }
     }, [loadedUser]);
 
-    // Populate permissions
     useEffect(() => {
         if (loadedPermission) {
             setPermission({

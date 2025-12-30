@@ -76,7 +76,7 @@ function Header() {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between gap-6">
 
                 <Link to="/" className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-blue-700 flex items-center justify-center text-white font-semibold">
+                    <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center text-blue-950 font-semibold">
                         SB
                     </div>
                     <div>
@@ -127,12 +127,8 @@ function Header() {
                                 onClick={() => setOpen((prev) => !prev)}
                                 className="flex items-center gap-2"
                             >
-                                <span className="hidden md:inline text-sm text-blue-100 font-medium">
-                                    {user?.first_name}
-                                </span>
-                                <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">
-                                    {user?.first_name?.[0]?.toUpperCase()}
-                                </div>
+                                <span className="hidden md:inline text-sm text-blue-100 font-medium">{user?.first_name}</span>
+                                <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">{user?.first_name?.[0]?.toUpperCase()}</div>
                             </button>
 
                             {open && (
@@ -140,12 +136,8 @@ function Header() {
 
                                     {/* User Info */}
                                     <div className="px-5 py-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-gray-300">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">
-                                            {user?.username?.toUpperCase()}
-                                        </p>
-                                        <p className="text-xs text-gray-500 truncate mt-0.5">
-                                            {user?.email}
-                                        </p>
+                                        <p className="text-sm font-semibold text-gray-900 truncate">{user?.username?.toUpperCase()}</p>
+                                        <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
                                     </div>
 
                                     {/* Menu */}

@@ -13,7 +13,6 @@ function UserTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedUser
         try {
             if (window.confirm("Do you want to delete this User?")) {
                 const res = await axios.delete(`/api/user/${id}`);
-                // console.log("Delete User", res.data);
                 alert("User has been deleted successfully!")
             }
         } catch (error) {

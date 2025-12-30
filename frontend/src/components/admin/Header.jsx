@@ -25,7 +25,6 @@ function Header() {
         <header className="w-full bg-blue-950 border-b border-blue-900/60 shadow-sm">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
 
-                {/* Left: Logo / Brand */}
                 <div className="flex items-center gap-2">
                     <div className="h-9 w-9 rounded-lg bg-blue-700 flex items-center justify-center text-white font-semibold">SB</div>
                     <div>
@@ -34,16 +33,6 @@ function Header() {
                     </div>
                 </div>
 
-                {/* Middle: Search */}
-                {/* <div className="w-full md:flex-1 md:flex md:justify-center">
-                    <input
-                        type="text"
-                        placeholder="Search..."
-                        className="w-full md:w-1/2 border border-gray-300 text-white rounded-lg px-4 py-2 text-sm sm:text-base focus:outline-none focus:ring-1 focus:ring-white"
-                    />
-                </div> */}
-
-                {/* Right: Profile */}
                 <div className="flex items-center gap-3">
                     <Link to={"/"} className="hidden sm:inline-flex items-center rounded-full border border-blue-700 px-3 py-1.5 text-xs font-medium text-blue-100 hover:bg-blue-800/60 transition">View Storefront</Link>
                     <div className="relative" ref={menuRef}>
@@ -52,7 +41,6 @@ function Header() {
                             className="flex items-center gap-2 cursor-pointer"
                         >
                             <span className="hidden md:inline text-sm text-blue-100 font-medium">{user && user.first_name}</span>
-                            {/* <LuUserRound className="size-8 rounded-full border border-gray-300 p-1 text-white" /> */}
                             <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">
                                 {user && user.first_name[0].toUpperCase()}
                             </div>
@@ -60,14 +48,11 @@ function Header() {
 
                         {open && (
                             <div className="absolute right-0 mt-3 w-56 bg-white shadow-lg border border-gray-200 rounded-xl z-50 animate-fadeIn overflow-hidden">
-                                {/* Top user info */}
                                 <div className="px-4 py-3 bg-slate-50 border-b border-gray-100">
-                                    {/* <p className="text-xs text-gray-500">Signed in as</p> */}
                                     <p className="text-sm font-semibold text-gray-900">{user && user.username.toUpperCase()}</p>
                                     <p className="text-xs text-gray-500 truncate">{user && user.email}</p>
                                 </div>
 
-                                {/* Menu items */}
                                 <div className="py-1">
                                     <Link
                                         href="/profile"
@@ -80,12 +65,10 @@ function Header() {
                                     </Link>
                                 </div>
 
-                                {/* Footer / logout */}
                                 <div className="border-t border-gray-100">
                                     <button
                                         type="button"
                                         className="w-full flex items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
-                                        // onClick={() => (window.location.href = "/logout")}
                                         onClick={() => logout()}
                                     >Logout</button>
                                 </div>

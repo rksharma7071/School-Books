@@ -14,9 +14,6 @@ function CartById() {
     const onDelete = async (userId) => {
         try {
             if (window.confirm("Do you want to delete this Review?")) {
-                // await axios.delete(`/api/review/${id}`);
-                // setRender(true);
-                // alert("Review has been deleted successfully!");
                 const res = await axios.post("/api/cart", {
                     userId: userId,
                     items: []

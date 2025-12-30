@@ -74,18 +74,6 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
                 </td>
                 <td className="px-4 py-3 w-30 text-right">
                   <div className="flex items-center justify-end gap-3">
-                    {/* {discount.active == true &&
-                      <button
-                        onClick={() => publishReview(user._id)}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      >Publish</button>
-                    }
-                    {discount.active == false &&
-                      <button
-                        onClick={() => unpublishReview(user._id)}
-                        className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-                      >Unpublish</button>
-                    } */}
                     <button
                       onClick={() => deleteDiscount(discount._id)}
                       className="inline-flex items-center justify-center rounded-md p-1.5 text-red-600 transition hover:bg-red-50 hover:text-red-700 focus:outline-none focus:ring-2 focus:ring-red-400"

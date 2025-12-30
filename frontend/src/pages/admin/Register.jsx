@@ -16,7 +16,6 @@ function Register() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    // ✅ Auto-generate username when name changes
     useEffect(() => {
         if (form.first_name && form.last_name) {
             const username = generateUsername(form.first_name, form.last_name);
@@ -27,13 +26,12 @@ function Register() {
         }
     }, [form.first_name, form.last_name]);
 
-    // ✅ Generate unique username
     function generateUsername(first_name, last_name) {
         const base = `${first_name}.${last_name}`
             .toLowerCase()
             .replace(/\s/g, "");
 
-        const random = Math.floor(100 + Math.random() * 900); // 3 digit random
+        const random = Math.floor(100 + Math.random() * 900);
         return `${base}${random}`;
     }
 
@@ -41,13 +39,11 @@ function Register() {
         try {
             setLoading(true);
             setError("");
-            // console.log("Submitting:", form);
 
             await axios.post("/api/auth/signup", form);
 
             navigate("/login", { replace: true });
         } catch (error) {
-            // console.log("Admin Register Error:", error);
             setError(
                 error.response?.data?.message || "Registration failed"
             );
@@ -65,6 +61,15 @@ function Register() {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));
     };
+
+    useEffect(() => {
+        const token = localStorage.getItem("token");
+        const user = JSON.parse(localStorage.getItem("user"));
+
+        if (token || user) {
+            navigate("/")
+        }
+    }, [])
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-indigo-600 via-blue-600 to-purple-600">

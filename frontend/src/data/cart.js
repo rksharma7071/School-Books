@@ -20,7 +20,7 @@ export const getCart = async () => {
 
                 return {
                     ...item,
-                    book, // attach full book object
+                    book,
                 };
             });
 
@@ -43,14 +43,13 @@ export const getCartById = async ({ params }) => {
         const id = params.id;
         const carts = await getCart();
 
-        const cart = carts.find((cart) => cart._id === id);
+        const cart = carts.find((cart) => cart.userId === id);
 
         if (!cart) {
-            // throw { message: "Cart not found" };
             return [];
         }
 
-        return cart;
+        return cart.items;
     } catch (error) {
         console.error("Get Cart By Id Error:", error);
         throw (

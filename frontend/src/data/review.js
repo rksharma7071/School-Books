@@ -34,7 +34,6 @@ export const getReview1 = async () => {
                 user,
             };
         });
-        // console.log("updatedReviews: ",updatedReviews);
         
         return updatedReviews;
     } catch (error) {
