@@ -28,8 +28,8 @@ function Register() {
 
     function generateUsername(first_name, last_name) {
         const base = `${first_name}.${last_name}`
-            .toLowerCase()
-            .replace(/\s/g, "");
+            ?.toLowerCase()
+            ?.replace(/\s/g, "");
 
         const random = Math.floor(100 + Math.random() * 900);
         return `${base}${random}`;

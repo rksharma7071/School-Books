@@ -149,6 +149,14 @@ function SideMenu() {
                 </div>
 
                 <div>
+                    <NavLink to={`/${import.meta.env.VITE_ADMIN}/order`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                        <span className="flex items-center gap-3">
+                            <span className="h-6 w-6 rounded bg-violet-50 text-red-600 flex items-center justify-center text-xs">C</span>
+                            Order
+                        </span>
+                    </NavLink>
+                </div>
+                <div>
                     <NavLink to={`/${import.meta.env.VITE_ADMIN}/cart`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                         <span className="flex items-center gap-3">
                             <span className="h-6 w-6 rounded bg-violet-50 text-violet-600 flex items-center justify-center text-xs">C</span>

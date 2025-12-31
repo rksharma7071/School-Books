@@ -38,6 +38,7 @@ import Order from './pages/admin/Order.jsx'
 import { getOrder, getOrderById } from './data/order.js'
 import OrderById from './pages/admin/OrderById.jsx'
 import BookById from './pages/frontend/BookById.jsx'
+import Checkout from './pages/frontend/Checkout.jsx'
 
 const router = createBrowserRouter([
   {
@@ -60,7 +61,11 @@ const router = createBrowserRouter([
       {
         path: "contact",
         element: <Contact />
-      }
+      },
+      {
+        path: "checkout",
+        element: <Checkout />
+      },
     ]
   },
   {

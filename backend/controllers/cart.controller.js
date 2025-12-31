@@ -174,6 +174,32 @@ async function deleteCart(req, res) {
     }
 }
 
+export const clearCart = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ message: "Invalid user ID" });
+        }
+
+        const cart = await Cart.findOne({ userId });
+        if (!cart) {
+            return res.status(404).json({ message: "Cart not found" });
+        }
+
+        cart.items = [];
+        await cart.save();
+
+        return res.json({
+            success: true,
+            message: "Cart cleared successfully",
+        });
+    } catch (error) {
+        console.error("Clear cart error:", error);
+        res.status(500).json({ message: "Failed to clear cart" });
+    }
+};
+
 export {
     getAllCart,
     getCartByUserId,

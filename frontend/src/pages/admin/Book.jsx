@@ -39,9 +39,9 @@ function Book() {
         const term = search.toLowerCase();
         return books.filter(
             (b) =>
-                b.title.toLowerCase().includes(term) ||
-                b.author.toLowerCase().includes(term) ||
-                b.category.toLowerCase().includes(term)
+                b.title?.toLowerCase().includes(term) ||
+                b.author?.toLowerCase().includes(term) ||
+                b.category?.toLowerCase().includes(term)
         );
     }, [books, search]);
 

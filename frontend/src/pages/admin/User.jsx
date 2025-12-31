@@ -26,7 +26,7 @@ function User() {
     }, []);
 
     const filteredUsers = useMemo(() => {
-        const term = search.toLowerCase();
+        const term = search?.toLowerCase();
         return users
             .filter((user) => user.role !== "admin")
             .filter(

@@ -26,10 +26,10 @@ function Payment() {
     }, [render]);
 
     const filteredPayments = useMemo(() => {
-        const term = search.toLowerCase();
-        return payments.filter((payment) => payment.orderId.toLowerCase().includes(term)
-            || payment.provider.toLowerCase().includes(term)
-            || payment.amount.toLowerCase().includes(term)
+        const term = search?.toLowerCase();
+        return payments.filter((payment) => payment.orderId?.toLowerCase().includes(term)
+            || payment.provider?.toLowerCase().includes(term)
+            || payment.amount?.toLowerCase().includes(term)
         );
     }, [payments, search]);
 
@@ -76,6 +76,7 @@ function Payment() {
 
     const startIndex = filteredPayments.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
     const endIndex = Math.min(currentPage * rowsPerPage, filteredPayments.length);
+    console.log("paginatedPayment",paginatedPayment);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">

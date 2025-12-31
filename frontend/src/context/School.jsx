@@ -80,6 +80,7 @@ export const BookProvider = ({ children }) => {
     fetchBooks();
   }, []);
 
+  
   return (
     <BookContext.Provider value={{ toastConfig, update, setUpdate, setToastConfig, showToast, setShowToast, user, setUser, adminLogout, carts, search, setSearch, books, cartItems, setCartItems, orders, users, discounts, payments, reviews }}>
       {children}

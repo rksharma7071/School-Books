@@ -25,8 +25,8 @@ function Discount() {
   }, [render]);
 
   const filteredDiscounts = useMemo(() => {
-    const term = search.toLowerCase();
-    return discounts.filter((discount) => discount.discount_code.toLowerCase().includes(term));
+    const term = search?.toLowerCase();
+    return discounts.filter((discount) => discount.discount_code?.toLowerCase().includes(term));
   }, [discounts, search]);
 
   const totalPages = Math.max(1, Math.ceil(filteredDiscounts.length / rowsPerPage));

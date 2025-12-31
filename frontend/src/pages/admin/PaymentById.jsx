@@ -41,7 +41,7 @@ function PaymentById() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-                <div className="border rounded-xl p-4 bg-white space-y-2">
+                <div className="border border-gray-300 rounded-xl p-4 bg-white space-y-2">
                     <h3 className="font-semibold">Payment Info</h3>
                     <p className="text-sm"><span className="text-gray-500">Provider:</span>{" "}{providerLabel[payment.provider]}</p>
                     <p className="text-sm"><span className="text-gray-500">Transaction ID:</span>{" "}<span className="font-medium">{payment.transactionId}</span></p>
@@ -49,7 +49,7 @@ function PaymentById() {
                     <p className="text-sm"><span className="text-gray-500">Created At:</span>{" "}{new Date(payment.createdAt).toLocaleString()}</p>
                 </div>
 
-                <div className="border rounded-xl p-4 bg-white space-y-2">
+                <div className="border border-gray-300 rounded-xl p-4 bg-white space-y-2">
                     <h3 className="font-semibold">Order Info</h3>
                     <p className="text-sm">
                         <span className="text-gray-500">Order ID:</span>{" "}{payment.orderId}</p>
@@ -60,7 +60,7 @@ function PaymentById() {
                 </div>
             </div>
 
-            <div className="border rounded-xl bg-white p-6 text-center">
+            <div className="border border-gray-300 rounded-xl bg-white p-6 text-center">
                 <p className="text-gray-500 text-sm">Total Paid</p>
                 <p className="text-3xl font-bold text-gray-900">{payment.currency} {payment.amount}</p>
             </div>

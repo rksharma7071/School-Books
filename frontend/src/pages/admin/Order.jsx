@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useLoaderData } from "react-router-dom";
+import { Link, useLoaderData } from "react-router-dom";
 import { getOrder } from "../../data/order.js";
 import OrderTable from "../../components/admin/OrderTable.jsx";
 
@@ -7,14 +7,14 @@ import OrderTable from "../../components/admin/OrderTable.jsx";
 
 function Order() {
     const loader = useLoaderData();
-    console.log("loader: ",loader);
-    
+
     const [orders, setOrders] = useState(loader || []);
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [render, setRender] = useState(false);
+
 
     useEffect(() => {
         async function fetchOrder() {
@@ -29,12 +29,17 @@ function Order() {
     }, [render]);
 
     const filteredOrders = useMemo(() => {
+        if (!search) return orders;
+
         const term = search.toLowerCase();
-        return orders.filter((order) => order.orderId.toLowerCase().includes(term)
-            || order.provider.toLowerCase().includes(term)
-            || order.amount.toLowerCase().includes(term)
+
+        return orders.filter((order) =>
+            order.orderNumber?.toLowerCase().includes(term) ||
+            order.status?.toLowerCase().includes(term) ||
+            String(order.total).includes(term)
         );
     }, [orders, search]);
+    // console.log("filteredOrders", filteredOrders);
 
     const totalPages = Math.max(1, Math.ceil(filteredOrders.length / rowsPerPage));
 

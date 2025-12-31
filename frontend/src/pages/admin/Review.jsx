@@ -27,12 +27,12 @@ function Review() {
 
 
     const filteredReviews = useMemo(() => {
-        const term = search.toLowerCase();
+        const term = search?.toLowerCase();
         return reviews.filter(
             (b) =>
-                b.title.toLowerCase().includes(term) ||
-                b.body.toLowerCase().includes(term) ||
-                b.userId.toLowerCase().includes(term)
+                b.title?.toLowerCase().includes(term) ||
+                b.body?.toLowerCase().includes(term) ||
+                b.userId?.toLowerCase().includes(term)
         );
     }, [reviews, search]);
 

@@ -2,9 +2,11 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { BookContext } from "../../context/School";
 import CartItem from "../../components/frontend/CartItem";
+import { useNavigate } from "react-router-dom";
 
 function FCart() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast, update, setUpdate } = useContext(BookContext);
+    const navigate = useNavigate();
 
     const { totalItems, totalAmount } = useMemo(() => {
         return cartItems.reduce(
@@ -106,9 +108,15 @@ function FCart() {
             setShowToast(true);
         }
     };
+    
     useEffect(() => {
         setUpdate(prev => !prev);
     }, []);
+
+    const handleCheckout = () => {
+        navigate('/checkout')
+    }
+
     if (cartItems.length === 0) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
@@ -126,7 +134,7 @@ function FCart() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-4">
                         {cartItems.map((item) => (
-                            <CartItem key={item._id} item={item} updateQuantityByInput={updateQuantityByInput} updateQuantity={updateQuantity} removeItemFromCart={removeItemFromCart}/>
+                            <CartItem key={item._id} item={item} updateQuantityByInput={updateQuantityByInput} updateQuantity={updateQuantity} removeItemFromCart={removeItemFromCart} />
                         ))}
                     </div>
 
@@ -142,7 +150,7 @@ function FCart() {
                             <span className="font-semibold">₹{totalAmount}</span>
                         </div>
 
-                        <button className="w-full bg-blue-900 hover:bg-blue-950 text-white py-2 rounded-lg font-medium transition">Proceed to Checkout</button>
+                        <button className="w-full bg-blue-900 hover:bg-blue-950 text-white py-2 rounded-lg font-medium transition" onClick={handleCheckout}>Proceed to Checkout</button>
                     </div>
                 </div>
             </div>

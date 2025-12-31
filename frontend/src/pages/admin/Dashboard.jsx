@@ -12,7 +12,7 @@ function Dashboard() {
         { title: "Orders", value: orders.length, url: `${import.meta.env.VITE_ADMIN}/order`, color: "bg-emerald-500" },
         { title: "Cart Items", value: carts.length, url: `${import.meta.env.VITE_ADMIN}/cart`, color: "bg-cyan-500" },
         { title: "Discounts", value: discounts.length, url: `${import.meta.env.VITE_ADMIN}/discount`, color: "bg-violet-500" },
-        { title: "Payments", value: "₹1,24,500", url: `${import.meta.env.VITE_ADMIN}/payment`, color: "bg-fuchsia-500" },
+        { title: "Payments", value: payments.length, url: `${import.meta.env.VITE_ADMIN}/payment`, color: "bg-fuchsia-500" },
         { title: "Reviews", value: reviews.totalReview, url: `${import.meta.env.VITE_ADMIN}/review`, color: "bg-green-500" },
     ];
 

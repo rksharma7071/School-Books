@@ -31,20 +31,42 @@ const shipmentSchema = new mongoose.Schema(
 
 const orderSchema = new mongoose.Schema(
     {
-        orderNumber: { type: String, required: true, unique: true, index: true },
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
-        items: { type: [orderItemSchema], required: true, validate: [(v) => v.length > 0, "Order must have at least one item"]},
+        orderNumber: {
+            type: String,
+            required: true,
+            unique: true,
+            index: true,
+        },
+        userId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            required: true,
+            index: true,
+        },
+        items: {
+            type: [orderItemSchema],
+            required: true,
+            validate: [
+                (v) => v.length > 0,
+                "Order must have at least one item",
+            ],
+        },
         shipment: shipmentSchema,
         shipping: { type: Number, required: true, min: 0 },
         subtotal: { type: Number, required: true, min: 0 },
         tax: { type: Number, required: true, min: 0 },
         discount: { type: Number, default: 0, min: 0 },
         total: { type: Number, required: true, min: 0 },
-        status: { type: String, enum: ["pending", "fulfilled", "cancelled"], default: "pending", index: true },
+        status: {
+            type: String,
+            enum: ["pending", "fulfilled", "cancelled"],
+            default: "pending",
+            index: true,
+        },
         placed_at: { type: Date, default: Date.now },
         shipping_address: { type: String, required: true },
         billing_address: { type: String, required: true },
-        paymentId: { type: String, required: true, index: true },
+        paymentId: { type: String, index: true },
     },
     {
         timestamps: true,

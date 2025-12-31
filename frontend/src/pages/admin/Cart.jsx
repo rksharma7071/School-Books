@@ -25,11 +25,11 @@ function Cart() {
     }, [render]);
 
     const filteredReviews = useMemo(() => {
-        const term = search.toLowerCase();
+        const term = search?.toLowerCase();
         return carts.filter(
             (b) =>
-                b.user.first_name.toLowerCase().includes(term) ||
-                b.book.title.toLowerCase().includes(term)
+                b.user.first_name?.toLowerCase().includes(term) ||
+                b.book.title?.toLowerCase().includes(term)
         );
     }, [carts, search]);
 

@@ -51,12 +51,12 @@ function Test() {
   const [search, setSearch] = useState("");
 
   const filteredBooks = useMemo(() => {
-    const q = search.toLowerCase();
+    const q = search?.toLowerCase();
     return booksData.filter(
       (b) =>
-        b.title.toLowerCase().includes(q) ||
-        b.author.toLowerCase().includes(q) ||
-        b.category.toLowerCase().includes(q)
+        b.title?.toLowerCase().includes(q) ||
+        b.author?.toLowerCase().includes(q) ||
+        b.category?.toLowerCase().includes(q)
     );
   }, [search]);
 

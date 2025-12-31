@@ -9,6 +9,7 @@ import cartRouter from "./routes/cart.route.js";
 import paymentRouter from "./routes/payment.route.js";
 import discountRouter from "./routes/discount.route.js";
 import orderRouter from "./routes/order.route.js";
+import razorpayRoutes from "./routes/razorpay.routes.js";
 import cors from "cors";
 
 const app = express();
@@ -26,6 +27,7 @@ app.use("/api/cart", cartRouter);
 app.use("/api/payment", paymentRouter);
 app.use("/api/discount", discountRouter);
 app.use("/api/order", orderRouter);
+app.use("/api/razorpay", razorpayRoutes);
 
 app.get("/", (req, res) => {
     res.status(200).json({
@@ -39,6 +41,7 @@ app.get("/", (req, res) => {
         "/api/discount": "Discount",
         "/api/payment": "Payment",
         "/api/order": "Order",
+        "/api/razorpay": "razorpay",
     });
 });
 

@@ -39,10 +39,10 @@ function Category() {
 
 
   const filteredCategories = useMemo(() => {
-    const term = search.toLowerCase();
+    const term = search?.toLowerCase();
     return categories.filter(
       (b) =>
-        b.name.toLowerCase().includes(term)
+        b.name?.toLowerCase().includes(term)
     );
   }, [categories, search]);
 
