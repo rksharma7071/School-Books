@@ -3,8 +3,7 @@ import axios from "axios";
 const getOrder = async () => {
     try {
         const { data } = await axios.get("/api/order");
-        console.log("data: ",data);
-        
+        // console.log("data: ",data);
         return data ?? [];
     } catch (error) {
         console.error("Failed to fetch order:", error);

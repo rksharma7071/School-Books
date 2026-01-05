@@ -263,7 +263,7 @@ function Header() {
             {searchOpen && (
                 <div className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-24 px-4">
 
-                    <div className="w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-4 relative animate-fadeIn">
+                    <div className="w-full max-w-2xl bg-white rounded-2xl shadow p-4 relative animate-fadeIn">
 
                         <button
                             onClick={() => setSearchOpen(false)}

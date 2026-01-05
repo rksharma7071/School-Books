@@ -149,7 +149,7 @@ function BookById() {
 
                     <div className="flex items-center gap-4 mt-4">
                         <span className="font-medium">Quantity</span>
-                        <div className="flex items-center border rounded-lg overflow-hidden">
+                        <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
                             <button onClick={decreaseQty} className="px-4 py-2 text-lg">−</button>
                             <span className="px-5 py-2">{quantity}</span>
                             <button onClick={increaseQty} className="px-4 py-2 text-lg">+</button>

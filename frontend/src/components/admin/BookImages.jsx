@@ -32,7 +32,7 @@ function SortableImage({ img, index, onRemove }) {
       style={style}
       {...attributes}
       {...listeners}
-      className="group relative cursor-grab rounded-lg overflow-hidden border border-gray-400 bg-white shadow-sm active:cursor-grabbing"
+      className="group relative cursor-grab rounded-lg overflow-hidden border border-gray-400 bg-white shadow active:cursor-grabbing"
     >
       <img
         src={img.url || img.preview}

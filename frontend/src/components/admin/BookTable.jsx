@@ -9,19 +9,25 @@ import { BookContext } from '../../context/School';
 function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBooks, selectedIds }) {
     const { user } = useContext(BookContext);
     const role = user?.role;
-    const [files, setFiles] = useState([]);
     const navigate = useNavigate();
 
     const deleteBook = async (id) => {
         try {
-            if (confirm("Do you want to delete this Book!")) {
-                const res = await axios.delete(`/api/book/${id}`);
-                alert("Book has been deleted successfully!")
+            if (confirm("Do you want to delete this Book?")) {
+                const token = localStorage.getItem("token");
+
+                const res = await axios.delete(`/api/book/${id}`, {
+                    headers: { Authorization: `Bearer ${token}` },
+                });
+                console.log("Delete Book: ", res);
+                alert("Book has been deleted successfully!");
             }
         } catch (error) {
-            console.error("Delete error:", error);
+            console.error("Delete error:", error.response?.data || error.message);
+            alert(error.response?.data?.message || "Delete failed");
         }
     };
+
 
     const editBook = async (id) => {
         navigate(`/${import.meta.env.VITE_ADMIN}/edit-book/${id}`)

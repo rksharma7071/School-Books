@@ -2,6 +2,8 @@ import React, { useContext, useState } from "react";
 import axios from "axios";
 import { BookContext } from "../../context/School";
 import { useNavigate } from 'react-router-dom';
+import InputField from "../../components/UI/InputField";
+import Button from "../../components/UI/Button";
 
 function Checkout() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast } = useContext(BookContext);
@@ -187,43 +189,69 @@ function Checkout() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto p-6">
-            <h1 className="text-2xl font-bold mb-6">Checkout</h1>
+        <div className="max-w-6xl mx-auto p-6">
+            <h1 className="text-3xl font-bold mb-8">Checkout</h1>
 
-            {/* Shipping Details */}
-            <div className="bg-white border border-gray-300 rounded-lg p-4 mb-6">
-                <h2 className="font-semibold mb-4">Shipping Details</h2>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <input name="name" placeholder="Full Name" value={shipping.name} onChange={handleChange} className="border border-gray-300 p-2 rounded" />
-                    <input name="phone" placeholder="Phone Number" value={shipping.phone} onChange={handleChange} className="border border-gray-300 p-2 rounded" />
-                    <input name="address" placeholder="Address" value={shipping.address} onChange={handleChange} className="border border-gray-300 p-2 rounded col-span-2" />
-                    <input name="city" placeholder="City" value={shipping.city} onChange={handleChange} className="border border-gray-300 p-2 rounded" />
-                    <input name="state" placeholder="State" value={shipping.state} onChange={handleChange} className="border border-gray-300 p-2 rounded" />
-                    <input name="pincode" placeholder="Pincode" value={shipping.pincode} onChange={handleChange} className="border border-gray-300 p-2 rounded" />
+                {/* LEFT — Shipping Details */}
+                <div className="lg:col-span-2 bg-white border border-gray-300 rounded-xl p-6">
+                    <h2 className="text-lg font-semibold mb-6">Shipping Details</h2>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <InputField name="name" placeholder="Full Name" value={shipping.name} onChange={handleChange} />
+                        <InputField name="phone" placeholder="Phone Number" value={shipping.phone} onChange={handleChange} />
+                        <InputField name="address" placeholder="Address" value={shipping.address} onChange={handleChange} className="col-span-2" />
+                        <InputField name="city" placeholder="City" value={shipping.city} onChange={handleChange} />
+                        <InputField name="state" placeholder="State" value={shipping.state} onChange={handleChange} />
+                        <InputField name="pincode" placeholder="Pincode" value={shipping.pincode} onChange={handleChange} />
+                    </div>
+                </div>
+
+                {/* RIGHT — Order Summary */}
+                <div className="bg-white border border-gray-300 rounded-xl p-6 h-fit sticky top-6">
+                    <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+
+                    <div className="space-y-3">
+                        {cartItems.map((item) => (
+                            <div
+                                key={item.bookId}
+                                className="flex justify-between text-sm"
+                            >
+                                <span className="text-gray-700">
+                                    {item.book.name} × {item.quantity}
+                                </span>
+                                <span className="font-medium">
+                                    ₹{item.book.price * item.quantity}
+                                </span>
+                            </div>
+                        ))}
+                    </div>
+
+                    <hr className="my-4 border-gray-300" />
+
+                    {/* Total */}
+                    <div className="flex justify-between font-semibold text-lg mb-6">
+                        <span>Total</span>
+                        <span>
+                            ₹{cartItems.reduce(
+                                (total, item) => total + item.book.price * item.quantity,
+                                0
+                            )}
+                        </span>
+                    </div>
+
+                    {/* <button
+                        onClick={createOrder}
+                        disabled={loading}
+                        className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-semibold transition disabled:opacity-60"
+                    >{loading ? "Processing..." : "Pay Now"}</button> */}
+                    <Button children={loading ? "Processing..." : "Pay Now"} variant={"secondary"} disabled={loading} onClick={createOrder} />
+                    {/* <Button children={loading ? "Processing..." : "Pay Now"} variant={"primary"} disabled={loading} onClick={createOrder} /> */}
                 </div>
             </div>
+        </div >
 
-            {/* Order Summary */}
-            <div className="bg-white border border-gray-300 rounded-lg p-4">
-                <h2 className="font-semibold mb-4">Order Summary</h2>
-
-                {cartItems.map((item) => (
-                    <div key={item.bookId} className="flex justify-between mb-2">
-                        <span>{item.book.name} × {item.quantity}</span>
-                        <span>₹{item.book.price * item.quantity}</span>
-                    </div>
-                ))}
-            </div>
-
-            <button
-                onClick={createOrder}
-                disabled={loading}
-                className="mt-6 w-full bg-blue-600 text-white px-6 py-3 rounded"
-            >
-                {loading ? "Processing..." : "Pay Now"}
-            </button>
-        </div>
     );
 }
 

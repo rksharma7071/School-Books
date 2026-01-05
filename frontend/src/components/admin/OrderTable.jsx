@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 function OrderTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedOrder, selectedIds }) {
     const { user } = useContext(BookContext);
     const role = user?.role;
-    console.log("paginatedOrder: ", paginatedOrder);
+    // console.log("paginatedOrder: ", paginatedOrder);
 
     return (
         <table className="min-w-full text-sm">

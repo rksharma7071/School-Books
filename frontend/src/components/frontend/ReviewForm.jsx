@@ -44,7 +44,7 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
         >
             {/* Modal Card */}
             <div
-                className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-6 sm:p-8 animate-scaleIn"
+                className="w-full max-w-lg bg-white rounded-2xl shadow p-6 sm:p-8 animate-scaleIn"
                 onClick={(e) => e.stopPropagation()}
             >
                 {/* Header */}

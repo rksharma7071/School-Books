@@ -108,7 +108,7 @@ function Book() {
                         placeholder="Search by title, author, category..."
                         className="flex-1 sm:w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <Link to={`/${import.meta.env.VITE_ADMIN}/add-book`} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Add Book</Link>
+                    <Link to={`/${import.meta.env.VITE_ADMIN}/add-book`} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Add Book</Link>
                 </div>
             </div>
 
