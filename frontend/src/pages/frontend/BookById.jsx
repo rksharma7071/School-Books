@@ -2,7 +2,7 @@ import axios from "axios";
 import React, { useContext, useEffect, useState, useMemo, useRef } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { BookContext } from "../../context/School.jsx";
-import Review from "../../components/frontend/review.jsx";
+import Review from "../../components/frontend/Review.jsx";
 import ReviewByBook from "../../components/frontend/ReviewByBook.jsx";
 import ReviewForm from "../../components/frontend/ReviewForm.jsx";
 import { IoIosArrowDown } from "react-icons/io";
