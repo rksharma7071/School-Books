@@ -1,8 +1,8 @@
-import { useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import { BookContext } from "../../context/School";
-import CartItem from "../../components/frontend/CartItem";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BookContext } from "../../context/School.jsx";
+import CartItem from "../../components/frontend/CartItem.jsx";
 
 function FCart() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast, update, setUpdate } = useContext(BookContext);

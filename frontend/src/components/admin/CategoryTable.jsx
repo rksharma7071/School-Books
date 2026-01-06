@@ -1,7 +1,7 @@
 import React, { useContext } from 'react'
 import { MdDelete } from 'react-icons/md';
 import { RiEdit2Fill } from 'react-icons/ri';
-import { BookContext } from '../../context/School';
+import { BookContext } from '../../context/School.jsx';
 
 function CategoryTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedCategories, selectedIds }) {
     const { user } = useContext(BookContext);

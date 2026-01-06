@@ -1,10 +1,10 @@
 import axios from "axios";
 import React, { useContext, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import Review from "./review";
-import { getReview } from "../../data/review";
-import StatusMessage from "./StatusMessage";
-import { BookContext } from "../../context/School";
+import Review from "./Review.jsx";
+import { getReview } from "../../data/review.js";
+import StatusMessage from "./StatusMessage.jsx";
+import { BookContext } from "../../context/School.jsx";
 
 function ProductCard({ user, book }) {
     const { toastConfig, setToastConfig, showToast, cartItems, setCartItems, setShowToast, } = useContext(BookContext);

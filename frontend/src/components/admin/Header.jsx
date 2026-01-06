@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { LuUserRound } from "react-icons/lu";
-import { BookContext } from "../../context/School";
+import { BookContext } from "../../context/School.jsx";
 import { Link, useNavigate } from "react-router-dom";
 
 function Header() {

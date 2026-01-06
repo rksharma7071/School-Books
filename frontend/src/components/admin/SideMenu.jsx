@@ -1,6 +1,6 @@
 import React, { useContext, useState } from 'react'
 import { Link, NavLink } from 'react-router-dom';
-import { BookContext } from '../../context/School';
+import { BookContext } from '../../context/School.jsx';
 
 function SideMenu() {
 

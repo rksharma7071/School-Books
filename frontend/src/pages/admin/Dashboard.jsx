@@ -1,6 +1,6 @@
 import React, { useContext } from "react";
 import { Link } from "react-router-dom";
-import { BookContext } from "../../context/School";
+import { BookContext } from "../../context/School.jsx";
 
 function Dashboard() {
     const { books, carts, orders, users, discounts, payments, reviews } = useContext(BookContext);

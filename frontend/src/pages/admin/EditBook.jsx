@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import axios from "axios";
-import BookImages from "../../components/admin/BookImages";
+import BookImages from "../../components/admin/BookImages.jsx";
 
 function EditBook() {
     const [imageMeta, setImageMeta] = useState({

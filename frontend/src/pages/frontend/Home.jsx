@@ -1,4 +1,4 @@
-import BestSellingProduct from '../../components/frontend/BestSellingProduct'
+import BestSellingProduct from '../../components/frontend/BestSellingProduct.jsx'
 
 function Home() {
     return (

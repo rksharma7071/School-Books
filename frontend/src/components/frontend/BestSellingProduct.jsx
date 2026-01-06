@@ -1,6 +1,6 @@
 import React, { useContext } from 'react'
-import { BookContext } from '../../context/School';
-import ProductCard from './ProductCard';
+import { BookContext } from '../../context/School.jsx';
+import ProductCard from './ProductCard.jsx';
 
 function BestSellingProduct() {
     const { user, adminLogout, search, setSearch, books, cartItems, setCartItems } = useContext(BookContext);

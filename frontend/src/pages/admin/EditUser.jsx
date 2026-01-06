@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { useLoaderData } from "react-router-dom";
-import PermissionForm from "../../components/admin/PermissionForm";
+import PermissionForm from "../../components/admin/PermissionForm.jsx";
 
 function EditUser() {
     const { user: loadedUser, permission: loadedPermission } = useLoaderData();

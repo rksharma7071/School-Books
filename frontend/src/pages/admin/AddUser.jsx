@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import PermissionForm from "../../components/admin/PermissionForm";
+import PermissionForm from "../../components/admin/PermissionForm.jsx";
 
 function AddUser() {
     const [form, setForm] = useState({

@@ -1,6 +1,6 @@
 import React from "react";
-import Review from "./Review";
-import ReviewHeader from "./ReviewHeader";
+import Review from "./Review.jsx";
+import ReviewHeader from "./ReviewHeader.jsx";
 
 function ReviewByBook({ review = [], reviewSectionRef, showReviewForm, setShowReviewForm }) {
 

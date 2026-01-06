@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import axios from "axios";
-import CategoryTable from "../../components/admin/CategoryTable";
+import CategoryTable from "../../components/admin/CategoryTable.jsx";
 
 function Category() {
   const [categories, setCategories] = useState([]);

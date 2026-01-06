@@ -4,7 +4,7 @@ import { RiEdit2Fill } from 'react-icons/ri';
 import { useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { BookContext } from '../../context/School';
+import { BookContext } from '../../context/School.jsx';
 
 function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBooks, selectedIds }) {
     const { user } = useContext(BookContext);

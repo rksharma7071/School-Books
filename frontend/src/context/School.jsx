@@ -1,6 +1,6 @@
 import { createContext, useEffect, useState } from "react";
-import { getBook } from "../data/book";
-import { getCart, getCartById } from "../data/cart";
+import { getBook } from "../data/book.js";
+import { getCart, getCartById } from "../data/cart.js";
 import axios from "axios";
 
 export const BookContext = createContext("");

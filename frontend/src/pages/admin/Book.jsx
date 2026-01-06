@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import axios from "axios";
-import BookTable from "../../components/admin/BookTable";
+import BookTable from "../../components/admin/BookTable.jsx";
 import { Link } from "react-router-dom";
 
 function Book() {

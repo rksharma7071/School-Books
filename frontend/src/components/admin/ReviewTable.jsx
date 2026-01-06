@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { BookContext } from '../../context/School';
+import { BookContext } from '../../context/School.jsx';
 import { MdDelete } from 'react-icons/md';
 import axios from "axios";
-import Review from '../frontend/Review';
+import Review from '../frontend/Review.jsx';
 
 function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggleSelect, paginatedReviews, selectedIds }) {
     const { user } = useContext(BookContext);

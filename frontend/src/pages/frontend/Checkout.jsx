@@ -1,9 +1,9 @@
-import React, { useContext, useState } from "react";
 import axios from "axios";
-import { BookContext } from "../../context/School";
+import React, { useContext, useState } from "react";
 import { useNavigate } from 'react-router-dom';
-import InputField from "../../components/UI/InputField";
-import Button from "../../components/UI/Button";
+import { BookContext } from "../../context/School.jsx";
+import InputField from "../../components/UI/InputField.jsx";
+import Button from "../../components/UI/Button.jsx";
 
 function Checkout() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast } = useContext(BookContext);

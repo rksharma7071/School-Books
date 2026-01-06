@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import axios from "axios";
-import ImageGridManager from "../../components/admin/ImageGridManager";
+import ImageGridManager from "../../components/admin/ImageGridManager.jsx";
 import { useNavigate } from "react-router-dom";
 
 function AddBook() {

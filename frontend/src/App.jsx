@@ -2,9 +2,9 @@ import { useState } from 'react'
 import reactLogo from './assets/react.svg'
 import viteLogo from '/vite.svg'
 import './App.css'
-import Header from './components/admin/Header'
-import SideMenu from './components/admin/SideMenu'
-import Main from './components/admin/Main'
+import Header from './components/admin/Header.jsx'
+import SideMenu from './components/admin/SideMenu.jsx'
+import Main from './components/admin/Main.jsx'
 
 function App() {
 

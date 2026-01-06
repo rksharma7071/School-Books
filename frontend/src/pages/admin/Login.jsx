@@ -1,7 +1,7 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
-import { BookContext } from "../../context/School";
+import { BookContext } from "../../context/School.jsx";
 
 function Login() {
     const { user, setUser } = useContext(BookContext);

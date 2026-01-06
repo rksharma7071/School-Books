@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useContext, useMemo } from "react";
 import { LuShoppingCart, LuUserRound } from "react-icons/lu";
-import { BookContext } from "../../context/School";
+import { BookContext } from "../../context/School.jsx";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { AiOutlineUser } from "react-icons/ai";
 import { MdSearch } from "react-icons/md";

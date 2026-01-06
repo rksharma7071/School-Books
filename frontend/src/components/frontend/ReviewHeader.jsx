@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import Review from "./Review";
+import Review from "./Review.jsx";
 
 function ReviewHeader({ book, approvedReviews = [], setShowReviewForm }) {
     const totalReviews = approvedReviews.length;
