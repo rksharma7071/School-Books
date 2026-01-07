@@ -4,7 +4,6 @@ import { BookContext } from "../../context/School.jsx";
 
 function Dashboard() {
     const { books, carts, orders, users, discounts, payments, reviews } = useContext(BookContext);
-    // console.log(payments);
 
     const stats = [
         { title: "Books", value: books.length, url: `${import.meta.env.VITE_ADMIN}/books`, color: "bg-blue-500" },

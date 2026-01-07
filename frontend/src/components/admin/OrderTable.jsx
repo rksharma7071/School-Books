@@ -6,7 +6,6 @@ import { Link } from 'react-router-dom';
 function OrderTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedOrder, selectedIds }) {
     const { user } = useContext(BookContext);
     const role = user?.role;
-    // console.log("paginatedOrder: ", paginatedOrder);
 
     return (
         <table className="min-w-full text-sm">
@@ -33,11 +32,11 @@ function OrderTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedOrd
                                 <td className="px-4 py-3">
                                     <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(order._id)} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" />
                                 </td>
-                                <td className="px-4 py-3">
+                                <td className="px-4 py-3 font-bold">
                                     {/* <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(order._id)} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" /> */}
-                                    <Link to={`${order._id}`} >{order.orderNumber}</Link>
+                                    <Link to={`${order._id}`} >#{order.orderNumber}</Link>
                                 </td>
-                                <td className="px-4 py-3 text-gray-900 font-medium">{order?.userId}</td>
+                                <td className="px-4 py-3 text-gray-900 font-medium">{order?.user?.first_name} {order?.user?.last_name}</td>
                                 <td className="px-4 py-3 text-gray-900 font-medium">₹{order?.total}</td>
                                 {/* <td className="px-4 py-3 text-gray-700">{order?.paymentId}</td> */}
                                 <td className="px-4 py-3">

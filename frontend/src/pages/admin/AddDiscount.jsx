@@ -25,9 +25,7 @@ function AddDiscount() {
         setError("");
 
         try {
-            // console.log("Discount payload:", form);
             const res = await axios.post(`${import.meta.env.VITE_API}/api/discount`, form);
-            // console.log(res.data);
             alert("Discount created successfully!");
 
             setForm({

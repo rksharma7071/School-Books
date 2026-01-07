@@ -5,7 +5,6 @@ function ImageGridManager({ onImagesChange }) {
   const [files, setFiles] = useState([]);
   const fileInputRef = useRef(null);
   const [dragIndex, setDragIndex] = useState(null);
-  // console.log("files: ", files);
 
   const [previews, setPreviews] = useState([]);
 

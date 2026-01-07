@@ -3,9 +3,10 @@ import { useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BookContext } from "../../context/School.jsx";
 import CartItem from "../../components/frontend/CartItem.jsx";
+import { getCartById } from "../../data/cart.js";
 
 function FCart() {
-    const { user, cartItems, setCartItems, setToastConfig, setShowToast, update, setUpdate } = useContext(BookContext);
+    const { user, cartItems, setCartItems, setToastConfig, setShowToast, update, setUpdate, loading, setLoading } = useContext(BookContext);
     const navigate = useNavigate();
 
     const { totalItems, totalAmount } = useMemo(() => {
@@ -108,10 +109,26 @@ function FCart() {
             setShowToast(true);
         }
     };
-    
+
     useEffect(() => {
         setUpdate(prev => !prev);
     }, []);
+
+    useEffect(() => {
+        const fetchBooks = async () => {
+            try {
+                setLoading(true)
+                const items = await getCartById({ params: { id: user.id || user._id } });
+                setCartItems(items);
+            } catch (err) {
+                console.error("Error: ", err.message);
+            } finally {
+                setLoading(false)
+            }
+        };
+
+        fetchBooks();
+    }, [user, update]);
 
     const handleCheckout = () => {
         navigate('/checkout')
@@ -134,7 +151,7 @@ function FCart() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-4">
                         {cartItems.map((item) => (
-                            <CartItem key={item._id} item={item} updateQuantityByInput={updateQuantityByInput} updateQuantity={updateQuantity} removeItemFromCart={removeItemFromCart} />
+                            <CartItem key={String(item.bookId)} item={item} updateQuantityByInput={updateQuantityByInput} updateQuantity={updateQuantity} removeItemFromCart={removeItemFromCart} />
                         ))}
                     </div>
 

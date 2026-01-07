@@ -30,7 +30,6 @@ export const getCart = async () => {
                 items: itemsWithBooks,
             };
         });
-        // console.log("getCart:", updatedCarts);
 
         return updatedCarts;
     } catch (error) {
@@ -49,7 +48,6 @@ export const getCartById = async ({ params }) => {
         if (!cart) {
             return [];
         }
-        // console.log("getCartById:", cart.items);
         return cart.items;
     } catch (error) {
         console.error("Get Cart By Id Error:", error);

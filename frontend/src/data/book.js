@@ -4,7 +4,6 @@ import { getReview1 } from "./review";
 export const getBook = async () => {
     try {
         const res = await axios.get(`${import.meta.env.VITE_API}/api/book`);
-        // console.log("getBook", res.data);
         return res.data;
     } catch (error) {
         console.error("Edit User Error:", error);
@@ -20,7 +19,6 @@ export const getBookById = async ({ params }) => {
         const data = await getReview1();
         const review = data.filter((element) => element.bookId == book._id);
         book.review = review;
-        // console.log("getBookById", book);
         return book;
     } catch (error) {
         console.error("Edit User Error:", error);

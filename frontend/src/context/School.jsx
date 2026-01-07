@@ -36,21 +36,21 @@ export const BookProvider = ({ children }) => {
   useEffect(() => {
 
   }, [toastConfig, toastConfig])
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        setLoading(true)
-        const items = await getCartById({ params: { id: user.id } });
-        setCartItems(items);
-      } catch (err) {
-        console.error("Error: ", err.message);
-      } finally {
-        setLoading(false)
-      }
-    };
+  // useEffect(() => {
+  //   const fetchBooks = async () => {
+  //     try {
+  //       setLoading(true)
+  //       const items = await getCartById({ params: { id: user.id || user._id } });
+  //       setCartItems(items);
+  //     } catch (err) {
+  //       console.error("Error: ", err.message);
+  //     } finally {
+  //       setLoading(false)
+  //     }
+  //   };
 
-    fetchBooks();
-  }, [user, update]);
+  //   fetchBooks();
+  // }, [user, update]);
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -71,11 +71,6 @@ export const BookProvider = ({ children }) => {
         setDiscounts(discountData.data)
         setPayments(paymentData.data)
         setReviews(reviewData.data)
-
-        // console.log("Book Provider: ", { books, carts, orders, users, discounts, payments, reviews });
-        // console.log("VITE_ADMIN:", import.meta.env.VITE_ADMIN);
-        // console.log("VITE_API: ", import.meta.env.VITE_API);
-
       } catch (err) {
         console.error("Error: ", err.message);
       } finally {

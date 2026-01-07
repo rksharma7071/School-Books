@@ -45,7 +45,6 @@ async function handleAuthSignUp(req, res) {
                 expiresIn: "1d",
             }
         );
-        // console.log("Generated Token:", token);
         res.json({
             token,
             user: {
@@ -66,8 +65,6 @@ async function handleAuthSignUp(req, res) {
 async function handleAuthLogin(req, res) {
     const { email, password } = req.body;
 
-    // console.log("Login attempt:", { email }); // ✅ Debug log
-
     if (!email || !password) {
         return res
             .status(400)
@@ -78,14 +75,12 @@ async function handleAuthLogin(req, res) {
         // 1. Find user by email
         const user = await User.findOne({ email });
         if (!user) {
-            // console.log("User not found:", email);
             return res.status(400).json({ message: "User not found." });
         }
 
         // 2. Compare passwords
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
-            // console.log("Incorrect password for:", email);
             return res.status(400).json({ message: "Password is incorrect." });
         }
 

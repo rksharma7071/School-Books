@@ -76,7 +76,6 @@ function Payment() {
 
     const startIndex = filteredPayments.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
     const endIndex = Math.min(currentPage * rowsPerPage, filteredPayments.length);
-    // console.log("paginatedPayment",paginatedPayment);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">

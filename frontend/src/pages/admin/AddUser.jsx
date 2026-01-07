@@ -61,7 +61,6 @@ function AddUser() {
                 ...user
             }
             const res1 = await axios.post(`${import.meta.env.VITE_API}/api/user/permission`, payload);
-            // console.log("res1: ", res1);
 
             alert("User created successfully!");
 

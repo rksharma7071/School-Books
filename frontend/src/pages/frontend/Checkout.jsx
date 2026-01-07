@@ -27,7 +27,6 @@ function Checkout() {
         try {
             await axios.delete(`${import.meta.env.VITE_API}/api/cart/clear/${user.id}`);
             setCartItems([]);
-            // console.log("Cart cleared after payment");
         } catch (error) {
             console.error("Failed to clear cart", error);
         }
@@ -36,29 +35,18 @@ function Checkout() {
     const deleteOrder = async (orderId) => {
         try {
             await axios.delete(`${import.meta.env.VITE_API}/api/order/${orderId}`);
-            // console.log("Order deleted:", orderId);
         } catch (err) {
             console.error("Failed to delete order", err);
         }
     };
 
     const validateShipping = () => {
-        return (
-            shipping.name &&
-            shipping.phone &&
-            shipping.address &&
-            shipping.city &&
-            shipping.state &&
-            shipping.pincode
-        );
+        return (shipping.name && shipping.phone && shipping.address && shipping.city && shipping.state && shipping.pincode);
     };
 
     const createOrder = async () => {
         if (!validateShipping()) {
-            setToastConfig({
-                type: "error",
-                message: "Please fill all shipping details",
-            });
+            setToastConfig({ type: "error", message: "Please fill all shipping details" });
             setShowToast(true);
             return;
         }
@@ -67,45 +55,23 @@ function Checkout() {
 
         try {
             // 1️⃣ Create Order
-            // console.log({
-            //     userId: user.id,
-            //     items: cartItems.map((item) => ({
-            //         bookId: item.bookId,
-            //         quantity: item.quantity,
-            //     })),
-            //     shipping: 50,
-            //     tax: 0,
-            //     discount: 0,
-            //     shipping_address: `${shipping}`,
-            //     billing_address: `${shipping}`,
-            // });
-
             const orderRes = await axios.post(`${import.meta.env.VITE_API}/api/order`, {
                 userId: user.id,
-                items: cartItems.map((item) => ({
-                    bookId: item.bookId,
-                    quantity: item.quantity,
-                })),
+                items: cartItems.map((item) => ({ bookId: item.bookId, quantity: item.quantity })),
                 shipping: 50,
                 tax: 0,
                 discount: 0,
-                shipping_address: `${shipping}`,
-                billing_address: `${shipping}`,
+                shipping_address: `${shipping.name}%20${shipping.phone}%20${shipping.address}%20${shipping.city}%20${shipping.state}%20${shipping.pincode}`,
+                billing_address: `${shipping.name}%20${shipping.phone}%20${shipping.address}%20${shipping.city}%20${shipping.state}%20${shipping.pincode}`,
             });
 
             const order = orderRes.data;
-            // console.log("order: ", order);
             setCreatedOrderId(order._id);
             const razorpayRes = await axios.post(`${import.meta.env.VITE_API}/api/razorpay/create-order`, { orderId: order._id });
-            // console.log("razorpayRes", razorpayRes);
-
             openRazorpay(razorpayRes.data.razorpayOrder, order._id);
         } catch (error) {
             console.error("Checkout error:", error);
-            setToastConfig({
-                type: "error",
-                message: "Checkout failed",
-            });
+            setToastConfig({ type: "error", message: "Checkout failed" });
             setShowToast(true);
         } finally {
             setLoading(false);
@@ -119,18 +85,22 @@ function Checkout() {
             currency: "INR",
             name: "School Book",
             description: "Order Payment",
-            order_id: razorpayOrder.orderNumber,
+
+            // 🔥 THIS IS THE FIX
+            order_id: razorpayOrder.id,
 
             handler: async function (response) {
                 try {
-                    await axios.post(`${import.meta.env.VITE_API}/api/razorpay/verify-payment`, {
-                        razorpay_order_id: response.razorpay_order_id,
-                        razorpay_payment_id: response.razorpay_payment_id,
-                        razorpay_signature: response.razorpay_signature,
-                        orderId,
-                    });
+                    await axios.post(
+                        `${import.meta.env.VITE_API}/api/razorpay/verify-payment`,
+                        {
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            orderId,
+                        }
+                    );
 
-                    // ✅ Clear cart after successful payment
                     await clearCart();
 
                     setToastConfig({
@@ -138,10 +108,9 @@ function Checkout() {
                         message: "Payment Successful! Cart cleared.",
                     });
                     setShowToast(true);
-                    navigate('/')
+                    navigate("/");
                 } catch (error) {
                     await deleteOrder(orderId);
-
                     setToastConfig({
                         type: "error",
                         message: "Payment verification failed",
@@ -150,12 +119,9 @@ function Checkout() {
                 }
             },
 
-
             modal: {
                 ondismiss: async function () {
-                    // ❌ User closed payment window
                     await deleteOrder(orderId);
-
                     setToastConfig({
                         type: "error",
                         message: "Payment cancelled",
@@ -173,18 +139,6 @@ function Checkout() {
         };
 
         const rzp = new window.Razorpay(options);
-
-        // ❌ Payment failure event
-        rzp.on("payment.failed", async function () {
-            await deleteOrder(orderId);
-
-            setToastConfig({
-                type: "error",
-                message: "Payment failed",
-            });
-            setShowToast(true);
-        });
-
         rzp.open();
     };
 

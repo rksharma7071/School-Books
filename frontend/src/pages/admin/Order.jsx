@@ -7,7 +7,6 @@ import OrderTable from "../../components/admin/OrderTable.jsx";
 
 function Order() {
     const loader = useLoaderData();
-
     const [orders, setOrders] = useState(loader || []);
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
@@ -39,7 +38,6 @@ function Order() {
             String(order.total).includes(term)
         );
     }, [orders, search]);
-    // console.log("filteredOrders", filteredOrders);
 
     const totalPages = Math.max(1, Math.ceil(filteredOrders.length / rowsPerPage));
 
@@ -90,7 +88,6 @@ function Order() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Order</h2>
-                    {/* <p className="text-sm text-gray-500">Manage all school books and inventory.</p> */}
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto bg-white">

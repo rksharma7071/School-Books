@@ -1,10 +1,15 @@
 import mongoose from "mongoose";
 import { Order } from "../models/order.model.js";
 import { Book } from "../models/book.model.js";
+import Counter from "../models/counter.model.js";
 
 async function getAllOrder(req, res) {
     try {
-        const orders = await Order.find({});
+        const orders = await Order.find({})
+            .populate("userId", "name email")
+            .populate("items.bookId", "name price")
+            .sort({ createdAt: -1 });
+
         return res.status(200).json(orders);
     } catch (error) {
         console.error("Get orders error:", error);
@@ -30,7 +35,7 @@ async function getOrderById(req, res) {
 
         return res.status(200).json(order);
     } catch (error) {
-        console.error("Get order by ID error:", error);
+        console.error("Get order error:", error);
         return res.status(500).json("Internal Server Error");
     }
 }
@@ -52,7 +57,7 @@ async function createOrder(req, res) {
             return res.status(400).json("Invalid user ID");
         }
 
-        if (!items || !items.length) {
+        if (!items?.length) {
             return res.status(400).json("Order must have items");
         }
 
@@ -65,12 +70,11 @@ async function createOrder(req, res) {
                 return res.status(404).json(`Book not found: ${item.bookId}`);
             }
 
-            const unit_price = book.price;
             const quantity = item.quantity || 1;
+            const unit_price = book.price;
             const total_price = unit_price * quantity;
 
             subtotal += total_price;
-
             orderItems.push({
                 bookId: book._id,
                 quantity,
@@ -82,12 +86,14 @@ async function createOrder(req, res) {
         const total =
             subtotal + Number(shipping) + Number(tax) - Number(discount);
 
-        if (total < 0) {
-            return res.status(400).json("Invalid order total");
-        }
+        const counter = await Counter.findOneAndUpdate(
+            { name: "order" },
+            { $inc: { seq: 1 } },
+            { new: true, upsert: true }
+        );
 
         const order = await Order.create({
-            orderNumber: `ORD-${Date.now()}`,
+            orderNumber: counter.seq,
             userId,
             items: orderItems,
             shipping,
@@ -98,7 +104,6 @@ async function createOrder(req, res) {
             shipping_address,
             billing_address,
             paymentId,
-            placed_at: new Date(),
         });
 
         return res.status(201).json(order);
@@ -169,7 +174,10 @@ async function deleteOrder(req, res) {
             status: "success",
             message: "Order deleted successfully",
         });
-    } catch (error) {}
+    } catch (error) {
+        console.error("Delete order error:", error);
+        return res.status(500).json("Internal Server Error");
+    }
 }
 
 export { getAllOrder, getOrderById, createOrder, updateOrder, deleteOrder };

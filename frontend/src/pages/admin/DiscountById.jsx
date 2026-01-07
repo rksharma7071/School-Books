@@ -43,9 +43,6 @@ function DiscountById() {
             };
 
             const res = await axios.patch(`${import.meta.env.VITE_API}/api/discount/${loader._id}`, form);
-            // console.log(res.data);
-
-            // console.log("Updated payload:", payload);
             navigate(`/discount/${loader._id}`)
         } catch (error) {
             console.error("Error updating discount:", error);

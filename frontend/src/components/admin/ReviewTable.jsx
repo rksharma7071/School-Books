@@ -6,9 +6,7 @@ import Review from '../frontend/Review.jsx';
 
 function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggleSelect, paginatedReviews, selectedIds }) {
     const { user } = useContext(BookContext);
-    const role = user?.role;
-    // console.log("paginatedReviews: ",paginatedReviews);
-    
+    const role = user?.role;    
 
     const publishReview = async (id) => {
         if (window.confirm("Do you want to update this Review?")) {

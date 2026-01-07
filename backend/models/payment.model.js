@@ -6,7 +6,7 @@ const paymentSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: "Order",
             required: true,
-            index: true,
+            unique: true,
         },
 
         provider: {

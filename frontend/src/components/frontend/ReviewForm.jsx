@@ -20,8 +20,6 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
                 userId,
             });
 
-            // console.log("Review added:", res.data);
-
             onSubmit(res.data);
             setRating(0);
             setTitle("");

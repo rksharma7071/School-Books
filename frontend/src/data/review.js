@@ -4,7 +4,6 @@ export const getReview = async () => {
     try {
         const res = await axios.get(`${import.meta.env.VITE_API}/api/review`);
         const book = res?.data || {};
-        // console.log("getReview: ", book);
         return book;
     } catch (error) {
         console.error("Edit User Error:", error);
@@ -35,7 +34,6 @@ export const getReview1 = async () => {
                 user,
             };
         });
-        // console.log("getReview1: ", updatedReviews);
         return updatedReviews;
     } catch (error) {
         console.error("Get Review Error:", error);

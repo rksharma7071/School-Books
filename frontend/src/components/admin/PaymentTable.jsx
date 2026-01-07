@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 function PaymentTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedPayment, selectedIds }) {
     const { user } = useContext(BookContext);
     const role = user?.role;
+    console.log(paginatedPayment);
 
     return (
         <table className="min-w-full text-sm">
@@ -29,13 +30,10 @@ function PaymentTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedP
                         return (
                             <tr key={payment._id} className="border-t border-gray-100 hover:bg-gray-50">
                                 <td className="px-4 py-3"><input type="checkbox" checked={isSelected} onChange={() => toggleSelect(discount._id)} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" /></td>
-                                <td className="px-4 py-3 text-gray-900 font-medium">
-                                    <Link to={payment._id}>{payment?.orderId}</Link>
-                                </td>
-                                <td className="px-4 py-3 text-gray-700">{payment?.provide}</td>
+                                <td className="px-4 py-3 text-gray-700 font-medium"><Link to={payment._id}>{payment?.transactionId}</Link></td>
+                                <td className="px-4 py-3 text-gray-700">{payment?.provider[0].toUpperCase()}{payment?.provider.slice(1)}</td>
                                 <td className="px-4 py-3 text-gray-700">{payment?.amount}</td>
-                                <td className="px-4 py-3 text-gray-700">{payment?.transactionId}</td>
-
+                                <td className="px-4 py-3 text-gray-900">#{payment?.order.orderNumber}</td>
                                 <td className="px-4 py-3">
                                     <span
                                         className={`px-3 py-1 rounded-full text-sm font-medium ${payment.status ? "bg-green-100 text-green-700" : "bg-gray-200 text-gray-600"}`}
