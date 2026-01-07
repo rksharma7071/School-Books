@@ -6,7 +6,7 @@ import Review from '../frontend/Review.jsx';
 
 function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggleSelect, paginatedReviews, selectedIds }) {
     const { user } = useContext(BookContext);
-    const role = user?.role;    
+    const role = user?.role;
 
     const publishReview = async (id) => {
         if (window.confirm("Do you want to update this Review?")) {
@@ -23,7 +23,13 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
             alert("Review has been updated successfully!");
         }
     };
-
+    const truncateWords = (text, count = 10) => {
+        if (!text) return "";
+        const words = text.split(" ");
+        return words.length > count
+            ? words.slice(0, count).join(" ") + "..."
+            : text;
+    };
     const deleteReview = async (id) => {
         if (window.confirm("Do you want to delete this Review?")) {
             await axios.delete(`${import.meta.env.VITE_API}/api/review/${id}`);
@@ -64,7 +70,18 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
                                     {user?.book?.name || "Loading..."}
                                 </td>
                                 <td className="px-4 py-3 text-gray-700">{user.title}</td>
-                                <td className="px-4 py-3 text-gray-700">{user.body}</td>
+                                {/* <td className="px-4 py-3 text-gray-700">{user.body}</td> */}
+                                <td className="px-4 py-3 text-gray-700">
+                                    {/* Mobile (≤ md): show 10 words */}
+                                    <span className="block md:hidden">
+                                        {truncateWords(user.body, 10)}
+                                    </span>
+
+                                    {/* Desktop (md+): show full text */}
+                                    <span className="hidden md:block">
+                                        {user.body}
+                                    </span>
+                                </td>
                                 <td className="px-4 py-3 w-30 text-right">
                                     <div className="flex items-center justify-end gap-3">
                                         {user.approved == false &&
