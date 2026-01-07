@@ -1,9 +1,18 @@
-import React, { useContext } from 'react'
+import React, { useContext, useEffect } from 'react'
 import { BookContext } from '../../context/School.jsx';
 import ProductCard from './ProductCard.jsx';
 
 function BestSellingProduct() {
-    const { user, adminLogout, search, setSearch, books, cartItems, setCartItems } = useContext(BookContext);
+    const { user, books, cartItems, setCartItems, setLoading } = useContext(BookContext);
+
+    useEffect(() => {
+        setLoading(true);
+
+        if (books && books.length > 0) {
+            setLoading(false);
+        }
+    }, [books]);
+
 
     return (
         <div className="bg-slate-50 py-12">
@@ -22,9 +31,7 @@ function BestSellingProduct() {
                         books
                             .filter(book => book.isActive === true)
                             .slice(0, 10)
-                            .map((book) => (
-                                <ProductCard key={book._id} book={book} user={user} cartItems={cartItems} setCartItems={setCartItems} />
-                            ))}
+                            .map((book) => <ProductCard key={book._id} book={book} user={user} cartItems={cartItems} setCartItems={setCartItems} />)}
                 </div>
             </div>
         </div>

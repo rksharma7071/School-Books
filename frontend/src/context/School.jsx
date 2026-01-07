@@ -18,16 +18,12 @@ export const BookProvider = ({ children }) => {
   const [reviews, setReviews] = useState([]);
   const [showToast, setShowToast] = useState(false);
   const [update, setUpdate] = useState(false);
-  const [toastConfig, setToastConfig] = useState({
-    type: "success",
-    title: "",
-    message: "",
-  });
+  const [loading, setLoading] = useState(false);
+  const [toastConfig, setToastConfig] = useState({ type: "success", title: "", message: "" });
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
-    if (storedUser) {
+    if (storedUser)
       setUser(JSON.parse(storedUser));
-    }
   }, []);
 
   const adminLogout = () => {
@@ -42,11 +38,13 @@ export const BookProvider = ({ children }) => {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
+        setLoading(true)
         const items = await getCartById({ params: { id: user.id } });
         setCartItems(items);
-
       } catch (err) {
         console.error("Error: ", err.message);
+      } finally {
+        setLoading (false)
       }
     };
 
@@ -56,6 +54,7 @@ export const BookProvider = ({ children }) => {
   useEffect(() => {
     const fetchBooks = async () => {
       try {
+        setLoading(true)
         const bookData = await axios.get("/api/book");
         const cartData = await axios.get("/api/cart");
         const orderData = await axios.get("/api/order");
@@ -74,15 +73,21 @@ export const BookProvider = ({ children }) => {
 
       } catch (err) {
         console.error("Error: ", err.message);
+      } finally {
+        setLoading(false)
       }
     };
 
     fetchBooks();
   }, []);
 
-  
+
   return (
-    <BookContext.Provider value={{ toastConfig, update, setUpdate, setToastConfig, showToast, setShowToast, user, setUser, adminLogout, carts, search, setSearch, books, cartItems, setCartItems, orders, users, discounts, payments, reviews }}>
+    <BookContext.Provider value={{
+      toastConfig, update, setUpdate, setToastConfig, showToast, setShowToast, user, setUser,
+      adminLogout, carts, search, setSearch, books, cartItems, setCartItems, orders, users, discounts,
+      payments, reviews, loading, setLoading
+    }}>
       {children}
     </BookContext.Provider>
   );

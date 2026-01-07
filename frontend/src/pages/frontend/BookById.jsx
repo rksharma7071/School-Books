@@ -1,11 +1,12 @@
 import axios from "axios";
 import React, { useContext, useEffect, useState, useMemo, useRef } from "react";
-import { useLoaderData, useNavigate } from "react-router-dom";
+import { useLoaderData, useNavigate, useNavigation } from "react-router-dom";
 import { BookContext } from "../../context/School.jsx";
 import Review from "../../components/frontend/Review.jsx";
 import ReviewByBook from "../../components/frontend/ReviewByBook.jsx";
 import ReviewForm from "../../components/frontend/ReviewForm.jsx";
 import { IoIosArrowDown } from "react-icons/io";
+import Loading from "../../components/UI/Loading.jsx";
 
 function BookById() {
     const book = useLoaderData();
@@ -13,7 +14,12 @@ function BookById() {
     const navigate = useNavigate();
     const [showReviewForm, setShowReviewForm] = useState(false);
     const reviewSectionRef = useRef(null);
+    const navigation = useNavigation();
+    const pageLoading = navigation.state === "loading";
 
+    if (pageLoading) {
+        return <Loading />
+    }
     const scrollToReviews = () => {
         reviewSectionRef.current?.scrollIntoView({
             behavior: "smooth",
@@ -53,12 +59,7 @@ function BookById() {
             setAvgRating(0);
             return;
         }
-
-        const total = approvedReviews.reduce(
-            (sum, r) => sum + Number(r.rating || 0),
-            0
-        );
-
+        const total = approvedReviews.reduce((sum, r) => sum + Number(r.rating || 0), 0);
         setAvgRating(total / approvedReviews.length);
     }, [approvedReviews]);
 
@@ -82,19 +83,14 @@ function BookById() {
         setCartItems((prev) => {
             const item = prev.find((i) => i.bookId === _id);
             return item
-                ? prev.map((i) =>
-                    i.bookId === _id
-                        ? { ...i, quantity: i.quantity + quantity }
-                        : i
-                )
+                ? prev.map((i) => i.bookId === _id ? { ...i, quantity: i.quantity + quantity } : i)
                 : [...prev, { bookId: _id, quantity }];
         });
 
         try {
             await axios.post("/api/cart", {
                 userId: user.id,
-                bookId: _id,
-                quantity,
+                bookId: _id, quantity,
             });
             setToastConfig({
                 type: "success",

@@ -26,7 +26,7 @@ function Header() {
     const filteredBooks = useMemo(() => {
         if (!search) return [];
 
-        const term = search.toLowerCase();
+        const term = search?.toLowerCase();
 
         return books.filter(
             (b) =>
@@ -76,50 +76,34 @@ function Header() {
             <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between gap-6">
 
                 <Link to="/" className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center text-blue-950 font-semibold">
-                        SB
-                    </div>
+                    <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center text-blue-950 font-semibold">SB</div>
                     <div>
-                        <h1 className="text-lg font-semibold text-white">
-                            SchoolBook
-                        </h1>
-                        <p className="text-xs text-blue-200">
-                            Learn • Read • Grow
-                        </p>
+                        <h1 className="text-lg font-semibold text-white">SchoolBook</h1>
+                        <p className="text-xs text-blue-200">Learn • Read • Grow</p>
                     </div>
                 </Link>
 
                 <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-blue-100">
                     <Link to="/" className="hover:text-white">Home</Link>
-                    <Link to="/books" className="hover:text-white">Shop</Link>
+                    <Link to="/products" className="hover:text-white">Books</Link>
                     <Link to="/categories" className="hover:text-white">Categories</Link>
                     <Link to="/best-sellers" className="hover:text-white">Best Sellers</Link>
                     <Link to="/new-arrivals" className="hover:text-white">New Arrivals</Link>
                     <Link to="/offers" className="hover:text-white">Offers</Link>
                     <Link to="/reviews" className="hover:text-white">Reviews</Link>
+                    <Link to="/contact" className="hover:text-white">Contact Us</Link>
                 </nav>
 
                 <div className="flex items-center gap-4">
 
                     <Link to="/cart" className="relative text-blue-100 hover:text-white">
                         <LuShoppingCart className="text-xl" />
-                        {cartItems.length > 0 && (
-                            <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] font-semibold rounded-full px-1.5">
-                                {cartItems.length}
-                            </span>
-                        )}
+                        {cartItems.length > 0 && (<span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] font-semibold rounded-full px-1.5">{cartItems.length}</span>)}
                     </Link>
-                    <button
-                        onClick={() => setSearchOpen(true)}
-                        className="text-blue-100 hover:text-white"
-                    >
-                        <MdSearch className="text-xl" />
-                    </button>
+                    <button onClick={() => setSearchOpen(true)} className="text-blue-100 hover:text-white"><MdSearch className="text-xl" /></button>
 
                     {!user &&
-                        <Link to="/login" className="text-blue-100 hover:text-white">
-                            <AiOutlineUser className="text-xl" />
-                        </Link>
+                        <Link to="/login" className="text-blue-100 hover:text-white"><AiOutlineUser className="text-xl" /></Link>
                     }
                     {user &&
                         <div className="relative" ref={menuRef}>
@@ -153,16 +137,12 @@ function Header() {
                                         <Link
                                             to="/orders/my-orders"
                                             className="flex items-center gap-3 px-5 py-2.5 text-sm text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-700 transition"
-                                        >
-                                            📦 My Orders
-                                        </Link>
+                                        >📦 My Orders</Link>
 
                                         <Link
                                             to="/settings"
                                             className="flex items-center gap-3 px-5 py-2.5 text-sm text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-700 transition"
-                                        >
-                                            ⚙️ Account Settings
-                                        </Link>
+                                        >⚙️ Account Settings</Link>
                                     </div>
 
                                     {/* Divider */}
@@ -199,12 +179,7 @@ function Header() {
                                 <h1 class="text-lg font-semibold text-white">SchoolBook</h1>
                                 <p class="text-xs text-blue-200">Learn • Read • Grow</p>
                             </div>
-                            <button
-                                onClick={() => setMobileOpen(false)}
-                                className="text-blue-200 hover:text-white text-xl"
-                            >
-                                ✕
-                            </button>
+                            <button onClick={() => setMobileOpen(false)} className="text-blue-200 hover:text-white text-xl">✕</button>
                         </div>
 
                         <nav className="flex flex-col gap-4 text-blue-100 text-sm font-medium">
@@ -215,6 +190,7 @@ function Header() {
                             <Link onClick={() => setMobileOpen(false)} to="/new-arrivals" className="hover:text-white">New Arrivals</Link>
                             <Link onClick={() => setMobileOpen(false)} to="/offers" className="hover:text-white">Offers</Link>
                             <Link onClick={() => setMobileOpen(false)} to="/reviews" className="hover:text-white">Reviews</Link>
+                            <Link onClick={() => setMobileOpen(false)} to="/contact" className="hover:text-white">Contact Us</Link>
                         </nav>
 
                         <div className="border-t border-blue-800 my-6" />
@@ -289,8 +265,9 @@ function Header() {
                         </p>
                         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                             {filteredBooks.slice(0, 6).map((b) => (
-                                <div
+                                <Link to={`products/${b._id}`}
                                     key={b._id}
+                                    onClick={() => setSearchOpen(false)}
                                     className="group cursor-pointer rounded-xl border border-gray-200 bg-white p-3 transition hover:shadow-md hover:border-blue-400"
                                 >
                                     <div className="aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
@@ -302,14 +279,10 @@ function Header() {
                                     </div>
 
                                     <div className="mt-3 space-y-1">
-                                        <p className="line-clamp-2 text-sm font-semibold text-gray-900">
-                                            {b.name}
-                                        </p>
-                                        <p className="text-xs text-gray-500">
-                                            {b.author}
-                                        </p>
+                                        <p className="line-clamp-2 text-sm font-semibold text-gray-900">{b.name}</p>
+                                        <p className="text-xs text-gray-500">{b.author}</p>
                                     </div>
-                                </div>
+                                </Link>
                             ))}
                         </div>
 
