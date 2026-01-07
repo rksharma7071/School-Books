@@ -3,7 +3,11 @@ import { BookContext } from '../../context/School.jsx';
 import ProductCard from './ProductCard.jsx';
 
 function BestSellingProduct() {
-    const { user, books, cartItems, setCartItems, setLoading } = useContext(BookContext);
+    const { user, books, carts, orders, users, discounts, payments, reviews, cartItems, setCartItems, setLoading } = useContext(BookContext);
+
+    // console.log("Book Provider: ", { books, carts, orders, users, discounts, payments, reviews });
+    // console.log("VITE_ADMIN:", import.meta.env.VITE_ADMIN);
+    // console.log("VITE_API: ", import.meta.env.VITE_API);
 
     useEffect(() => {
         setLoading(true);

@@ -6,8 +6,10 @@ export const editUser = async ({ params }) => {
             axios.get(`/api/user/${params.id}`),
             axios.get(`/api/user/permission/${params.id}`),
         ]);
-        console.log({ user: userRes.data, permission: permisssionRes.data });
-
+        console.log("editUser: ", {
+            user: userRes.data,
+            permission: permisssionRes.data,
+        });
         return {
             user: userRes.data,
             permission: permisssionRes.data,
