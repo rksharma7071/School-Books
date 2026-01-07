@@ -22,7 +22,7 @@ function Base() {
                     onClose={() => setShowToast(false)}
                 />
             )}
-            {(navigation.state === "loading" || loading) && <Loading />}
+            {/* {(navigation.state === "loading" || loading) && <Loading />} */}
             <Footer />
         </>
 

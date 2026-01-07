@@ -85,7 +85,7 @@ function Header() {
 
                 <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-blue-100">
                     <Link to="/" className="hover:text-white">Home</Link>
-                    <Link to="/products" className="hover:text-white">Books</Link>
+                    {/* <Link to="/products" className="hover:text-white">Books</Link> */}
                     <Link to="/categories" className="hover:text-white">Categories</Link>
                     <Link to="/best-sellers" className="hover:text-white">Best Sellers</Link>
                     <Link to="/new-arrivals" className="hover:text-white">New Arrivals</Link>

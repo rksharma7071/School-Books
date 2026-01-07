@@ -17,9 +17,9 @@ function BookById() {
     const navigation = useNavigation();
     const pageLoading = navigation.state === "loading";
 
-    if (pageLoading) {
-        return <Loading />
-    }
+    // if (pageLoading) {
+    //     return <Loading />
+    // }
     const scrollToReviews = () => {
         reviewSectionRef.current?.scrollIntoView({
             behavior: "smooth",

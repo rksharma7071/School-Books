@@ -4,7 +4,7 @@ import { MdOutlinePolicy } from "react-icons/md";
 
 function Footer() {
     return (
-        <footer className="bg-blue-950 border-t border-blue-900/60 mt-16">
+        <footer className="bg-blue-950 border-t border-blue-900/60">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
                     <div>

@@ -39,142 +39,57 @@ import { getOrder, getOrderById } from './data/order.js'
 import OrderById from './pages/admin/OrderById.jsx'
 import BookById from './pages/frontend/BookById.jsx'
 import Checkout from './pages/frontend/Checkout.jsx'
+import { StrictMode } from 'react'
+import NotFound from './components/frontend/NotFound.jsx'
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Base />,
+    errorElement: <NotFound />,
     children: [
-      {
-        path: "",
-        element: <Home />
-      },
-      {
-        path: "cart",
-        element: <FCart />
-      },
-      {
-        path: "products/:id",
-        element: <BookById />,
-        loader: getBookById
-      },
-      {
-        path: "contact",
-        element: <Contact />
-      },
-      {
-        path: "checkout",
-        element: <Checkout />
-      },
+      { path: "", element: <Home /> },
+      { path: "cart", element: <FCart /> },
+      { path: "products/:id", element: <BookById />, loader: getBookById },
+      { path: "contact", element: <Contact /> },
+      { path: "checkout", element: <Checkout /> },
     ]
   },
-  {
-    path: "/login",
-    element: <Login />
-  },
+  { path: "/login", element: <Login />, errorElement: <NotFound />, },
   {
     path: "/register",
-    element: <Register />
+    element: <Register />,
+    errorElement: <NotFound />,
   },
   {
     element: <ProtectedRoute />,
+    errorElement: <NotFound />,
     children: [
       {
         path: `/${import.meta.env.VITE_ADMIN}`,
         element: <App />,
+        errorElement: <NotFound />,
         children: [
-          {
-            index: true,
-            element: <Dashboard />
-          },
-          {
-            path: "books",
-            element: <Book />
-          },
-          {
-            path: "add-book",
-            element: <AddBook />
-          },
-          {
-            path: "edit-book/:id",
-            element: <EditBook />,
-            loader: getBookById
-          },
-          {
-            path: "categories",
-            element: <Category />
-          },
-          {
-            path: "users",
-            element: <User />
-          },
-          {
-            path: "add-user",
-            element: <AddUser />
-          },
-          {
-            path: "edit-user/:id",
-            element: <EditUser />,
-            loader: editUser
-          },
-          {
-            path: "general",
-            element: <General />
-          },
-          {
-            path: "roles",
-            element: <Role />
-          },
-          {
-            path: "review",
-            element: <Review />,
-            loader: getReview1
-          },
-          {
-            path: "cart",
-            element: <Cart />,
-            loader: getCart
-          },
-          {
-            path: "cart/:id",
-            element: <CartById />,
-            loader: getCartById
-          },
-          {
-            path: "discount",
-            element: <Discount />,
-            loader: getDiscount
-          },
-          {
-            path: "add-discount",
-            element: <AddDiscount />,
-          },
-          {
-            path: "discount/:id",
-            element: <DiscountById />,
-            loader: getDiscountById
-          },
-          {
-            path: "payment",
-            element: <Payment />,
-            loader: getPayment
-          },
-          {
-            path: "payment/:id",
-            element: <PaymentById />,
-            loader: getPaymentById
-          },
-          {
-            path: "order",
-            element: <Order />,
-            loader: getOrder
-          },
-          {
-            path: "order/:id",
-            element: <OrderById />,
-            loader: getOrderById
-          },
-
+          { index: true, element: <Dashboard /> },
+          { path: "books", element: <Book /> },
+          { path: "add-book", element: <AddBook /> },
+          { path: "edit-book/:id", element: <EditBook />, loader: getBookById },
+          { path: "categories", element: <Category /> },
+          { path: "users", element: <User /> },
+          { path: "add-user", element: <AddUser /> },
+          { path: "edit-user/:id", element: <EditUser />, loader: editUser },
+          { path: "general", element: <General /> },
+          { path: "roles", element: <Role /> },
+          { path: "review", element: <Review />, loader: getReview1 },
+          { path: "cart", element: <Cart />, loader: getCart },
+          { path: "cart/:id", element: <CartById />, loader: getCartById },
+          { path: "discount", element: <Discount />, loader: getDiscount },
+          { path: "add-discount", element: <AddDiscount /> },
+          { path: "discount/:id", element: <DiscountById />, loader: getDiscountById },
+          { path: "payment", element: <Payment />, loader: getPayment },
+          { path: "payment/:id", element: <PaymentById />, loader: getPaymentById },
+          { path: "order", element: <Order />, loader: getOrder },
+          { path: "order/:id", element: <OrderById />, loader: getOrderById },
         ]
       }
     ]
@@ -184,6 +99,8 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <BookProvider>
-    <RouterProvider router={router}></RouterProvider>
+    <StrictMode>
+      <RouterProvider router={router}></RouterProvider>
+    </StrictMode>
   </BookProvider>
 )

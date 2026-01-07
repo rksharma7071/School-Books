@@ -20,6 +20,7 @@ export const BookProvider = ({ children }) => {
   const [update, setUpdate] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toastConfig, setToastConfig] = useState({ type: "success", title: "", message: "" });
+
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser)
@@ -44,7 +45,7 @@ export const BookProvider = ({ children }) => {
       } catch (err) {
         console.error("Error: ", err.message);
       } finally {
-        setLoading (false)
+        setLoading(false)
       }
     };
 
@@ -70,6 +71,10 @@ export const BookProvider = ({ children }) => {
         setDiscounts(discountData.data)
         setPayments(paymentData.data)
         setReviews(reviewData.data)
+
+        console.log("Book Provider: ", { books, carts, orders, users, discounts, payments, reviews });
+        console.log("VITE_ADMIN:", import.meta.env.VITE_ADMIN);
+        console.log("VITE_API: ", import.meta.env.VITE_API);
 
       } catch (err) {
         console.error("Error: ", err.message);
