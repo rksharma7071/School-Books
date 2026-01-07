@@ -201,7 +201,7 @@ function BookById() {
                 <ReviewForm
                     onClose={() => setShowReviewForm(false)}
                     onSubmit={(data) => {
-                        console.log("Review submitted:", data);
+                        // console.log("Review submitted:", data);
                         setShowReviewForm(false);
                     }}
                     bookId={bookId}

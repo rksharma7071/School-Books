@@ -27,7 +27,7 @@ function Checkout() {
         try {
             await axios.delete(`${import.meta.env.VITE_API}/api/cart/clear/${user.id}`);
             setCartItems([]);
-            console.log("Cart cleared after payment");
+            // console.log("Cart cleared after payment");
         } catch (error) {
             console.error("Failed to clear cart", error);
         }
@@ -36,7 +36,7 @@ function Checkout() {
     const deleteOrder = async (orderId) => {
         try {
             await axios.delete(`${import.meta.env.VITE_API}/api/order/${orderId}`);
-            console.log("Order deleted:", orderId);
+            // console.log("Order deleted:", orderId);
         } catch (err) {
             console.error("Failed to delete order", err);
         }
@@ -67,18 +67,18 @@ function Checkout() {
 
         try {
             // 1️⃣ Create Order
-            console.log({
-                userId: user.id,
-                items: cartItems.map((item) => ({
-                    bookId: item.bookId,
-                    quantity: item.quantity,
-                })),
-                shipping: 50,
-                tax: 0,
-                discount: 0,
-                shipping_address: `${shipping}`,
-                billing_address: `${shipping}`,
-            });
+            // console.log({
+            //     userId: user.id,
+            //     items: cartItems.map((item) => ({
+            //         bookId: item.bookId,
+            //         quantity: item.quantity,
+            //     })),
+            //     shipping: 50,
+            //     tax: 0,
+            //     discount: 0,
+            //     shipping_address: `${shipping}`,
+            //     billing_address: `${shipping}`,
+            // });
 
             const orderRes = await axios.post(`${import.meta.env.VITE_API}/api/order`, {
                 userId: user.id,
@@ -94,10 +94,10 @@ function Checkout() {
             });
 
             const order = orderRes.data;
-            console.log("order: ", order);
+            // console.log("order: ", order);
             setCreatedOrderId(order._id);
             const razorpayRes = await axios.post(`${import.meta.env.VITE_API}/api/razorpay/create-order`, { orderId: order._id });
-            console.log("razorpayRes", razorpayRes);
+            // console.log("razorpayRes", razorpayRes);
 
             openRazorpay(razorpayRes.data.razorpayOrder, order._id);
         } catch (error) {

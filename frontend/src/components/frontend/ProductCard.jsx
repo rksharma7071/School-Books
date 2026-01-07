@@ -57,7 +57,7 @@ function ProductCard({ user, book }) {
                 const avgRating = result.reduce((sum, r) => sum + Number(r.rating || 0), 0) / (result.length || 1);
                 setAvgRating(avgRating);
             } catch (error) {
-                console.log("Fetch Review Error: ", error);
+                console.log("Fetch Review Error: ", error);   
             }
         }
         fetchReview()

@@ -21,7 +21,7 @@ function Contact() {
             message: contact.message.trim(),
         };
 
-        console.log("Cleaned Contact Form:", cleanedData);
+        // console.log("Cleaned Contact Form:", cleanedData);
 
         setLoading(false)
     }

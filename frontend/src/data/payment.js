@@ -3,7 +3,7 @@ import axios from "axios";
 const getPayment = async () => {
     try {
         const { data } = await axios.get(`${import.meta.env.VITE_API}/api/payment`);
-        console.log("getPayment: ", data);
+        // console.log("getPayment: ", data);
         return data ?? [];
     } catch (error) {
         console.error("Failed to fetch payment:", error);
@@ -14,7 +14,7 @@ const getPayment = async () => {
 const getPaymentById = async ({ params }) => {
     try {
         const { data } = await axios.get(`${import.meta.env.VITE_API}/api/payment/${params.id}`);
-        console.log("getPaymentById: ", data);
+        // console.log("getPaymentById: ", data);
         return data ?? {};
     } catch (error) {
         console.error("Failed to fetch payment:", error);

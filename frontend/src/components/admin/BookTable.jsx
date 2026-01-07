@@ -19,7 +19,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
                 const res = await axios.delete(`${import.meta.env.VITE_API}/api/book/${id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                console.log("Delete Book: ", res);
+                // console.log("Delete Book: ", res);
                 alert("Book has been deleted successfully!");
             }
         } catch (error) {

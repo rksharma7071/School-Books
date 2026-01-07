@@ -5,7 +5,7 @@ import { useLoaderData, useNavigate } from 'react-router-dom'
 function CartById() {
     const cart = useLoaderData();
     const navigate = useNavigate();
-    console.log("loader: ", cart);
+    // console.log("loader: ", cart);
     const totalAmount = cart.items.reduce(
         (sum, item) => sum + item.quantity * item.book.price,
         0
@@ -18,7 +18,7 @@ function CartById() {
                     userId: userId,
                     items: []
                 });
-                console.log("Res: ", res.data);
+                // console.log("Res: ", res.data);
                 
                 alert("Cart has been deleted successfully!");
                 navigate(`/${import.meta.env.VITE_ADMIN}/cart`)
@@ -26,7 +26,6 @@ function CartById() {
             }
         } catch (error) {
             console.log("Cart Delete Error: ", error);
-
         }
     }
 
