@@ -12,7 +12,7 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
 
     const publishReview = async (id) => {
         if (window.confirm("Do you want to update this Review?")) {
-            await axios.patch(`/api/review/${id}`, { approved: true });
+            await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: true });
             setRender(true);
             alert("Review has been updated successfully!");
         }
@@ -20,7 +20,7 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
 
     const unpublishReview = async (id) => {
         if (window.confirm("Do you want to update this Review?")) {
-            await axios.patch(`/api/review/${id}`, { approved: false });
+            await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: false });
             setRender(true);
             alert("Review has been updated successfully!");
         }
@@ -28,7 +28,7 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
 
     const deleteReview = async (id) => {
         if (window.confirm("Do you want to delete this Review?")) {
-            await axios.delete(`/api/review/${id}`);
+            await axios.delete(`${import.meta.env.VITE_API}/api/review/${id}`);
             setRender(true);
             alert("Review has been deleted successfully!");
         }

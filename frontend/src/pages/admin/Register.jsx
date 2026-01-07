@@ -40,7 +40,7 @@ function Register() {
             setLoading(true);
             setError("");
 
-            await axios.post("/api/auth/signup", form);
+            await axios.post(`${import.meta.env.VITE_API}/api/auth/signup`, form);
 
             navigate("/login", { replace: true });
         } catch (error) {

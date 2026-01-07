@@ -3,9 +3,9 @@ import axios from "axios";
 export const getCart = async () => {
     try {
         const [usersRes, booksRes, cartRes] = await Promise.all([
-            axios.get("/api/user"),
-            axios.get("/api/book"),
-            axios.get("/api/cart"),
+            axios.get(`${import.meta.env.VITE_API}/api/user`),
+            axios.get(`${import.meta.env.VITE_API}/api/book`),
+            axios.get(`${import.meta.env.VITE_API}/api/cart`),
         ]);
 
         const users = usersRes.data;

@@ -56,13 +56,13 @@ export const BookProvider = ({ children }) => {
     const fetchBooks = async () => {
       try {
         setLoading(true)
-        const bookData = await axios.get("/api/book");
-        const cartData = await axios.get("/api/cart");
-        const orderData = await axios.get("/api/order");
-        const userData = await axios.get("/api/user");
-        const discountData = await axios.get("/api/discount");
-        const paymentData = await axios.get("/api/payment");
-        const reviewData = await axios.get("/api/review");
+        const bookData = await axios.get(`${import.meta.env.VITE_API}/api/book`);
+        const cartData = await axios.get(`${import.meta.env.VITE_API}/api/cart`);
+        const orderData = await axios.get(`${import.meta.env.VITE_API}/api/order`);
+        const userData = await axios.get(`${import.meta.env.VITE_API}/api/user`);
+        const discountData = await axios.get(`${import.meta.env.VITE_API}/api/discount`);
+        const paymentData = await axios.get(`${import.meta.env.VITE_API}/api/payment`);
+        const reviewData = await axios.get(`${import.meta.env.VITE_API}/api/review`);
 
         setBooks(bookData.data.data);
         setCarts(cartData.data)

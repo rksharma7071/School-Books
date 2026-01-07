@@ -52,7 +52,7 @@ function AddBook() {
                 if (k !== "images") console.log(k, "=>", v);
             }
 
-            const res = await axios.post("/api/book", formData, {
+            const res = await axios.post(`${import.meta.env.VITE_API}/api/book`, formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
                 },

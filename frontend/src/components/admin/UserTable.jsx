@@ -12,7 +12,7 @@ function UserTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedUser
     const deleteUser = async (id) => {
         try {
             if (window.confirm("Do you want to delete this User?")) {
-                const res = await axios.delete(`/api/user/${id}`);
+                const res = await axios.delete(`${import.meta.env.VITE_API}/api/user/${id}`);
                 alert("User has been deleted successfully!")
             }
         } catch (error) {

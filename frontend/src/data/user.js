@@ -3,8 +3,8 @@ import axios from "axios";
 export const editUser = async ({ params }) => {
     try {
         const [userRes, permisssionRes] = await Promise.all([
-            axios.get(`/api/user/${params.id}`),
-            axios.get(`/api/user/permission/${params.id}`),
+            axios.get(`${import.meta.env.VITE_API}/api/user/${params.id}`),
+            axios.get(`${import.meta.env.VITE_API}/api/user/permission/${params.id}`),
         ]);
         console.log("editUser: ", {
             user: userRes.data,

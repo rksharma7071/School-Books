@@ -3,7 +3,7 @@ import { getReview1 } from "./review";
 
 export const getBook = async () => {
     try {
-        const res = await axios.get(`/api/book`);
+        const res = await axios.get(`${import.meta.env.VITE_API}/api/book`);
         console.log("getBook", res.data);
         return res.data;
     } catch (error) {
@@ -15,7 +15,7 @@ export const getBook = async () => {
 
 export const getBookById = async ({ params }) => {
     try {
-        const res = await axios.get(`/api/book/${params.id}`);
+        const res = await axios.get(`${import.meta.env.VITE_API}/api/book/${params.id}`);
         const book = res?.data?.data || {};
         const data = await getReview1();
         const review = data.filter((element) => element.bookId == book._id);

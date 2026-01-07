@@ -13,7 +13,7 @@ function Book() {
     useEffect(() => {
         const fetchBooks = async () => {
             try {
-                const res = await axios.get("/api/book");
+                const res = await axios.get(`${import.meta.env.VITE_API}/api/book`);
                 const apiBooks = res.data.data || [];
 
                 const mapped = apiBooks.map((b) => ({

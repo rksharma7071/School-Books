@@ -14,7 +14,7 @@ function CartById() {
     const onDelete = async (userId) => {
         try {
             if (window.confirm("Do you want to delete this Review?")) {
-                const res = await axios.post("/api/cart", {
+                const res = await axios.post(`${import.meta.env.VITE_API}/api/cart`, {
                     userId: userId,
                     items: []
                 });

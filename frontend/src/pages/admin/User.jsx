@@ -14,7 +14,7 @@ function User() {
     useEffect(() => {
         const fetchUsers = async () => {
             try {
-                const res = await axios.get("/api/user");
+                const res = await axios.get(`${import.meta.env.VITE_API}/api/user`);
                 const apiUsers = res.data || [];
                 setUsers(apiUsers);
             } catch (error) {

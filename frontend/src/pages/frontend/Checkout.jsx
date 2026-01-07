@@ -25,7 +25,7 @@ function Checkout() {
 
     const clearCart = async () => {
         try {
-            await axios.delete(`/api/cart/clear/${user.id}`);
+            await axios.delete(`${import.meta.env.VITE_API}/api/cart/clear/${user.id}`);
             setCartItems([]);
             console.log("Cart cleared after payment");
         } catch (error) {
@@ -35,7 +35,7 @@ function Checkout() {
 
     const deleteOrder = async (orderId) => {
         try {
-            await axios.delete(`/api/order/${orderId}`);
+            await axios.delete(`${import.meta.env.VITE_API}/api/order/${orderId}`);
             console.log("Order deleted:", orderId);
         } catch (err) {
             console.error("Failed to delete order", err);
@@ -80,7 +80,7 @@ function Checkout() {
                 billing_address: `${shipping}`,
             });
 
-            const orderRes = await axios.post("/api/order", {
+            const orderRes = await axios.post(`${import.meta.env.VITE_API}/api/order`, {
                 userId: user.id,
                 items: cartItems.map((item) => ({
                     bookId: item.bookId,
@@ -96,7 +96,7 @@ function Checkout() {
             const order = orderRes.data;
             console.log("order: ", order);
             setCreatedOrderId(order._id);
-            const razorpayRes = await axios.post("/api/razorpay/create-order", { orderId: order._id });
+            const razorpayRes = await axios.post(`${import.meta.env.VITE_API}/api/razorpay/create-order`, { orderId: order._id });
             console.log("razorpayRes", razorpayRes);
 
             openRazorpay(razorpayRes.data.razorpayOrder, order._id);
@@ -123,7 +123,7 @@ function Checkout() {
 
             handler: async function (response) {
                 try {
-                    await axios.post("/api/razorpay/verify-payment", {
+                    await axios.post(`${import.meta.env.VITE_API}/api/razorpay/verify-payment`, {
                         razorpay_order_id: response.razorpay_order_id,
                         razorpay_payment_id: response.razorpay_payment_id,
                         razorpay_signature: response.razorpay_signature,

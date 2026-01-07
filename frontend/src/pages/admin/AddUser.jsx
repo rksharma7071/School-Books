@@ -54,13 +54,13 @@ function AddUser() {
         setError("");
 
         try {
-            const res = await axios.post("/api/auth/signup", form);
+            const res = await axios.post(`${import.meta.env.VITE_API}/api/auth/signup`, form);
             user.userId = res.data?.user?.id;
             const payload = {
                 userId: res.data?.user?.id,
                 ...user
             }
-            const res1 = await axios.post("/api/user/permission", payload);
+            const res1 = await axios.post(`${import.meta.env.VITE_API}/api/user/permission`, payload);
             console.log("res1: ", res1);
 
             alert("User created successfully!");

@@ -16,7 +16,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
             if (confirm("Do you want to delete this Book?")) {
                 const token = localStorage.getItem("token");
 
-                const res = await axios.delete(`/api/book/${id}`, {
+                const res = await axios.delete(`${import.meta.env.VITE_API}/api/book/${id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 console.log("Delete Book: ", res);

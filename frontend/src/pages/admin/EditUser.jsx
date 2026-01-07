@@ -68,8 +68,8 @@ function EditUser() {
             const userId = loadedUser._id || loadedUser.id;
             console.log({ userId, ...permission });
 
-            await axios.patch(`/api/user/${userId}`, form);
-            await axios.patch(`/api/user/permission/${userId}`, { userId, ...permission });
+            await axios.patch(`${import.meta.env.VITE_API}/api/user/${userId}`, form);
+            await axios.patch(`${import.meta.env.VITE_API}/api/user/permission/${userId}`, { userId, ...permission });
 
             alert("User and permissions updated successfully!");
         } catch (err) {

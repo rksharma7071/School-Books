@@ -10,7 +10,7 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
 
   const publishReview = async (id) => {
     if (window.confirm("Do you want to update this Review?")) {
-      await axios.patch(`/api/review/${id}`, { approved: true });
+      await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: true });
       setRender(true);
       alert("Review has been updated successfully!");
     }
@@ -18,7 +18,7 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
 
   const unpublishReview = async (id) => {
     if (window.confirm("Do you want to update this Review?")) {
-      await axios.patch(`/api/review/${id}`, { approved: false });
+      await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: false });
       setRender(true);
       alert("Review has been updated successfully!");
     }
@@ -26,7 +26,7 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
 
   const deleteDiscount = async (id) => {  
     if (window.confirm("Do you want to delete this Review?")) {
-      await axios.delete(`/api/discount/${id}`);
+      await axios.delete(`${import.meta.env.VITE_API}/api/discount/${id}`);
       setRender(true);
       alert("Discount has been deleted successfully!");
     }

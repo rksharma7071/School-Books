@@ -2,7 +2,7 @@ import axios from "axios";
 
 const getOrder = async () => {
     try {
-        const { data } = await axios.get("/api/order");
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/api/order`);
         console.log("getOrder: ", data);
         return data ?? [];
     } catch (error) {
@@ -13,7 +13,7 @@ const getOrder = async () => {
 
 const getOrderById = async ({ params }) => {
     try {
-        const { data } = await axios.get(`/api/order/${params.id}`);
+        const { data } = await axios.get(`${import.meta.env.VITE_API}/api/order/${params.id}`);
         console.log("getOrderById: ", data);
         return data ?? {};
     } catch (error) {

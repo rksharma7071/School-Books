@@ -82,7 +82,7 @@ function EditBook() {
                 formData.append("images", file);
             });
 
-            await axios.patch(`/api/book/${loadedBook._id}`, formData);
+            await axios.patch(`${import.meta.env.VITE_API}/api/book/${loadedBook._id}`, formData);
 
             alert("Book updated successfully!");
             navigate(`/${import.meta.env.VITE_ADMIN}/books`);

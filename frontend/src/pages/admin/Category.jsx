@@ -12,10 +12,10 @@ function Category() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const bookRes = await axios.get("/api/book");
+        const bookRes = await axios.get(`${import.meta.env.VITE_API}/api/book`);
         const apiBooks = bookRes.data.data || [];
 
-        const res = await axios.get("/api/book/category");
+        const res = await axios.get(`${import.meta.env.VITE_API}/api/book/category`);
         const apiCategories = res.data.data || [];
 
         const mapped = apiCategories.map((cat) => {

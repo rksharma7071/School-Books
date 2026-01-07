@@ -12,7 +12,7 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
         e.preventDefault();
 
         try {
-            const res = await axios.post("/api/review", {
+            const res = await axios.post(`${import.meta.env.VITE_API}/api/review`, {
                 rating,
                 title,
                 body,

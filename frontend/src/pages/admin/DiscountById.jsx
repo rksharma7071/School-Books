@@ -42,7 +42,7 @@ function DiscountById() {
                 usage_limit: form.usage_limit === "" ? null : form.usage_limit,
             };
 
-            const res = await axios.patch(`/api/discount/${loader._id}`, form);
+            const res = await axios.patch(`${import.meta.env.VITE_API}/api/discount/${loader._id}`, form);
             console.log(res.data);
 
             console.log("Updated payload:", payload);

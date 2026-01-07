@@ -33,7 +33,7 @@ function FCart() {
             )
         );
         try {
-            await axios.post("/api/cart", {
+            await axios.post(`${import.meta.env.VITE_API}/api/cart`, {
                 userId: user.id,
                 bookId,
                 quantity: delta,
@@ -66,7 +66,7 @@ function FCart() {
         );
 
         try {
-            await axios.post("/api/cart", {
+            await axios.post(`${import.meta.env.VITE_API}/api/cart`, {
                 userId: user.id,
                 bookId,
                 quantity: delta,
@@ -87,7 +87,7 @@ function FCart() {
         );
 
         try {
-            await axios.post("/api/cart", {
+            await axios.post(`${import.meta.env.VITE_API}/api/cart`, {
                 userId: user.id,
                 bookId,
                 quantity: -item.quantity,

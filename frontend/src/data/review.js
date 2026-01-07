@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const getReview = async () => {
     try {
-        const res = await axios.get(`/api/review`);
+        const res = await axios.get(`${import.meta.env.VITE_API}/api/review`);
         const book = res?.data || {};
         console.log("getReview: ", book);
         return book;
@@ -16,9 +16,9 @@ export const getReview = async () => {
 export const getReview1 = async () => {
     try {
         const [usersRes, booksRes, reviewRes] = await Promise.all([
-            axios.get("/api/user"),
-            axios.get("/api/book"),
-            axios.get("/api/review"),
+            axios.get(`${import.meta.env.VITE_API}/api/user`),
+            axios.get(`${import.meta.env.VITE_API}/api/book`),
+            axios.get(`${import.meta.env.VITE_API}/api/review`),
         ]);
 
         const users = usersRes.data;
