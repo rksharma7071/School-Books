@@ -1,9 +1,11 @@
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { BookContext } from "../../context/School.jsx"
 
 function Register() {
     const navigate = useNavigate();
+    const { setToastConfig, setShowToast } = useContext(BookContext);
 
     const [form, setForm] = useState({
         username: "",
@@ -41,12 +43,19 @@ function Register() {
             setError("");
 
             await axios.post(`${import.meta.env.VITE_API}/api/auth/signup`, form);
-
+            setToastConfig({
+                type: "success",
+                message: "User signup successfully!",
+            });
+            setShowToast(true);
             navigate("/login", { replace: true });
         } catch (error) {
-            setError(
-                error.response?.data?.message || "Registration failed"
-            );
+            setError(error.response?.data?.message || "Registration failed");
+            setToastConfig({
+                type: "error",
+                message: error.response?.data?.messages || "Registration failed",
+            });
+            setShowToast(true);
         } finally {
             setLoading(false);
         }

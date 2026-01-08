@@ -1,6 +1,7 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
+import { BookContext } from "../../context/School.jsx";
 
 const formatDateTimeLocal = (date) => {
     if (!date) return "";
@@ -10,8 +11,8 @@ const formatDateTimeLocal = (date) => {
 function DiscountById() {
     const loader = useLoaderData();
     const navigate = useNavigate();
-    const [error, setError] = useState("");
-
+    // const [error, setError] = useState("");
+    const { setToastConfig, setShowToast } = useContext(BookContext);
     const [form, setForm] = useState({
         discount_code: loader.discount_code || "",
         discount_type: loader.discount_type || "percentage",
@@ -29,11 +30,14 @@ function DiscountById() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setError("");
 
         try {
             if (new Date(form.ends_at) <= new Date(form.starts_at)) {
-                setError("End date must be greater than start date");
+                setToastConfig({
+                    type: "error",
+                    message: "End date must be greater than start date",
+                });
+                setShowToast(true);
                 return;
             }
 
@@ -43,10 +47,21 @@ function DiscountById() {
             };
 
             const res = await axios.patch(`${import.meta.env.VITE_API}/api/discount/${loader._id}`, form);
-            navigate(`/discount/${loader._id}`)
+            setToastConfig({
+                type: "success",
+                message: "Discount updated successfully",
+            });
+            setShowToast(true);
+            navigate(`/${import.meta.env.VITE_ADMIN}/discount/${loader._id}`)
         } catch (error) {
             console.error("Error updating discount:", error);
-            setError("Failed to update discount");
+            setToastConfig({
+                type: "error",
+                message:
+                    error.response?.data?.message ||
+                    "Failed to update discount. Please try again.",
+            });
+            setShowToast(true);
         }
     };
 
@@ -66,11 +81,11 @@ function DiscountById() {
                         onSubmit={handleSubmit}
                         className="max-w-5xl mx-auto bg-white p-6 space-y-6"
                     >
-                        {error && (
+                        {/* {error && (
                             <div className="bg-red-100 text-red-700 p-2 rounded text-sm">
                                 {error}
                             </div>
-                        )}
+                        )} */}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Discount Code */}

@@ -36,21 +36,30 @@ export const BookProvider = ({ children }) => {
   useEffect(() => {
 
   }, [toastConfig, toastConfig])
-  // useEffect(() => {
-  //   const fetchBooks = async () => {
-  //     try {
-  //       setLoading(true)
-  //       const items = await getCartById({ params: { id: user.id || user._id } });
-  //       setCartItems(items);
-  //     } catch (err) {
-  //       console.error("Error: ", err.message);
-  //     } finally {
-  //       setLoading(false)
-  //     }
-  //   };
 
-  //   fetchBooks();
-  // }, [user, update]);
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchCart = async () => {
+      try {
+        setLoading(true);
+        const cart = await getCartById({
+          params: { id: user.id || user._id }
+        });
+        
+        setCartItems(cart?.items || []);
+      } catch (error) {
+        console.error("Error fetching cart:", error);
+        setCartItems([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchCart();
+  }, [user, update]);
+
+
 
   useEffect(() => {
     const fetchBooks = async () => {
@@ -71,8 +80,8 @@ export const BookProvider = ({ children }) => {
         setDiscounts(discountData.data)
         setPayments(paymentData.data)
         setReviews(reviewData.data)
-      } catch (err) {
-        console.error("Error: ", err.message);
+      } catch (error) {
+        console.error("Error: ", error.message);
       } finally {
         setLoading(false)
       }

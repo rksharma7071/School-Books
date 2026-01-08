@@ -5,30 +5,77 @@ import axios from "axios";
 import { Link } from 'react-router-dom';
 
 function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, toggleSelect, paginatedDiscount, selectedIds }) {
-  const { user } = useContext(BookContext);
+  const { user, setToastConfig, setShowToast } = useContext(BookContext);
   const role = user?.role;
 
+
   const publishReview = async (id) => {
-    if (window.confirm("Do you want to update this Review?")) {
-      await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: true });
+    if (!window.confirm("Do you want to update this review?")) return;
+
+    try {
+      await axios.patch(
+        `${import.meta.env.VITE_API}/api/review/${id}`,
+        { approved: true }
+      );
+
       setRender(true);
-      alert("Review has been updated successfully!");
+
+      setToastConfig({
+        type: "success",
+        message: "Review has been approved successfully.",
+      });
+      setShowToast(true);
+    } catch (error) {
+      console.error("Review update failed:", error);
+
+      setToastConfig({
+        type: "error",
+        message: error.response?.data?.message || "Failed to update the review. Please try again.",
+      });
+      setShowToast(true);
     }
   };
+
 
   const unpublishReview = async (id) => {
     if (window.confirm("Do you want to update this Review?")) {
-      await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: false });
-      setRender(true);
-      alert("Review has been updated successfully!");
+      try {
+        await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: false });
+        setRender(true);
+        // alert("Review has been updated successfully!");
+        setToastConfig({
+          type: "success",
+          message: "Review has been updated successfully!",
+        });
+        setShowToast(true);
+      } catch (error) {
+        setToastConfig({
+          type: "error",
+          message: error.response?.data?.message || "Failed to update the review. Please try again.",
+        });
+        setShowToast(true);
+      }
+
     }
   };
 
-  const deleteDiscount = async (id) => {  
+  const deleteDiscount = async (id) => {
     if (window.confirm("Do you want to delete this Review?")) {
-      await axios.delete(`${import.meta.env.VITE_API}/api/discount/${id}`);
-      setRender(true);
-      alert("Discount has been deleted successfully!");
+      try {
+        await axios.delete(`${import.meta.env.VITE_API}/api/discount/${id}`);
+        setRender(true);
+        // alert("Discount has been deleted successfully!");
+        setToastConfig({
+          type: "success",
+          message: "Discount has been deleted successfully!",
+        });
+      } catch (error) {
+        setToastConfig({
+          type: "error",
+          message: error.response?.data?.message || "Failed to update the review. Please try again.",
+        });
+        setShowToast(true);
+      }
     }
   };
 

@@ -1,29 +1,37 @@
 import axios from 'axios';
+import { useContext } from 'react';
 import { MdDelete } from 'react-icons/md';
 import { useLoaderData, useNavigate } from 'react-router-dom'
+import { BookContext } from '../../context/School';
 
 function CartById() {
     const cart = useLoaderData();
     const navigate = useNavigate();
+    const { setToastConfig, setShowToast } = useContext(BookContext);
+    
+    
     const totalAmount = cart.items.reduce(
-        (sum, item) => sum + item.quantity * item.book.price,
-        0
+        (sum, item) => sum + item.quantity * item.book.price, 0
     );
 
-    const onDelete = async (userId) => {
+    const onDelete = async () => {
         try {
             if (window.confirm("Do you want to delete this Review?")) {
-                const res = await axios.post(`${import.meta.env.VITE_API}/api/cart`, {
-                    userId: userId,
-                    items: []
+                const res = await axios.delete(`${import.meta.env.VITE_API}/api/cart/${cart._id}`);
+                setToastConfig({
+                    type: "success",
+                    message: "Cart has been deleted successfully!",
                 });
-                
-                alert("Cart has been deleted successfully!");
+                setShowToast(true);
                 navigate(`/${import.meta.env.VITE_ADMIN}/cart`)
-                
+
             }
         } catch (error) {
-            console.log("Cart Delete Error: ", error);
+            setToastConfig({
+                type: "error",
+                message: error?.message || "Cart Delete Error",
+            });
+            setShowToast(true);
         }
     }
 

@@ -3,13 +3,39 @@ import { Cart } from "../models/cart.model.js";
 import { User } from "../models/user.model.js";
 
 async function getAllCart(req, res) {
-    const cart = await Cart.find({});
-    return res.json(cart || []);
+    try {
+        await Cart.deleteMany({
+            $or: [{ items: { $exists: false } }, { items: { $size: 0 } }],
+        });
+
+        const carts = await Cart.find({});
+
+        return res.status(200).json(carts || []);
+    } catch (error) {
+        console.error("Get All Cart Error:", error);
+        return res.status(500).json({
+            message: "Failed to fetch carts",
+        });
+    }
 }
 
 async function getCartByUserId(req, res) {
-    const cart = await Cart.findOne({ userId: req.params.id });
-    return res.json(cart);
+    try {
+        const { id } = req.params;
+
+        const cart = await Cart.findOne({ userId: id });
+
+        if (!cart) {
+            return res
+                .status(404)
+                .json({ message: "Cart not found for this user" });
+        }
+        return res.status(200).json(cart);
+    } catch (error) {
+        console.error("Get Cart By UserId Error:", error);
+
+        return res.status(500).json({ message: "Failed to fetch cart" });
+    }
 }
 
 async function createOrUpdateCart(req, res) {

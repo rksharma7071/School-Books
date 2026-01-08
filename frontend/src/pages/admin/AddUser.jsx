@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import PermissionForm from "../../components/admin/PermissionForm.jsx";
+import { BookContext } from "../../context/School.jsx";
 
 function AddUser() {
     const [form, setForm] = useState({
@@ -11,6 +12,8 @@ function AddUser() {
         password: "",
         role: "customer",
     });
+    const { setToastConfig, setShowToast } = useContext(BookContext);
+
     const [user, setUser] = useState({
         createUser: false,
         updateUser: false,
@@ -62,8 +65,12 @@ function AddUser() {
             }
             const res1 = await axios.post(`${import.meta.env.VITE_API}/api/user/permission`, payload);
 
-            alert("User created successfully!");
-
+            // alert("User created successfully!");
+            setToastConfig({
+                type: "success",
+                message: "User created successfully.",
+            });
+            setShowToast(true);
             setForm({
                 username: "",
                 first_name: "",
@@ -83,9 +90,14 @@ function AddUser() {
                 readBook: false,
             })
             setUsernameTouched(false);
-        } catch (err) {
-            console.error("Error creating user:", err);
-            setError(err.response?.data?.message || "Failed to create user");
+        } catch (error) {
+            console.error("Error creating user:", error);
+            // setError(error.response?.data?.message || "Failed to create user");
+            setToastConfig({
+                type: "error",
+                message: error.response?.data?.message || "Failed to create discount. Check console for details.",
+            });
+            setShowToast(true);
         }
     };
 

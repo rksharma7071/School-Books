@@ -56,8 +56,8 @@ async function handleAuthSignUp(req, res) {
                 role: newUser.role,
             },
         });
-    } catch (err) {
-        console.error(err.message);
+    } catch (error) {
+        console.error(error.message);
         res.status(500).json({ message: "Server error" });
     }
 }
@@ -108,8 +108,8 @@ async function handleAuthLogin(req, res) {
                 role: user.role,
             },
         });
-    } catch (err) {
-        console.error("Login Error:", err);
+    } catch (error) {
+        console.error("Login Error:", error);
         return res.status(500).json({ message: "Server error" });
     }
 }
@@ -145,8 +145,8 @@ async function handleAuthChangePassword(req, res) {
         await user.save();
 
         res.json({ message: "Password changed successfully." });
-    } catch (err) {
-        console.error(err.message);
+    } catch (error) {
+        console.error(error.message);
         res.status(500).json({ message: "Server error" });
     }
 }

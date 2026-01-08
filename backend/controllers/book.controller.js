@@ -144,14 +144,14 @@ export const createBook = async (req, res) => {
             message: "Book created successfully",
             book: created,
         });
-    } catch (err) {
-        console.error("createBook error:", err);
+    } catch (error) {
+        console.error("createBook error:", error);
 
-        if (err.name === "ValidationError") {
+        if (error.name === "ValidationError") {
             return res.status(400).json({
                 success: false,
-                message: err.message,
-                errors: err.errors,
+                message: error.message,
+                errors: error.errors,
             });
         }
 
@@ -285,12 +285,12 @@ export const updateBook = async (req, res) => {
             message: "Book updated successfully",
             book,
         });
-    } catch (err) {
-        console.error(err);
+    } catch (error) {
+        console.error(error);
         return res.status(500).json({
             success: false,
             message: "Failed to update book",
-            error: err.message,
+            error: error.message,
         });
     }
 };
@@ -301,6 +301,21 @@ export const getAllCategories = async (req, res) => {
         return res.status(200).json({
             success: true,
             count: category.length,
+            data: category,
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: false,
+            message: "Server error while fetching category",
+        });
+    }
+};
+
+export const getCategoriesById = async (req, res) => {
+    try {
+        const category = await Category.findById(req.params.id);
+        return res.status(200).json({
+            success: true,
             data: category,
         });
     } catch (error) {

@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import axios from "axios";
 import BookImages from "../../components/admin/BookImages.jsx";
+import { BookContext } from "../../context/School.jsx";
 
 function EditBook() {
     const [imageMeta, setImageMeta] = useState({
         removedPublicIds: [],
         order: [],
     });
-
+    const { setToastConfig, setShowToast } = useContext(BookContext);
     const loadedBook = useLoaderData();
     const navigate = useNavigate();
 
@@ -31,23 +32,43 @@ function EditBook() {
     const [images, setImages] = useState([]);
 
     useEffect(() => {
-        if (loadedBook) {
-            setForm({
-                name: loadedBook.name || "",
-                author: loadedBook.author || "",
-                subject: loadedBook.subject || "",
-                category: loadedBook.category?._id || loadedBook.category || "",
-                classLevel: loadedBook.classLevel || "",
-                isbn: loadedBook.isbn || "",
-                language: loadedBook.language || "",
-                price: loadedBook.price || "",
-                cost: loadedBook.cost || "",
-                publisher: loadedBook.publisher || "",
-                stockQty: loadedBook.stockQty || "",
-                description: loadedBook.description || "",
-                isActive: loadedBook.isActive ? true : false,
-            });
-        }
+        if (!loadedBook) return;
+
+        const fetchCategory = async () => {
+            try {
+                if (loadedBook.category) {
+                    const res = await axios.get(
+                        `${import.meta.env.VITE_API}/api/book/category/${loadedBook.category}`
+                    );
+
+                    setForm((prev) => ({
+                        ...prev,
+                        category: res.data.data.name || "",
+                    }));
+                }
+            } catch (error) {
+                console.error("Get Category Error:", error);
+            }
+        };
+
+        // Set base book data first
+        setForm((prev) => ({
+            ...prev,
+            name: loadedBook.name || "",
+            author: loadedBook.author || "",
+            subject: loadedBook.subject || "",
+            classLevel: loadedBook.classLevel || "",
+            isbn: loadedBook.isbn || "",
+            language: loadedBook.language || "",
+            price: loadedBook.price || "",
+            cost: loadedBook.cost || "",
+            publisher: loadedBook.publisher || "",
+            stockQty: loadedBook.stockQty || "",
+            description: loadedBook.description || "",
+            isActive: Boolean(loadedBook.isActive),
+        }));
+
+        fetchCategory();
     }, [loadedBook]);
 
     const handleChange = (e) => {
@@ -84,12 +105,22 @@ function EditBook() {
 
             await axios.patch(`${import.meta.env.VITE_API}/api/book/${loadedBook._id}`, formData);
 
-            alert("Book updated successfully!");
+            // alert("Book updated successfully!");
+            setToastConfig({
+                type: "success",
+                message: "Book updated successfully.",
+            });
+            setShowToast(true);
             navigate(`/${import.meta.env.VITE_ADMIN}/books`);
-            
+
         } catch (error) {
             console.error("Edit Book Error:", error);
-            alert(error.response?.data?.message || "Failed to update book");
+            // alert(error.response?.data?.message || "Failed to update book");
+            setToastConfig({
+                type: "error",
+                message: error.response?.data?.message || "Failed to update book. Please try again.",
+            });
+            setShowToast(true);
         }
     };
 

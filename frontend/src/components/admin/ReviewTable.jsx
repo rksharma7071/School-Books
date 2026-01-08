@@ -5,36 +5,74 @@ import axios from "axios";
 import Review from '../frontend/Review.jsx';
 
 function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggleSelect, paginatedReviews, selectedIds }) {
-    const { user } = useContext(BookContext);
+    const { user, setToastConfig, setShowToast } = useContext(BookContext);
     const role = user?.role;
 
     const publishReview = async (id) => {
         if (window.confirm("Do you want to update this Review?")) {
-            await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: true });
-            setRender(true);
-            alert("Review has been updated successfully!");
+            try {
+                await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: true });
+                // alert("Review has been updated successfully!");
+                setRender(true);
+                setToastConfig({
+                    type: "success",
+                    message: "Review has been updated successfully!",
+                });
+                setShowToast(true);
+            } catch (error) {
+                setToastConfig({
+                    type: "error",
+                    message: error.response?.data?.message || "Failed to update the review. Please try again.",
+                });
+                setShowToast(true);
+            }
+
         }
     };
 
     const unpublishReview = async (id) => {
         if (window.confirm("Do you want to update this Review?")) {
-            await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: false });
-            setRender(true);
-            alert("Review has been updated successfully!");
+            try {
+                await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: false });
+                setRender(true);
+                // alert("Review has been updated successfully!");
+                setToastConfig({
+                    type: "success",
+                    message: "Review has been updated successfully!",
+                });
+                setShowToast(true);
+            } catch (error) {
+                setToastConfig({
+                    type: "error",
+                    message: error.response?.data?.message || "Failed to update the review. Please try again.",
+                });
+                setShowToast(true);
+            }
         }
     };
     const truncateWords = (text, count = 10) => {
         if (!text) return "";
         const words = text.split(" ");
-        return words.length > count
-            ? words.slice(0, count).join(" ") + "..."
-            : text;
+        return words.length > count ? words.slice(0, count).join(" ") + "..." : text;
     };
     const deleteReview = async (id) => {
         if (window.confirm("Do you want to delete this Review?")) {
-            await axios.delete(`${import.meta.env.VITE_API}/api/review/${id}`);
-            setRender(true);
-            alert("Review has been deleted successfully!");
+            try {
+                await axios.delete(`${import.meta.env.VITE_API}/api/review/${id}`);
+                setRender(true);
+                alert("Review has been deleted successfully!");
+                setToastConfig({
+                    type: "success",
+                    message: "Review has been deleted successfully!",
+                });
+                setShowToast(true);
+            } catch (error) {
+                setToastConfig({
+                    type: "error",
+                    message: error.response?.data?.message || "Failed to update the review. Please try again.",
+                });
+                setShowToast(true);
+            }
         }
     };
 

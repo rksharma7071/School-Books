@@ -10,6 +10,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
     const { user } = useContext(BookContext);
     const role = user?.role;
     const navigate = useNavigate();
+    const { setToastConfig, setShowToast } = useContext(BookContext);
 
     const deleteBook = async (id) => {
         try {
@@ -19,11 +20,21 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
                 const res = await axios.delete(`${import.meta.env.VITE_API}/api/book/${id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
-                alert("Book has been deleted successfully!");
+                // alert("Book has been deleted successfully!");
+                setToastConfig({
+                    type: "success",
+                    message: "Book has been deleted successfully.",
+                });
+                setShowToast(true);
             }
         } catch (error) {
-            console.error("Delete error:", error.response?.data || error.message);
-            alert(error.response?.data?.message || "Delete failed");
+            // console.error("Delete error:", error.response?.data || error.message);
+            // alert(error.response?.data?.message || "Delete failed");
+            setToastConfig({
+                type: "error",
+                message: error.response?.data?.message || "Failed to update book. Please try again.",
+            });
+            setShowToast(true);
         }
     };
 

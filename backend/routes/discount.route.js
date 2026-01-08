@@ -1,5 +1,6 @@
 import express from "express";
 import {
+    applyDiscount,
     createDiscount,
     deleteDiscount,
     getAllDiscount,
@@ -16,5 +17,7 @@ router
     .get(getDiscountById)
     .patch(updateDiscount)
     .delete(deleteDiscount);
+
+router.post("/apply", applyDiscount);
 
 export default router;

@@ -29,6 +29,11 @@ function Book() {
                 setBooks(mapped);
             } catch (error) {
                 console.error("Error fetching books:", error.message);
+                setToastConfig({
+                    type: "error",
+                    message: error.response?.data?.message || "Failed to create discount. Check console for details.",
+                });
+                setShowToast(true);
             }
         };
 

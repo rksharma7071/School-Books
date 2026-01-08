@@ -4,7 +4,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { BookContext } from "../../context/School.jsx";
 
 function Login() {
-    const { user, setUser } = useContext(BookContext);
+    const { user, setUser, setToastConfig, setShowToast } = useContext(BookContext);
 
     const navigate = useNavigate();
 
@@ -26,17 +26,28 @@ function Login() {
             const { token, user } = res.data;
 
             setUser(user);
+
             localStorage.setItem("token", token);
             localStorage.setItem("user", JSON.stringify(user));
-
+            setToastConfig({
+                type: "success",
+                message: "Welcome back! You have logged in successfully.",
+            });
+            setShowToast(true);
             if (user.role == "admin") {
                 navigate(`/${import.meta.env.VITE_ADMIN}`, { replace: true });
             } else {
                 navigate(`/`, { replace: true });
             }
 
+
         } catch (error) {
-            setError(error.response?.data?.message || "Invalid email or password");
+            // setError(error.response?.data?.message || "Invalid email or password");
+            setToastConfig({
+                type: "error",
+                message: error.response?.data?.message || "Update failed",
+            });
+            setShowToast(true);
 
         } finally {
             setLoading(false);

@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 function PaymentTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedPayment, selectedIds }) {
     const { user } = useContext(BookContext);
     const role = user?.role;
-    console.log(paginatedPayment);
 
     return (
         <table className="min-w-full text-sm">

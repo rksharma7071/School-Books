@@ -9,16 +9,18 @@ function FCart() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast, update, setUpdate, loading, setLoading } = useContext(BookContext);
     const navigate = useNavigate();
 
+    const safeCartItems = Array.isArray(cartItems) ? cartItems : cartItems.items || [];
+
     const { totalItems, totalAmount } = useMemo(() => {
-        return cartItems.reduce(
+        return safeCartItems.reduce(
             (acc, item) => {
                 acc.totalItems += item.quantity;
-                acc.totalAmount += item.quantity * item.book?.price;
+                acc.totalAmount += item.quantity * (item.book?.price || 0);
                 return acc;
             },
             { totalItems: 0, totalAmount: 0 }
         );
-    }, [cartItems]);
+    }, [safeCartItems]);
 
     const updateQuantity = async (bookId, delta) => {
         if (!user) return;
@@ -112,23 +114,9 @@ function FCart() {
 
     useEffect(() => {
         setUpdate(prev => !prev);
+        setCartItems(safeCartItems);
     }, []);
 
-    useEffect(() => {
-        const fetchBooks = async () => {
-            try {
-                setLoading(true)
-                const items = await getCartById({ params: { id: user.id || user._id } });
-                setCartItems(items);
-            } catch (err) {
-                console.error("Error: ", err.message);
-            } finally {
-                setLoading(false)
-            }
-        };
-
-        fetchBooks();
-    }, [user, update]);
 
     const handleCheckout = () => {
         navigate('/checkout')
@@ -150,7 +138,7 @@ function FCart() {
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-2 space-y-4">
-                        {cartItems.map((item) => (
+                        {safeCartItems.map((item) => (
                             <CartItem key={String(item.bookId)} item={item} updateQuantityByInput={updateQuantityByInput} updateQuantity={updateQuantity} removeItemFromCart={removeItemFromCart} />
                         ))}
                     </div>

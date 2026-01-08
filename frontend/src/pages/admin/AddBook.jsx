@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
 import axios from "axios";
 import ImageGridManager from "../../components/admin/ImageGridManager.jsx";
 import { useNavigate } from "react-router-dom";
+import { BookContext } from "../../context/School.jsx";
 
 function AddBook() {
     const [form, setForm] = useState({
@@ -22,6 +23,7 @@ function AddBook() {
     });
     const [images, setImages] = useState([]);
     const navigate = useNavigate();
+    const { setToastConfig, setShowToast } = useContext(BookContext);
 
 
     const handleChange = (e) => {
@@ -57,8 +59,13 @@ function AddBook() {
                     "Content-Type": "multipart/form-data",
                 },
             });
+            setToastConfig({
+                type: "success",
+                message: "Book created successfully.",
+            });
+            setShowToast(true);
             navigate(`/${import.meta.env.VITE_ADMIN}/books`)
-            
+
             setForm({
                 name: "",
                 author: "",
@@ -76,12 +83,14 @@ function AddBook() {
                 isActive: true,
             });
             setImages([]);
-        } catch (err) {
-            console.error("❌ Error creating book:", err);
-            alert(
-                err.response?.data?.message ||
-                "Failed to create book. Check console for details."
-            );
+        } catch (error) {
+            console.error("❌ Error creating book:", error);
+            // alert(error.response?.data?.message || "Failed to create book. Check console for details.");
+            setToastConfig({
+                type: "error",
+                message: error.response?.data?.message || "Failed to create book. Check console for details.",
+            });
+            setShowToast(true);
         }
     };
 

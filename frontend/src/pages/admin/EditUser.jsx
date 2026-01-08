@@ -1,10 +1,12 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { useLoaderData } from "react-router-dom";
 import PermissionForm from "../../components/admin/PermissionForm.jsx";
+import { BookContext } from "../../context/School.jsx";
 
 function EditUser() {
     const { user: loadedUser, permission: loadedPermission } = useLoaderData();
+    const { setToastConfig, setShowToast } = useContext(BookContext);
 
     const [form, setForm] = useState({
         username: "",
@@ -68,11 +70,20 @@ function EditUser() {
             const userId = loadedUser._id || loadedUser.id;
             await axios.patch(`${import.meta.env.VITE_API}/api/user/${userId}`, form);
             await axios.patch(`${import.meta.env.VITE_API}/api/user/permission/${userId}`, { userId, ...permission });
-
-            alert("User and permissions updated successfully!");
-        } catch (err) {
-            console.log("err", err);
-            setError(err.message || "Update failed");
+            setToastConfig({
+                type: "success",
+                message: "User and permissions updated successfully!",
+            });
+            setShowToast(true);
+            // alert("User and permissions updated successfully!");
+        } catch (error) {
+            console.log("error", error);
+            // setError(error.message || "Update failed");
+            setToastConfig({
+                type: "error",
+                message: error.message || "Update failed",
+            });
+            setShowToast(true);
         }
     };
 

@@ -140,13 +140,9 @@ async function updateOrder(req, res) {
             };
         }
 
-        if (shipping_address) {
-            order.shipping_address = shipping_address;
-        }
+        if (shipping_address) order.shipping_address = shipping_address;
 
-        if (billing_address) {
-            order.billing_address = billing_address;
-        }
+        if (billing_address) order.billing_address = billing_address;
 
         await order.save();
 

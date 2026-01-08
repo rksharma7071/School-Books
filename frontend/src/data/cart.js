@@ -42,13 +42,11 @@ export const getCartById = async ({ params }) => {
     try {
         const id = params.id;
         const carts = await getCart();
-
-        const cart = carts.find((cart) => cart.userId === id);
-
+        const cart = carts.find((cart) => cart._id === id || cart.userId === id);
         if (!cart) {
             return [];
         }
-        return cart.items;
+        return cart;
     } catch (error) {
         console.error("Get Cart By Id Error:", error);
         throw (

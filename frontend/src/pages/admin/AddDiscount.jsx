@@ -1,5 +1,6 @@
 import axios from "axios";
-import React, { useState } from "react";
+import React, { useContext, useState } from "react";
+import { BookContext } from "../../context/School";
 
 function AddDiscount() {
     const [form, setForm] = useState({
@@ -11,7 +12,7 @@ function AddDiscount() {
         usage_limit: "",
         active: true,
     });
-
+    const { setToastConfig, setShowToast } = useContext(BookContext);
     const [error, setError] = useState("");
 
     const handleChange = (e) => {
@@ -26,7 +27,12 @@ function AddDiscount() {
 
         try {
             const res = await axios.post(`${import.meta.env.VITE_API}/api/discount`, form);
-            alert("Discount created successfully!");
+            setToastConfig({
+                type: "success",
+                message: "Discount created successfully.",
+            });
+            setShowToast(true);
+            // alert("Discount created successfully!");
 
             setForm({
                 discount_code: "",
@@ -37,9 +43,14 @@ function AddDiscount() {
                 usage_limit: "",
                 active: true,
             });
-        } catch (err) {
-            console.error("Error creating discount:", err);
-            setError("Failed to create discount");
+        } catch (error) {
+            console.error("Error creating discount:", error);
+            // setError("Failed to create discount");
+            setToastConfig({
+                type: "error",
+                message: error.response?.data?.message || "Failed to create discount. Check console for details.",
+            });
+            setShowToast(true);
         }
     };
 

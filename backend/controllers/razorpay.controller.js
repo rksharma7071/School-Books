@@ -68,7 +68,7 @@ export async function verifyRazorpayPayment(req, res) {
             currency: "INR",
         });
 
-        order.status = "fulfilled";
+        // order.status = "fulfilled";
         order.paymentId = razorpay_payment_id;
         await order.save();
 

@@ -11,7 +11,7 @@ function Cart() {
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [render, setRender] = useState(false);
-
+    
     useEffect(() => {
         async function fetchCart() {
             const data = await getCart();

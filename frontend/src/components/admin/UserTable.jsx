@@ -7,16 +7,26 @@ import { useContext } from 'react';
 
 function UserTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedUsers, selectedIds }) {
     const navigate = useNavigate();
-    const { user } = useContext(BookContext);
+    const { user, setToastConfig, setShowToast } = useContext(BookContext);
     const role = user?.role;
     const deleteUser = async (id) => {
         try {
             if (window.confirm("Do you want to delete this User?")) {
                 const res = await axios.delete(`${import.meta.env.VITE_API}/api/user/${id}`);
-                alert("User has been deleted successfully!")
+                // alert("User has been deleted successfully!")
+                setToastConfig({
+                    type: "success",
+                    message: "User has been deleted successfully!",
+                });
+                setShowToast(true);
             }
         } catch (error) {
-            console.error("Delete error:", error);
+            // console.error("Delete error:", error);
+            setToastConfig({
+                type: "error",
+                message: error.response?.data?.message || "Failed to update the review. Please try again.",
+            });
+            setShowToast(true);
         }
     };
 

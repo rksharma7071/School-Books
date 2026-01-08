@@ -43,6 +43,22 @@ function SideMenu() {
                     </Link>
                     <p className="px-3 pt-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Management</p>
                     <div>
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/books`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
+                            <span className="flex items-center gap-3">
+                                <span className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">B</span>
+                                Books
+                            </span>
+                        </NavLink>
+                    </div>
+                    <div>
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/categories`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
+                            <span className="flex items-center gap-3">
+                                <span className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">B</span>
+                                Categories
+                            </span>
+                        </NavLink>
+                    </div>
+                    {/* <div>
                         <button onClick={() => toggleMenu("books")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg hover:cursor-pointer">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">B</span>
@@ -96,10 +112,17 @@ function SideMenu() {
                             </div>
                         )}
 
-                    </div>
-
+                    </div> */}
 
                     <div>
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/users`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
+                            <span className="flex items-center gap-3">
+                                <span className="h-6 w-6 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">U</span>
+                                Users
+                            </span>
+                        </NavLink>
+                    </div>
+                    {/* <div>
                         <button onClick={() => toggleMenu("users")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">U</span>
@@ -141,9 +164,16 @@ function SideMenu() {
                                 }
                             </div>
                         )}
-                    </div>
-
+                    </div> */}
                     <div>
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/review`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                            <span className="flex items-center gap-3">
+                                <span className="h-6 w-6 rounded bg-violet-50 text-cyan-600 flex items-center justify-center text-xs">R</span>
+                                Review
+                            </span>
+                        </NavLink>
+                    </div>
+                    {/* <div>
                         <button onClick={() => toggleMenu("review")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-cyan-50 text-cyan-600 flex items-center justify-center text-xs">R</span>
@@ -169,7 +199,7 @@ function SideMenu() {
                                 </NavLink>
                             </div>
                         )}
-                    </div>
+                    </div> */}
 
                     <div>
                         <NavLink to={`/${import.meta.env.VITE_ADMIN}/order`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
@@ -190,12 +220,20 @@ function SideMenu() {
                     <div>
                         <NavLink to={`/${import.meta.env.VITE_ADMIN}/payment`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
-                                <span className="h-6 w-6 rounded bg-violet-50 text-violet-600 flex items-center justify-center text-xs">C</span>
+                                <span className="h-6 w-6 rounded bg-violet-50 text-violet-600 flex items-center justify-center text-xs">P</span>
                                 Payment
                             </span>
                         </NavLink>
                     </div>
                     <div>
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/discount`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                            <span className="flex items-center gap-3">
+                                <span className="h-6 w-6 rounded bg-violet-50 text-cyan-600 flex items-center justify-center text-xs">D</span>
+                                Discount
+                            </span>
+                        </NavLink>
+                    </div>
+                    {/* <div>
                         <button onClick={() => toggleMenu("discount")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-cyan-50 text-cyan-600 flex items-center justify-center text-xs">D</span>
@@ -235,7 +273,7 @@ function SideMenu() {
                                 </NavLink>
                             </div>
                         )}
-                    </div>
+                    </div> */}
                     <div>
                         <button onClick={() => toggleMenu("settings")} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
