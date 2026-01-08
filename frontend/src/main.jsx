@@ -41,6 +41,9 @@ import BookById from './pages/frontend/BookById.jsx'
 import Checkout from './pages/frontend/Checkout.jsx'
 import { StrictMode } from 'react'
 import NotFound from './components/frontend/NotFound.jsx'
+import { SpeedInsights } from "@vercel/speed-insights/react"
+import { Analytics } from "@vercel/analytics/react";
+
 
 const router = createBrowserRouter([
   {
@@ -100,7 +103,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')).render(
   <BookProvider>
     <StrictMode>
-      <RouterProvider router={router}></RouterProvider>
+      <RouterProvider router={router} />
+      <SpeedInsights />
+      <Analytics />
     </StrictMode>
   </BookProvider>
 )
