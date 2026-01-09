@@ -140,7 +140,7 @@ function Header() {
 
                                     <div className="py-2">
                                         <Link to="/profile" className="menu-item">My Profile</Link>
-                                        <Link to="/orders/my-orders" className="menu-item">My Orders</Link>
+                                        <Link to="/profile/orders" className="menu-item">My Orders</Link>
                                         <Link to="/settings" className="menu-item">Settings</Link>
                                     </div>
 

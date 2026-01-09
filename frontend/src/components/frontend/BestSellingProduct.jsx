@@ -3,7 +3,7 @@ import { BookContext } from '../../context/School.jsx';
 import ProductCard from './ProductCard.jsx';
 
 function BestSellingProduct() {
-    const { user, books, carts, orders, users, discounts, payments, reviews, cartItems, setCartItems, setLoading } = useContext(BookContext);
+    const { user, books, cartItems, setCartItems, loading, setLoading } = useContext(BookContext);
 
     useEffect(() => {
         setLoading(true);
@@ -11,7 +11,9 @@ function BestSellingProduct() {
         if (books && books.length > 0) {
             setLoading(false);
         }
-    }, [books]);
+    }, [books, setLoading]);
+
+    // console.log("Loading: ", loading);
 
 
     return (
@@ -25,14 +27,21 @@ function BestSellingProduct() {
 
                     <a href="/best-sellers" className="text-sm font-medium text-blue-600 hover:text-blue-700">View All →</a>
                 </div>
-
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                    {books.length > 0 &&
-                        books
-                            .filter(book => book.isActive === true)
-                            .slice(0, 10)
-                            .map((book) => <ProductCard key={book._id} book={book} user={user} cartItems={cartItems} setCartItems={setCartItems} />)}
-                </div>
+                {loading ? (
+                    <div className="flex justify-center items-center h-40">
+                        <span className="text-gray-500 text-lg animate-pulse">
+                            Loading books...
+                        </span>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                        {books.length > 0 &&
+                            books
+                                .filter(book => book.isActive === true)
+                                .slice(0, 10)
+                                .map((book) => <ProductCard key={book._id} book={book} user={user} cartItems={cartItems} setCartItems={setCartItems} />)}
+                    </div>
+                )}
             </div>
         </div>
 

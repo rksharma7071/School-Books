@@ -54,8 +54,8 @@ function Checkout() {
         setDiscountLoading(true);
         try {
             // console.log("data: ",{ code: coupon, amount: subtotal });
-            const { data } = await axios.post(`${import.meta.env.VITE_API}/api/discount/apply`,{ code: coupon, amount: subtotal });
-            
+            const { data } = await axios.post(`${import.meta.env.VITE_API}/api/discount/apply`, { code: coupon, amount: subtotal });
+
             setDiscountAmount(data.discountAmount);
             setAppliedCoupon(coupon);
 
@@ -104,11 +104,23 @@ function Checkout() {
                     billing_address: `${shipping.name}%20${shipping.phone}%20${shipping.address}%20${shipping.city}%20${shipping.state}%20${shipping.pincode}`,
                 }
             );
+            const addressRes = await axios.post(`${import.meta.env.VITE_API}/api/address`, {
+                userId: user.id || user_id,
+                fullName: shipping.name,
+                phone: shipping.phone,
+                address: shipping.address,
+                city: shipping.city,
+                state: shipping.state,
+                pincode: shipping.pincode,
+                country: "India",
+                isDefault: false
+            })
+            console.log("Address: ", addressRes.data);
+
 
             const order = orderRes.data;
 
-            const razorpayRes = await axios.post(
-                `${import.meta.env.VITE_API}/api/razorpay/create-order`,
+            const razorpayRes = await axios.post(`${import.meta.env.VITE_API}/api/razorpay/create-order`,
                 { orderId: order._id }
             );
 

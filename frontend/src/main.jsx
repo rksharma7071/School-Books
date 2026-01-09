@@ -43,19 +43,45 @@ import { StrictMode } from 'react'
 import NotFound from './components/frontend/NotFound.jsx'
 import { SpeedInsights } from "@vercel/speed-insights/react"
 import { Analytics } from "@vercel/analytics/react";
+import Profile from './pages/frontend/Profile.jsx'
+import getProfile from './data/profile.js'
+import PersonalDetails from './pages/frontend/PersonalDetails.jsx'
+import Addresses from './pages/frontend/Addresses.jsx'
+import MyOrders from './pages/frontend/MyOrders.jsx'
+import OrderDetails from './pages/frontend/OrderDetails.jsx'
+import AddressList from './pages/frontend/AddressList.jsx'
+import EditAddress from './pages/frontend/EditAddress.jsx'
+import ChangePassword from './pages/frontend/ChangePassword.jsx'
+import AddAddress from './pages/frontend/AddAddress.jsx'
 
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Base />,
-    errorElement: <NotFound />,
+    // errorElement: <NotFound />,
     children: [
       { path: "", element: <Home /> },
       { path: "cart", element: <FCart /> },
       { path: "products/:id", element: <BookById />, loader: getBookById },
       { path: "contact", element: <Contact /> },
       { path: "checkout", element: <Checkout /> },
+      {
+        path: "profile", element: <Profile />, loader: getProfile,
+        children: [
+          { index: true, element: <PersonalDetails />, loader: getProfile },
+          { path: "orders", element: <MyOrders />, loader: getProfile },
+          { path: "orders/:id", element: <OrderDetails />, loader: getOrderById },
+          { path: "address", element: <AddressList />, loader: getProfile },
+          { path: "address/new", element: <AddAddress />, loader: getProfile },
+          { path: "address/:id/edit", element: <EditAddress />, loader: getProfile },
+          { path: "change-password", element: <ChangePassword />, loader: getProfile },
+        ]
+      },
+      {
+        path: "profile/address", element: <Profile />, loader: getProfile,
+      },
+
     ]
   },
   { path: "/login", element: <Login />, errorElement: <NotFound />, },

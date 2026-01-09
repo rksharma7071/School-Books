@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import nodemailer from "nodemailer";
-import {User} from "../models/user.model.js";
+import { User } from "../models/user.model.js";
 
 function generateOTP() {
     return Math.floor(100000 + Math.random() * 900000).toString();
@@ -32,7 +32,7 @@ async function handleAuthSignUp(req, res) {
             password: hashedPassword,
             first_name,
             last_name,
-            role : role || "customer"
+            role: role || "customer",
         });
 
         await newUser.save();
@@ -116,6 +116,7 @@ async function handleAuthLogin(req, res) {
 
 async function handleAuthChangePassword(req, res) {
     const { email, oldPassword, newPassword } = req.body;
+    console.log({ email, oldPassword, newPassword });
 
     if (!email || !oldPassword || !newPassword) {
         return res.status(400).json({
@@ -133,7 +134,9 @@ async function handleAuthChangePassword(req, res) {
         // Compare old password
         const isMatch = await bcrypt.compare(oldPassword, user.password);
         if (!isMatch) {
-            return res.status(400).json({ message: "Old password is incorrect." });
+            return res
+                .status(400)
+                .json({ message: "Old password is incorrect." });
         }
 
         // Hash new password

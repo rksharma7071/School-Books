@@ -135,7 +135,7 @@ function Header() {
                                         </Link>
 
                                         <Link
-                                            to="/orders/my-orders"
+                                            to="/profile/orders"
                                             className="flex items-center gap-3 px-5 py-2.5 text-sm text-gray-700 rounded-md hover:bg-blue-50 hover:text-blue-700 transition"
                                         >📦 My Orders</Link>
 
@@ -217,7 +217,7 @@ function Header() {
                                     <Link to="/profile" onClick={() => setMobileOpen(false)} className="text-blue-100 hover:text-white">
                                         My Profile
                                     </Link>
-                                    <Link to="/orders/my-orders" onClick={() => setMobileOpen(false)} className="text-blue-100 hover:text-white">
+                                    <Link to="/profile/orders" onClick={() => setMobileOpen(false)} className="text-blue-100 hover:text-white">
                                         My Orders
                                     </Link>
                                     <button
