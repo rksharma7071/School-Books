@@ -19,6 +19,7 @@ export const BookProvider = ({ children }) => {
   const [showToast, setShowToast] = useState(false);
   const [update, setUpdate] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [address, setAddress] = useState([]);
   const [toastConfig, setToastConfig] = useState({ type: "success", title: "", message: "" });
 
   useEffect(() => {
@@ -46,7 +47,7 @@ export const BookProvider = ({ children }) => {
         const cart = await getCartById({
           params: { id: user.id || user._id }
         });
-        
+
         setCartItems(cart?.items || []);
       } catch (error) {
         console.error("Error fetching cart:", error);
@@ -60,7 +61,6 @@ export const BookProvider = ({ children }) => {
   }, [user, update]);
 
 
-
   useEffect(() => {
     const fetchBooks = async () => {
       try {
@@ -72,7 +72,12 @@ export const BookProvider = ({ children }) => {
         const discountData = await axios.get(`${import.meta.env.VITE_API}/api/discount`);
         const paymentData = await axios.get(`${import.meta.env.VITE_API}/api/payment`);
         const reviewData = await axios.get(`${import.meta.env.VITE_API}/api/review`);
+        const user = JSON.parse(localStorage.getItem("user"));
+        // console.log("user: ", user);
 
+        const addressData = await axios.get(`${import.meta.env.VITE_API}/api/address/user/${user?.id}`);
+        const address = addressData.data.addresses.find(addr => addr.isDefault) || null;
+        setAddress(address);
         setBooks(bookData.data.data);
         setCarts(cartData.data)
         setOrders(orderData.data)
@@ -95,7 +100,7 @@ export const BookProvider = ({ children }) => {
     <BookContext.Provider value={{
       toastConfig, update, setUpdate, setToastConfig, showToast, setShowToast, user, setUser,
       adminLogout, carts, search, setSearch, books, cartItems, setCartItems, orders, users, discounts,
-      payments, reviews, loading, setLoading
+      payments, reviews, loading, setLoading, address, setAddress
     }}>
       {children}
     </BookContext.Provider>

@@ -6,7 +6,8 @@ import InputField from "../../components/UI/InputField.jsx";
 import Button from "../../components/UI/Button.jsx";
 
 function Checkout() {
-    const { user, cartItems, setCartItems, setToastConfig, setShowToast } = useContext(BookContext);
+    const { user, cartItems, setCartItems, setToastConfig, setShowToast, address } = useContext(BookContext);
+    console.log("Address: ", address);
 
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -37,6 +38,23 @@ function Checkout() {
 
     const deleteOrder = async (orderId) => {
         await axios.delete(`${import.meta.env.VITE_API}/api/order/${orderId}`);
+    };
+
+    const handleUseAddress = (address) => {
+        setShipping({
+            name: address.fullName,
+            phone: address.phone,
+            address: address.address,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+        });
+
+        setToastConfig({
+            type: "success",
+            message: "Shipping address updated",
+        });
+        setShowToast(true);
     };
 
     const subtotal = useMemo(() => cartItems.reduce((sum, item) => sum + item.book.price * item.quantity, 0),
@@ -104,19 +122,17 @@ function Checkout() {
                     billing_address: `${shipping.name}%20${shipping.phone}%20${shipping.address}%20${shipping.city}%20${shipping.state}%20${shipping.pincode}`,
                 }
             );
-            const addressRes = await axios.post(`${import.meta.env.VITE_API}/api/address`, {
-                userId: user.id || user_id,
-                fullName: shipping.name,
-                phone: shipping.phone,
-                address: shipping.address,
-                city: shipping.city,
-                state: shipping.state,
-                pincode: shipping.pincode,
-                country: "India",
-                isDefault: false
-            })
-            console.log("Address: ", addressRes.data);
-
+            // const addressRes = await axios.post(`${import.meta.env.VITE_API}/api/address`, {
+            //     userId: user.id || user_id,
+            //     fullName: shipping.name,
+            //     phone: shipping.phone,
+            //     address: shipping.address,
+            //     city: shipping.city,
+            //     state: shipping.state,
+            //     pincode: shipping.pincode,
+            //     country: "India",
+            //     isDefault: false
+            // })
 
             const order = orderRes.data;
 
@@ -205,6 +221,31 @@ function Checkout() {
                         <InputField name="city" placeholder="City" value={shipping.city} onChange={handleChange} />
                         <InputField name="state" placeholder="State" value={shipping.state} onChange={handleChange} />
                         <InputField name="pincode" placeholder="Pincode" value={shipping.pincode} onChange={handleChange} />
+                    </div>
+                    <div>
+                        {address && (
+                            <div className="mt-4">
+                                <div className="p-4 bg-gray-100 rounded-md">
+                                    <h3 className="font-semibold mb-2">Default Address</h3>
+
+                                    <p className="text-sm">
+                                        <b>{address.fullName}</b> • {address.phone}
+                                    </p>
+
+                                    <p className="text-sm text-gray-600">
+                                        {address.address}, {address.city}, {address.state} - {address.pincode}
+                                    </p>
+                                </div>
+
+                                <button
+                                    onClick={() => handleUseAddress(address)}
+                                    className="mt-3 px-4 py-2 bg-blue-600 text-white text-sm rounded-md
+                       hover:bg-blue-700 transition"
+                                >
+                                    Use This Address
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 

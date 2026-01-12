@@ -5,7 +5,7 @@ const getProfile = async () => {
 
     const [userRes, addressRes, permisssionRes, orderRes] = await Promise.all([
         axios.get(`${import.meta.env.VITE_API}/api/user/${user.id}`),
-        axios.get(`${import.meta.env.VITE_API}/api/address/${user.id}`),
+        axios.get(`${import.meta.env.VITE_API}/api/address/user/${user.id}`),
         axios.get(`${import.meta.env.VITE_API}/api/user/permission/`),
         axios.get(`${import.meta.env.VITE_API}/api/order`),
     ]);

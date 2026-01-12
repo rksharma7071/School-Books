@@ -20,8 +20,8 @@ const userSchema = new mongoose.Schema(
         first_name: { type: String },
         last_name: { type: String },
         role: { type: String, default: "customer" },
-        otp: { type: String },
-        otpExpiry: { type: Date },
+        otp: { type: String, default: false },
+        otpExpiry: { type: Date, default: false },
     },
     { timestamps: true }
 );

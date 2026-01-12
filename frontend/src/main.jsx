@@ -53,6 +53,8 @@ import AddressList from './pages/frontend/AddressList.jsx'
 import EditAddress from './pages/frontend/EditAddress.jsx'
 import ChangePassword from './pages/frontend/ChangePassword.jsx'
 import AddAddress from './pages/frontend/AddAddress.jsx'
+import ResetPassword from './pages/frontend/ResetPassword.jsx'
+import { getAddress, getAddressById } from './data/address.js'
 
 
 const router = createBrowserRouter([
@@ -66,6 +68,7 @@ const router = createBrowserRouter([
       { path: "products/:id", element: <BookById />, loader: getBookById },
       { path: "contact", element: <Contact /> },
       { path: "checkout", element: <Checkout /> },
+      { path: "reset-password", element: <ResetPassword /> },
       {
         path: "profile", element: <Profile />, loader: getProfile,
         children: [
@@ -74,7 +77,7 @@ const router = createBrowserRouter([
           { path: "orders/:id", element: <OrderDetails />, loader: getOrderById },
           { path: "address", element: <AddressList />, loader: getProfile },
           { path: "address/new", element: <AddAddress />, loader: getProfile },
-          { path: "address/:id/edit", element: <EditAddress />, loader: getProfile },
+          { path: "address/:id/edit", element: <EditAddress />, loader: getAddressById },
           { path: "change-password", element: <ChangePassword />, loader: getProfile },
         ]
       },

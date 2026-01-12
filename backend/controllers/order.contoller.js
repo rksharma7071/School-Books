@@ -118,38 +118,38 @@ async function updateOrder(req, res) {
         const { id } = req.params;
 
         if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json("Invalid order ID");
+            return res.status(400).json({ message: "Invalid order ID" });
         }
 
         const order = await Order.findById(id);
         if (!order) {
-            return res.status(404).json("Order not found");
+            return res.status(404).json({ message: "Order not found" });
         }
 
         const { status, shipment, shipping_address, billing_address } =
             req.body;
 
-        if (status) {
-            order.status = status;
+        // ❌ Prevent cancelling fulfilled orders
+        if (status === "cancelled" && order.status === "fulfilled") {
+            return res
+                .status(400)
+                .json({ message: "Delivered orders cannot be cancelled" });
         }
 
-        if (shipment) {
-            order.shipment = {
-                ...order.shipment,
-                ...shipment,
-            };
-        }
-
+        if (status) order.status = status;
+        if (shipment) order.shipment = { ...order.shipment, ...shipment };
         if (shipping_address) order.shipping_address = shipping_address;
-
         if (billing_address) order.billing_address = billing_address;
 
         await order.save();
 
-        return res.status(200).json(order);
+        return res.status(200).json({
+            message: "Order updated successfully",
+            order,
+        });
     } catch (error) {
         console.error("Update order error:", error);
-        return res.status(500).json("Internal Server Error");
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 

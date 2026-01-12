@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useContext, useEffect, useState } from "react";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import { BookContext } from "../../context/School.jsx";
 
 function Login() {
@@ -113,18 +113,17 @@ function Login() {
 
                     <div className="flex items-center justify-between text-sm">
                         <label className="flex items-center gap-2">
-                            <input type="checkbox" className="rounded border-gray-300" />
-                            Remember me
+                            {/* <input type="checkbox" className="rounded border-gray-300" /> */}
+                            {/* Remember me */}
                         </label>
-                        <span className="text-blue-600 hover:underline cursor-pointer">Forgot password?</span>
+                        <Link to="/reset-password" className="text-blue-600 hover:underline cursor-pointer">Reset password?</Link>
                     </div>
 
-                    {/* Button */}
                     <button
                         type="submit"
                         disabled={loading}
                         className={`w-full text-white py-2 rounded-lg text-sm font-semibold transition 
-              ${loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
+                        ${loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
                     >{loading ? "Logging in..." : "Login"}</button>
                     <div className="text-center text-sm">
                         <span

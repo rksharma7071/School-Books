@@ -116,7 +116,6 @@ async function handleAuthLogin(req, res) {
 
 async function handleAuthChangePassword(req, res) {
     const { email, oldPassword, newPassword } = req.body;
-    console.log({ email, oldPassword, newPassword });
 
     if (!email || !oldPassword || !newPassword) {
         return res.status(400).json({
@@ -156,12 +155,15 @@ async function handleAuthChangePassword(req, res) {
 
 async function handleAuthRequestOTP(req, res) {
     const { email } = req.body;
+    console.log("email: ", email);
     const user = await User.findOne({ email });
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    console.log("user: ", user);
+
     const otp = generateOTP();
     user.otp = otp;
-    user.otpExpiry = Date.now() + 5 * 60 * 1000; // 5 min expiry
+    user.otpExpiry = Date.now() + 5 * 60 * 1000;
     await user.save();
 
     const transporter = nodemailer.createTransport({

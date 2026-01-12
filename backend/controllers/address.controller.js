@@ -7,9 +7,7 @@ async function getAddresses(req, res) {
         return res.status(200).json(addresses);
     } catch (error) {
         console.error("Get addresses error:", error);
-        return res
-            .status(500)
-            .json({ message: "Internal Server Error" });
+        return res.status(500).json({ message: "Internal Server Error" });
     }
 }
 
@@ -173,10 +171,35 @@ async function deleteAddress(req, res) {
     }
 }
 
+async function getAddressById(req, res) {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid address id" });
+        }
+
+        const address = await Address.findById(id);
+
+        if (!address) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+
+        return res.status(200).json({
+            message: "Address fetched successfully",
+            address,
+        });
+    } catch (error) {
+        console.error("Get address by id error:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
 export {
     getAddresses,
     createAddress,
     getAddressByUserId,
     updateAddress,
     deleteAddress,
+    getAddressById,
 };

@@ -2,6 +2,7 @@ import axios from 'axios';
 import React, { useContext } from 'react'
 import { Link, useLoaderData, useNavigate } from 'react-router-dom'
 import { BookContext } from '../../context/School';
+import { FiPhone } from "react-icons/fi";
 
 function AddressList() {
     const { address } = useLoaderData() || {}
@@ -16,6 +17,7 @@ function AddressList() {
                     type: "success",
                     message: "Address has been deleted successfully!",
                 });
+                setShowToast(true);
             } catch (error) {
                 setToastConfig({
                     type: "error",
@@ -28,7 +30,17 @@ function AddressList() {
 
     return (
         <div>
-            <h3 className="text-xl font-semibold mb-6">My Address</h3>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+                <h3 className="text-xl font-semibold text-gray-900">My Addresses</h3>
+                <Link
+                    to="new"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-md
+                   bg-blue-600 text-white text-sm font-medium
+                   hover:bg-blue-700 transition"
+                >
+                    + Add New
+                </Link>
+            </div>
 
             {address?.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -40,7 +52,7 @@ function AddressList() {
                             <div className="flex justify-between items-start mb-4">
                                 <div>
                                     <p className="font-semibold text-gray-800">{item.fullName}</p>
-                                    <p className="text-sm text-gray-500">📞 {item.phone}</p>
+                                    <p className="text-sm text-gray-500 flex items-center gap-2"><FiPhone className="text-gray-400" /> {item.phone}</p>
                                 </div>
 
                                 {item.isDefault && (

@@ -2,6 +2,7 @@ import express from "express";
 import {
     createAddress,
     deleteAddress,
+    getAddressById,
     getAddressByUserId,
     getAddresses,
     updateAddress,
@@ -13,9 +14,11 @@ router.route("/")
     .get(getAddresses)
     .post(createAddress);
 
+router.get("/user/:id", getAddressByUserId);
+
 router
     .route("/:id")
-    .get(getAddressByUserId)
+    .get(getAddressById)
     .patch(updateAddress)
     .delete(deleteAddress);
 

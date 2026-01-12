@@ -36,7 +36,7 @@ const orderSchema = new mongoose.Schema(
         tax: { type: Number, required: true, min: 0 },
         discount: { type: Number, default: 0, min: 0 },
         total: { type: Number, required: true, min: 0 },
-        status: { type: String, enum: ["in progress", "fulfilled", "unfulfilled"], default: "in progress", index: true },
+        status: { type: String, enum: ["in progress", "fulfilled", "unfulfilled", "cancelled"], default: "in progress", index: true },
         placed_at: { type: Date, default: Date.now },
         shipping_address: { type: String, required: true },
         billing_address: { type: String, required: true },
