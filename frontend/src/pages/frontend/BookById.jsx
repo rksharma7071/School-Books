@@ -115,7 +115,7 @@ function BookById() {
         name: book.name,
         description: book.description.replace(/\r?\n|\r/g, " ").slice(0, 300),
         sku: book._id,
-        isbn: book.isbn,
+        // isbn: book.isbn,
         image: book.images?.map(img => img.url) || [book.coverImage],
         brand: {
             "@type": "Brand",
