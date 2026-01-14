@@ -7,6 +7,7 @@ import ReviewByBook from "../../components/frontend/ReviewByBook.jsx";
 import ReviewForm from "../../components/frontend/ReviewForm.jsx";
 import { IoIosArrowDown } from "react-icons/io";
 import Loading from "../../components/UI/Loading.jsx";
+import { useSEO } from "../../seo/SEO.jsx";
 
 function BookById() {
     const book = useLoaderData();
@@ -104,6 +105,60 @@ function BookById() {
             setShowToast(true)
         }
     };
+
+    // console.log("Review: ", review);
+
+    const jsonLdSchema = {
+        "@context": "https://schema.org",
+        "@type": "Product",
+        "@id": `https://schoolbook.lol/products/${book._id}`,
+        name: book.name,
+        description: book.description.replace(/\r?\n|\r/g, " ").slice(0, 300),
+        sku: book._id,
+        isbn: book.isbn,
+        image: book.images?.map(img => img.url) || [book.coverImage],
+        brand: {
+            "@type": "Brand",
+            name: book.publisher,
+        },
+        offers: {
+            "@type": "Offer",
+            url: `https://schoolbook.lol/products/${book._id}`,
+            price: book.price,
+            priceCurrency: "INR",
+            availability: book.stockQty > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        },
+        aggregateRating: {
+            "@type": "AggregateRating",
+            ratingValue: avgRating.toFixed(1),
+            reviewCount: approvedReviews.length,
+            bestRating: "5",
+            worstRating: "1",
+        },
+        review: approvedReviews.map(r => ({
+            "@type": "Review",
+            author: {
+                "@type": "Person",
+                name: r.user?.first_name && r.user?.last_name ? `${r.user.first_name.trim()} ${r.user.last_name.trim()}` : r.user?.username || "Verified User",
+            },
+            datePublished: r.createdAt.split("T")[0],
+            name: r.title,
+            reviewBody: r.body,
+            reviewRating: {
+                "@type": "Rating",
+                ratingValue: r.rating,
+                bestRating: "5",
+                worstRating: "1",
+            },
+        })),
+    };
+    useSEO({
+        title: `${book.name} | Buy Online`,
+        description: book.description,
+        canonical: `https://schoolbook.lol/products/${book._id}`,
+        ogTitle: book.name,
+        jsonLd: jsonLdSchema,
+    })
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-10">
@@ -208,6 +263,7 @@ function BookById() {
                 />
             )}
             <ReviewByBook review={approvedReviews} reviewSectionRef={reviewSectionRef} showReviewForm={showReviewForm} setShowReviewForm={setShowReviewForm} />
+
         </div>
     );
 }
