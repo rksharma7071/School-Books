@@ -4,27 +4,15 @@ import ProductCard from './ProductCard.jsx';
 import axios from 'axios';
 
 function BestSellingProduct() {
-    const { user, books, cartItems, setCartItems, loading, setLoading, setAddress, setBooks, setCarts, setOrders, setUsers, setDiscounts, setPayments, setReviews } = useContext(BookContext);
+    const { user, books, cartItems, setCartItems, setBooks, setReviews } = useContext(BookContext);
     const [bookLoading, setBookLoading] = useState(true);
-
-    // useEffect(() => {
-    //     setLoading(true);
-
-    //     if (books && books.length > 0) {
-    //         setLoading(false);
-    //     }
-    // }, [books, setLoading]);
 
     useEffect(() => {
         const fetchBooks = async () => {
             try {
                 setBookLoading(true)
                 const bookData = await axios.get(`${import.meta.env.VITE_API}/api/book`);
-                const reviewData = await axios.get(`${import.meta.env.VITE_API}/api/review`);
-                // const user = JSON.parse(localStorage.getItem("user"));
-
                 setBooks(bookData.data.data);
-                setReviews(reviewData.data)
                 setBookLoading(false)
             } catch (error) {
                 console.error("Error: ", error.message);
@@ -35,16 +23,6 @@ function BestSellingProduct() {
 
         fetchBooks();
     }, []);
-
-    // if (bookLoading) {
-    //     return (
-    //         <div className="flex justify-center items-center h-40">
-    //             <span className="text-gray-500 text-lg animate-pulse">
-    //                 Loading books...
-    //             </span>
-    //         </div>
-    //     );
-    // }
 
     return (
         <div className="bg-slate-50 py-12">
