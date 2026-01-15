@@ -1,4 +1,4 @@
-User-agent: *
-Allow: /
+    User-agent: *
+    Allow: /
 
-Sitemap: https://schoolbook.lol/sitemap.xml
+    Sitemap: https://schoolbook.lol/sitemap.xml
