@@ -167,7 +167,7 @@ function BookById() {
                     <img
                         src={coverImage}
                         alt={name}
-                        className="w-full max-w-md rounded-xl aspect-[3/4] object-contain"
+                        className="w-full max-w-md rounded-xl aspect-3/4 object-contain"
                     />
                 </div>
                 <div className="flex flex-col gap-4">

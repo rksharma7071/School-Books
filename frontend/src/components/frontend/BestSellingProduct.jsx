@@ -1,20 +1,50 @@
-import React, { useContext, useEffect } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import { BookContext } from '../../context/School.jsx';
 import ProductCard from './ProductCard.jsx';
+import axios from 'axios';
 
 function BestSellingProduct() {
-    const { user, books, cartItems, setCartItems, loading, setLoading } = useContext(BookContext);
+    const { user, books, cartItems, setCartItems, loading, setLoading, setAddress, setBooks, setCarts, setOrders, setUsers, setDiscounts, setPayments, setReviews } = useContext(BookContext);
+    const [bookLoading, setBookLoading] = useState(true);
+
+    // useEffect(() => {
+    //     setLoading(true);
+
+    //     if (books && books.length > 0) {
+    //         setLoading(false);
+    //     }
+    // }, [books, setLoading]);
 
     useEffect(() => {
-        setLoading(true);
+        const fetchBooks = async () => {
+            try {
+                setBookLoading(true)
+                const bookData = await axios.get(`${import.meta.env.VITE_API}/api/book`);
+                const reviewData = await axios.get(`${import.meta.env.VITE_API}/api/review`);
+                // const user = JSON.parse(localStorage.getItem("user"));
 
-        if (books && books.length > 0) {
-            setLoading(false);
-        }
-    }, [books, setLoading]);
+                setBooks(bookData.data.data);
+                setReviews(reviewData.data)
+                setBookLoading(false)
+            } catch (error) {
+                console.error("Error: ", error.message);
+            } finally {
+                setBookLoading(false)
+            }
+        };
 
-    // console.log("Loading: ", loading);
+        fetchBooks();
+    }, []);
 
+    // if (bookLoading) {
+    //     return (
+    //         <div className="flex justify-center items-center h-40">
+    //             <span className="text-gray-500 text-lg animate-pulse">
+    //                 Loading books...
+    //             </span>
+    //         </div>
+    //     );
+    // }
 
     return (
         <div className="bg-slate-50 py-12">
@@ -27,7 +57,7 @@ function BestSellingProduct() {
 
                     <a href="/best-sellers" className="text-sm font-medium text-blue-600 hover:text-blue-700">View All →</a>
                 </div>
-                {loading ? (
+                {bookLoading ? (
                     <div className="flex justify-center items-center h-40">
                         <span className="text-gray-500 text-lg animate-pulse">
                             Loading books...

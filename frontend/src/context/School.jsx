@@ -99,8 +99,8 @@ export const BookProvider = ({ children }) => {
   return (
     <BookContext.Provider value={{
       toastConfig, update, setUpdate, setToastConfig, showToast, setShowToast, user, setUser,
-      adminLogout, carts, search, setSearch, books, cartItems, setCartItems, orders, users, discounts,
-      payments, reviews, loading, setLoading, address, setAddress
+      adminLogout, carts, search, setSearch, books, setBooks, cartItems, setCartItems, orders, users, discounts,
+      payments, reviews, setReviews, loading, setLoading, address, setAddress,
     }}>
       {children}
     </BookContext.Provider>
