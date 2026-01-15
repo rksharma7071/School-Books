@@ -2,14 +2,10 @@ import fs from "fs";
 import axios from "axios";
 import dotenv from "dotenv";
 
-// ✅ Load .env
 dotenv.config();
 
-// ✅ Use env variable
 const API_URL = process.env.VITE_API;
 const SITE_URL = "https://schoolbook.lol";
-
-console.log("API_URL: ", API_URL);
 
 /* ---------------- STATIC ROUTES ---------------- */
 const staticRoutes = [
@@ -23,19 +19,15 @@ const staticRoutes = [
 /* ---------------- DYNAMIC ROUTES ---------------- */
 async function getDynamicRoutes() {
     try {
-        const response = await axios.get(`http://localhost:3000/api/book`);
+        const response = await axios.get(`${API_URL}/api/book`);
 
-        // ✅ Validate response
         if (!response.data?.success || !Array.isArray(response.data.data)) {
-            console.error("Invalid API response structure");
             return [];
         }
 
-        const books = response.data.data;
-
-        return books.map((book) => `/products/${book._id}`);
-    } catch (error) {
-        console.error("❌ Failed to fetch books for sitemap:", error.message);
+        return response.data.data.map((book) => `/products/${book._id}`);
+    } catch (err) {
+        console.error("❌ Book fetch failed:", err.message);
         return [];
     }
 }
@@ -59,7 +51,7 @@ ${allRoutes
     .join("")}
 </urlset>`;
 
-    fs.writeFileSync("./public/sitemap.xml", xml);
+    fs.writeFileSync("./public/sitemap.xml", xml.trim());
     console.log("✅ Sitemap generated successfully");
 }
 
