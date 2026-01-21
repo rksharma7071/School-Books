@@ -4,7 +4,7 @@ import ProductCard from './ProductCard.jsx';
 import axios from 'axios';
 
 function BestSellingProduct() {
-    const { user, books, cartItems, setCartItems, setBooks, setReviews } = useContext(BookContext);
+    const { user, books, cartItems, setCartItems, setBooks } = useContext(BookContext);
     const [bookLoading, setBookLoading] = useState(true);
 
     useEffect(() => {
