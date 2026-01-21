@@ -1,4 +1,14 @@
-    User-agent: *
-    Allow: /
+User-agent: *
+Allow: /
 
-    Sitemap: https://schoolbook.lol/sitemap.xml
+Disallow: /admin
+Disallow: /cart
+Disallow: /orders
+Disallow: /checkouts/
+Disallow: /checkout
+Disallow: /carts
+Disallow: /account
+Disallow: /policies/
+Disallow: /search
+
+Sitemap: https://schoolbook.lol/sitemap.xml
