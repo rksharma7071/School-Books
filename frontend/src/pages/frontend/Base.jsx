@@ -23,14 +23,14 @@ function Base() {
         }
     };
 
-    /* useSEO({
-        title: "Online Book Store | Buy Books Online",
-        description: "Buy books online at best prices",
-        canonical: "https://schoolbook.lol/",
-        ogTitle: "Online Book Store",
-        jsonLd: websiteSchema,
-    });
-    */
+    // useSEO({
+    //     title: "Online Book Store | Buy Books Online",
+    //     description: "Buy books online at best prices",
+    //     canonical: "https://schoolbook.lol/",
+    //     ogTitle: "Online Book Store",
+    //     jsonLd: websiteSchema,
+    // });
+
     return (
         <>
             <Header />
