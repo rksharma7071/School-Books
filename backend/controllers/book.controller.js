@@ -4,17 +4,49 @@ import cloudinary from "../config/cloudinary.js";
 
 export const getAllBooks = async (req, res) => {
     try {
-        const books = await Book.find({});
+        const page = Math.max(1, Number(req.query.page) || 1);
+
+        const isAdminView = req.query.all === "true";
+        const maxLimit = isAdminView ? 500 : 50;
+        const limit = Math.min(maxLimit, Number(req.query.limit) || 20);
+
+        const filter = {};
+        if (!isAdminView) filter.isActive = true;
+        if (req.query.category) filter.category = req.query.category;
+        if (req.query.q) filter.$text = { $search: req.query.q };
+
+        const [data, total] = await Promise.all([
+            Book.find(filter)
+                .select(
+                    "name author price coverImage stockQty subject classLevel category isActive"
+                )
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean(),
+            Book.countDocuments(filter),
+        ]);
+
+        if (!isAdminView) {
+            res.set(
+                "Cache-Control",
+                "public, max-age=60, stale-while-revalidate=300"
+            );
+        } else {
+            res.set("Cache-Control", "no-store");
+        }
+
         return res.status(200).json({
             success: true,
-            count: books.length,
-            data: books,
+            data,
+            total,
+            page,
+            pages: Math.ceil(total / limit),
+            count: data.length,
         });
     } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: "Server error while fetching books",
-        });
+        console.error("getAllBooks error:", error);
+        res.status(500).json({ success: false, message: "Server error" });
     }
 };
 
@@ -55,8 +87,7 @@ export const createBook = async (req, res) => {
         if (!name || !author) {
             return res.status(400).json({
                 success: false,
-                message:
-                    "Missing required fields: name and author are required.",
+                message: "Missing required fields: name and author are required.",
             });
         }
 
@@ -158,7 +189,7 @@ export const createBook = async (req, res) => {
         return res.status(500).json({
             success: false,
             message: "Failed to create book",
-            error: err.message,
+            error: error.message,
         });
     }
 };
@@ -297,32 +328,61 @@ export const updateBook = async (req, res) => {
 
 export const getAllCategories = async (req, res) => {
     try {
-        const category = await Category.find({});
+        const [categories, counts] = await Promise.all([
+            Category.find({}).sort({ name: 1 }).lean(),
+            Book.aggregate([
+                { $match: { category: { $ne: null } } },
+                { $group: { _id: "$category", total: { $sum: 1 } } },
+            ]),
+        ]);
+
+        const map = new Map(counts.map((c) => [String(c._id), c.total]));
+
+        res.set("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
+
         return res.status(200).json({
             success: true,
-            count: category.length,
-            data: category,
+            count: categories.length,
+            data: categories.map((c) => ({
+                id: c._id,
+                _id: c._id,
+                name: c.name,
+                description: c.description || "",
+                totalBooks: map.get(String(c._id)) || 0,
+            })),
         });
     } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: "Server error while fetching category",
-        });
+        console.error("getAllCategories error:", error);
+        return res
+            .status(500)
+            .json({ success: false, message: "Server error while fetching categories" });
     }
 };
 
 export const getCategoriesById = async (req, res) => {
     try {
-        const category = await Category.findById(req.params.id);
-        return res.status(200).json({
-            success: true,
-            data: category,
-        });
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res
+                .status(400)
+                .json({ success: false, message: "Invalid category id" });
+        }
+
+        const category = await Category.findById(id).lean();
+
+        if (!category) {
+            return res
+                .status(404)
+                .json({ success: false, message: "Category not found" });
+        }
+
+        return res.status(200).json({ success: true, data: category });
     } catch (error) {
-        res.status(500).json({
-            status: false,
-            message: "Server error while fetching category",
-        });
+        console.error("getCategoriesById error:", error);
+        return res
+            .status(500)
+            .json({ success: false, message: "Server error while fetching category" });
     }
 };
 

@@ -1,12 +1,12 @@
 import mongoose from "mongoose";
 
-const fileSchema = mongoose.Schema(
+const fileSchema = new mongoose.Schema(
     {
-        url: { String, required: true },
-        publicId: { String, required: true },
+        url: { type: String, required: true },
+        publicId: { type: String, required: true },
     },
     {
-        timestamp: true,
+        timestamps: true,
     }
 );
 

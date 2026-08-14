@@ -1,7 +1,12 @@
 import mongoose from "mongoose";
 
 const permissionSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    userId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        unique: true,
+        index: true,
+    },
     createUser: { type: Boolean, default: false },
     updateUser: { type: Boolean, default: false },
     deleteUser: { type: Boolean, default: false },
@@ -14,14 +19,24 @@ const permissionSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema(
     {
-        username: { type: String, required: true, unique: true },
-        email: { type: String, required: true, unique: true },
-        password: { type: String, required: true },
-        first_name: { type: String },
-        last_name: { type: String },
-        role: { type: String, default: "customer" },
-        otp: { type: String, default: false },
-        otpExpiry: { type: Date, default: false },
+        username: { type: String, required: true, unique: true, trim: true },
+        email: {
+            type: String,
+            required: true,
+            unique: true,
+            lowercase: true,
+            trim: true,
+        },
+        password: { type: String, required: true, select: false },
+        first_name: { type: String, trim: true },
+        last_name: { type: String, trim: true },
+        role: {
+            type: String,
+            enum: ["customer", "author", "admin"],
+            default: "customer",
+        },
+        otp: { type: String, default: null, select: false },
+        otpExpiry: { type: Date, default: null, select: false },
     },
     { timestamps: true }
 );

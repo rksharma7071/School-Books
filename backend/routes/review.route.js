@@ -4,13 +4,27 @@ import {
     createReview,
     deleteReview,
     updateReview,
-    getReviewById
+    getReviewById,
+    getReviewSummary,
+    getReviewsByBook,
 } from "../controllers/review.controller.js";
+import authMiddleware from "../middlewares/authentication.js";
+import { authorize } from "../middlewares/authorize.js";
 
 const router = express.Router();
 
-router.route("/").get(getAllReview).post(createReview);
+router.get("/summary", getReviewSummary);
+router.get("/book/:bookId", getReviewsByBook);
 
-router.route("/:id").get(getReviewById).patch(updateReview).delete(deleteReview);
+router
+    .route("/")
+    .get(authMiddleware, authorize("admin"), getAllReview)
+    .post(authMiddleware, createReview); 
+
+router
+    .route("/:id")
+    .get(getReviewById)
+    .patch(authMiddleware, authorize("admin"), updateReview) 
+    .delete(authMiddleware, authorize("admin"), deleteReview);
 
 export default router;

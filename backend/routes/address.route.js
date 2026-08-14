@@ -1,25 +1,11 @@
-import express from "express";
-import {
-    createAddress,
-    deleteAddress,
-    getAddressById,
-    getAddressByUserId,
-    getAddresses,
-    updateAddress,
-} from "../controllers/address.controller.js";
+router.use(authMiddleware);
 
-const router = express.Router();
+router.route("/").get(authorize("admin"), getAddresses).post(createAddress);
+router.get("/user/:id", selfOrAdmin("id"), getAddressByUserId);
 
-router.route("/")
-    .get(getAddresses)
-    .post(createAddress);
-
-router.get("/user/:id", getAddressByUserId);
-
-router
-    .route("/:id")
+router.route("/:id")
     .get(getAddressById)
     .patch(updateAddress)
     .delete(deleteAddress);
 
-export default router;
+    export default router;

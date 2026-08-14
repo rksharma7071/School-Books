@@ -1,47 +1,70 @@
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useContext } from "react";
 import axios from "axios";
-import BookTable from "../../components/admin/BookTable.jsx";
 import { Link } from "react-router-dom";
+import BookTable from "../../components/admin/BookTable.jsx";
+import { BookContext } from "../../context/School.jsx";
 
 function Book() {
+    const { setToastConfig, setShowToast } = useContext(BookContext);
+
     const [books, setBooks] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
+        const controller = new AbortController();
+
         const fetchBooks = async () => {
             try {
-                const res = await axios.get(`${import.meta.env.VITE_API}/api/book`);
+                setLoading(true);
+
+                const res = await axios.get(
+                    `${import.meta.env.VITE_API}/api/book`,
+                    {
+                        params: { all: "true", limit: 500 },
+                        signal: controller.signal,
+                    }
+                );
+
                 const apiBooks = res.data.data || [];
 
-                const mapped = apiBooks.map((b) => ({
-                    id: b._id,
-                    title: b.name,
-                    author: b.author,
-                    category: b.subject || "N/A",
-                    price: b.price,
-                    stock: b.stockQty ?? 0,
-                    coverImage: b.coverImage ?? "",
-                }));
-
-                setBooks(mapped);
+                setBooks(
+                    apiBooks.map((b) => ({
+                        id: b._id,
+                        title: b.name,
+                        author: b.author,
+                        category: b.subject || "N/A",
+                        price: b.price,
+                        stock: b.stockQty ?? 0,
+                        coverImage: b.coverImage ?? "",
+                        isActive: b.isActive,
+                    }))
+                );
             } catch (error) {
+                if (axios.isCancel(error)) return;
+
                 console.error("Error fetching books:", error.message);
                 setToastConfig({
                     type: "error",
-                    message: error.response?.data?.message || "Failed to create discount. Check console for details.",
+                    message: "Failed to load books. Please refresh the page.",
                 });
                 setShowToast(true);
+            } finally {
+                setLoading(false);
             }
         };
 
         fetchBooks();
-    }, []);
+        return () => controller.abort();
+    }, [setToastConfig, setShowToast]);
 
     const filteredBooks = useMemo(() => {
-        const term = search.toLowerCase();
+        const term = search.trim().toLowerCase();
+        if (!term) return books;
+
         return books.filter(
             (b) =>
                 b.title?.toLowerCase().includes(term) ||
@@ -71,35 +94,39 @@ function Book() {
 
     const toggleSelectAll = () => {
         if (isAllSelected) {
-            setSelectedIds((prev) => prev.filter((id) => !allVisibleIds.includes(id)));
+            setSelectedIds((prev) =>
+                prev.filter((id) => !allVisibleIds.includes(id))
+            );
         } else {
-            setSelectedIds((prev) => Array.from(new Set([...prev, ...allVisibleIds])));
+            setSelectedIds((prev) =>
+                Array.from(new Set([...prev, ...allVisibleIds]))
+            );
         }
     };
 
     const handlePaginationChange = (e) => {
-        const value = Number(e.target.value);
-        setRowsPerPage(value);
+        setRowsPerPage(Number(e.target.value));
         setCurrentPage(1);
     };
 
-    const handlePrevPage = () => {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
-    };
+    const handlePrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
+    const handleNextPage = () =>
+        setCurrentPage((p) => Math.min(totalPages, p + 1));
 
-    const handleNextPage = () => {
-        setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-    };
-
-    const startIndex = filteredBooks.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const startIndex =
+        filteredBooks.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
     const endIndex = Math.min(currentPage * rowsPerPage, filteredBooks.length);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Books</h2>
-                    <p className="text-sm text-gray-500">Manage all school books and inventory.</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                        Books
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                        Manage all school books and inventory.
+                    </p>
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto bg-white">
@@ -113,13 +140,18 @@ function Book() {
                         placeholder="Search by title, author, category..."
                         className="flex-1 sm:w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <Link to={`/${import.meta.env.VITE_ADMIN}/add-book`} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Add Book</Link>
+                    <Link
+                        to={`/${import.meta.env.VITE_ADMIN}/add-book`}
+                        className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+                    >
+                        Add Book
+                    </Link>
                 </div>
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 {selectedIds.length > 0 && (
-                    <div className="px-4 py-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
+                    <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between text-xs text-gray-600">
                         <span>{selectedIds.length} book(s) selected</span>
                         <button
                             className="text-blue-600 hover:underline"
@@ -130,12 +162,27 @@ function Book() {
                     </div>
                 )}
 
-                {/* Table */}
                 <div className="overflow-x-auto">
-                    <BookTable isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedBooks={paginatedBooks} selectedIds={selectedIds} toggleSelect={toggleSelect} />
+                    {loading ? (
+                        <div className="p-4 space-y-3">
+                            {Array.from({ length: 6 }).map((_, i) => (
+                                <div
+                                    key={i}
+                                    className="h-12 bg-gray-100 rounded animate-pulse"
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <BookTable
+                            isAllSelected={isAllSelected}
+                            toggleSelectAll={toggleSelectAll}
+                            paginatedBooks={paginatedBooks}
+                            selectedIds={selectedIds}
+                            toggleSelect={toggleSelect}
+                        />
+                    )}
                 </div>
 
-                {/* Pagination footer */}
                 <div className="border-t border-gray-100 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
                     <div className="flex items-center gap-2">
                         <span>Rows per page:</span>
@@ -160,8 +207,11 @@ function Book() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
+                                currentPage === 1
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                            }`}
                         >
                             Prev
                         </button>
@@ -178,10 +228,11 @@ function Book() {
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
-                                }`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
+                                currentPage >= totalPages
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                            }`}
                         >
                             Next
                         </button>

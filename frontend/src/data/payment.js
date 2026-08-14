@@ -1,58 +1,33 @@
 import axios from "axios";
 
-const getPayment = async () => {
-    try {
-        const [orderRes, paymentRes, userRes] = await Promise.all([
-            axios.get(`${import.meta.env.VITE_API}/api/order`),
-            axios.get(`${import.meta.env.VITE_API}/api/payment`),
-            axios.get(`${import.meta.env.VITE_API}/api/user`),
-        ]);
-        const orders = orderRes.data.data || orderRes.data;
-        const payments = paymentRes.data.data || paymentRes.data;
-        const users = userRes.data.data || userRes.data;
+const API = import.meta.env.VITE_API;
 
-        const updatedPayment = payments.map((payment) => {
-            const order = orders.find((order) => order._id === payment.orderId);
-            const user = users.find((user) => user._id === order.userId._id);
-            return {
-                ...payment,
-                order,
-                user,
-            };
+const getPayment = async ({ request } = {}) => {
+    try {
+        const { data } = await axios.get(`${API}/api/payment`, {
+            signal: request?.signal,
         });
-        return updatedPayment ?? [];
+        return data || [];
     } catch (error) {
-        console.error("Failed to fetch payment:", error);
+        if (axios.isCancel(error)) return [];
+        console.error("Failed to fetch payments:", error.message);
         return [];
     }
 };
 
-const getPaymentById = async ({ params }) => {
+const getPaymentById = async ({ params, request } = {}) => {
     try {
-        const [paymentRes, orderRes, userRes] = await Promise.all([
-            axios.get(`${import.meta.env.VITE_API}/api/payment/${params.id}`),
-            axios.get(`${import.meta.env.VITE_API}/api/order`),
-            axios.get(`${import.meta.env.VITE_API}/api/user`),
-        ]);
-
-        const payment = paymentRes.data?.data || paymentRes.data;
-        const orders = orderRes.data?.data || orderRes.data;
-        const users = userRes.data?.data || userRes.data;
-
-        const order = orders.find((o) => o._id === payment.orderId);
-
-        const user = users.find(
-            (u) => u._id === (order?.userId?._id || order?.userId)
-        );
-
-        return {
-            ...payment,
-            order,
-            user,
-        };
+        const { data } = await axios.get(`${API}/api/payment/${params.id}`, {
+            signal: request?.signal,
+        });
+        return data;
     } catch (error) {
-        console.error("Failed to fetch payment by ID:", error);
-        return {};
+        if (axios.isCancel(error)) return null;
+        console.error("Failed to fetch payment by ID:", error.message);
+
+        throw new Response("Payment not found", {
+            status: error.response?.status || 500,
+        });
     }
 };
 

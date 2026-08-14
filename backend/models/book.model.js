@@ -40,6 +40,12 @@ const bookSchema = new mongoose.Schema(
     }
 );
 
+bookSchema.index({ isActive: 1, createdAt: -1 });
+bookSchema.index({ category: 1 });
+bookSchema.index({ classLevel: 1, subject: 1 });
+bookSchema.index({ isbn: 1 }, { sparse: true });
+bookSchema.index({ name: "text", author: "text", subject: "text" });
+
 const Book = mongoose.model("Book", bookSchema);
 const Category = mongoose.model("Category", categorySchema);
 

@@ -1,230 +1,176 @@
 import mongoose from "mongoose";
 import { Cart } from "../models/cart.model.js";
-import { User } from "../models/user.model.js";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
 
-async function getAllCart(req, res) {
-    try {
-        await Cart.deleteMany({
-            $or: [{ items: { $exists: false } }, { items: { $size: 0 } }],
-        });
+const getAllCart = asyncHandler(async (req, res) => {
+    const page = Math.max(1, Number(req.query.page) || 1);
+    const limit = Math.min(100, Number(req.query.limit) || 20);
+    const filter = { "items.0": { $exists: true } };
 
-        const carts = await Cart.find({});
+    const [carts, total] = await Promise.all([
+        Cart.find(filter)
+            .populate("userId", "first_name last_name username email")
+            .populate("items.bookId", "name price coverImage")
+            .sort({ updatedAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(limit)
+            .lean(),
+        Cart.countDocuments(filter),
+    ]);
 
-        return res.status(200).json(carts || []);
-    } catch (error) {
-        console.error("Get All Cart Error:", error);
-        return res.status(500).json({
-            message: "Failed to fetch carts",
-        });
+    return res.status(200).json({
+        data: carts.map((cart) => ({
+            ...cart,
+            user: cart.userId,
+            items: cart.items
+                .filter((i) => i.bookId)
+                .map((i) => ({
+                    bookId: String(i.bookId._id),
+                    quantity: i.quantity,
+                    book: i.bookId,
+                })),
+        })),
+        total,
+        page,
+        pages: Math.ceil(total / limit),
+    });
+});
+
+const getCartByUserId = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid id" });
     }
-}
 
-async function getCartByUserId(req, res) {
-    try {
-        const { id } = req.params;
+    const cart = await Cart.findOne({ $or: [{ userId: id }, { _id: id }] })
+        .populate("userId", "first_name last_name username email role")
+        .populate(
+            "items.bookId",
+            "name price coverImage author stockQty subject classLevel"
+        )
+        .lean();
 
-        const cart = await Cart.findOne({ userId: id });
+    if (!cart) return res.status(200).json({ userId: id, items: [] });
 
-        if (!cart) {
-            return res
-                .status(404)
-                .json({ message: "Cart not found for this user" });
-        }
-        return res.status(200).json(cart);
-    } catch (error) {
-        console.error("Get Cart By UserId Error:", error);
+    return res.status(200).json({
+        ...cart,
+        user: cart.userId,
+        items: cart.items
+            .filter((i) => i.bookId)
+            .map((i) => ({
+                bookId: String(i.bookId._id),
+                quantity: i.quantity,
+                book: i.bookId,
+            })),
+    });
+});
 
-        return res.status(500).json({ message: "Failed to fetch cart" });
+const createOrUpdateCart = asyncHandler(async (req, res) => {
+    const { userId, bookId, quantity = 1 } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid userId" });
     }
-}
-
-async function createOrUpdateCart(req, res) {
-    try {
-        const { userId, bookId, quantity = 1 } = req.body;
-
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ message: "Invalid userId" });
-        }
-
-        if (!mongoose.Types.ObjectId.isValid(bookId)) {
-            return res.status(400).json({ message: "Invalid bookId" });
-        }
-
-        if (typeof quantity !== "number") {
-            return res
-                .status(400)
-                .json({ message: "Quantity must be a number" });
-        }
-
-        let cart = await Cart.findOne({ userId });
-
-        // 🆕 Create cart
-        if (!cart) {
-            if (quantity <= 0) {
-                return res.status(400).json({
-                    message: "Quantity must be greater than 0",
-                });
-            }
-
-            cart = await Cart.create({
-                userId,
-                items: [{ bookId, quantity }],
-            });
-
-            return res.status(201).json({
-                message: "Cart created successfully",
-                cart,
-            });
-        }
-
-        const itemIndex = cart.items.findIndex(
-            (item) => String(item.bookId) === String(bookId)
-        );
-
-        // ➕ Item exists → update quantity
-        if (itemIndex !== -1) {
-            cart.items[itemIndex].quantity += quantity;
-
-            // ❌ Remove item if quantity <= 0
-            if (cart.items[itemIndex].quantity <= 0) {
-                cart.items.splice(itemIndex, 1);
-            }
-        }
-        // ➕ Item does not exist → add new
-        else {
-            if (quantity <= 0) {
-                return res.status(400).json({
-                    message: "Quantity must be greater than 0",
-                });
-            }
-
-            cart.items.push({ bookId, quantity });
-        }
-
-        // 🧹 Remove cart if empty
-        if (cart.items.length === 0) {
-            await Cart.deleteOne({ userId });
-            return res.status(200).json({
-                message: "Cart cleared",
-                cart: null,
-            });
-        }
-
-        await cart.save();
-
-        return res.status(200).json({
-            message: "Cart updated successfully",
-            cart,
-        });
-    } catch (error) {
-        console.error("Cart Error:", error);
-        return res.status(500).json({ message: "Internal server error" });
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+        return res.status(400).json({ message: "Invalid bookId" });
     }
-}
+    if (typeof quantity !== "number") {
+        return res.status(400).json({ message: "Quantity must be a number" });
+    }
 
-async function updateCart(req, res) {
-    try {
-        const { userId, bookId, quantity } = req.body;
+    let cart = await Cart.findOne({ userId });
 
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ message: "Invalid userId" });
-        }
-
-        if (!mongoose.Types.ObjectId.isValid(bookId)) {
-            return res.status(400).json({ message: "Invalid bookId" });
-        }
-
-        if (typeof quantity !== "number") {
+    if (!cart) {
+        if (quantity <= 0) {
             return res
                 .status(400)
-                .json({ message: "Quantity must be a number" });
+                .json({ message: "Quantity must be greater than 0" });
         }
-
-        const cart = await Cart.findOne({ userId });
-
-        if (!cart) {
-            return res.status(404).json({ message: "Cart not found" });
-        }
-
-        const itemIndex = cart.items.findIndex(
-            (item) => String(item.bookId) === String(bookId)
-        );
-
-        if (itemIndex === -1) {
-            return res.status(404).json({ message: "Item not found in cart" });
-        }
-
-        // 🔁 Update quantity
-        cart.items[itemIndex].quantity += quantity;
-
-        // ❌ Remove item if quantity <= 0
-        if (cart.items[itemIndex].quantity <= 0) {
-            cart.items.splice(itemIndex, 1);
-        }
-
-        // 🧹 Delete cart if empty
-        if (cart.items.length === 0) {
-            await Cart.deleteOne({ userId });
-            return res.status(200).json({
-                message: "Cart cleared",
-                cart: null,
-            });
-        }
-
-        await cart.save();
-
-        return res.status(200).json({
-            message: "Cart updated successfully",
-            cart,
-        });
-    } catch (error) {
-        console.error("Update Cart Error:", error);
-        return res.status(500).json({ message: "Internal server error" });
+        cart = await Cart.create({ userId, items: [{ bookId, quantity }] });
+        return res.status(201).json({ message: "Cart created", cart });
     }
-}
 
-async function deleteCart(req, res) {
-    try {
-        const id = req.params.id;
-        if (!id) {
-            return res.status(400).json({ message: "Invalid Cart ID" });
+    const idx = cart.items.findIndex(
+        (item) => String(item.bookId) === String(bookId)
+    );
+
+    if (idx !== -1) {
+        cart.items[idx].quantity += quantity;
+        if (cart.items[idx].quantity <= 0) cart.items.splice(idx, 1);
+    } else {
+        if (quantity <= 0) {
+            return res
+                .status(400)
+                .json({ message: "Quantity must be greater than 0" });
         }
-        await Cart.findByIdAndDelete(id);
-        return res.json({
-            status: "success",
-            message: "Cart deleted successfully",
-        });
-    } catch (error) {
-        console.error("Cart delete error:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
+        cart.items.push({ bookId, quantity });
     }
-}
 
-export const clearCart = async (req, res) => {
-    try {
-        const { userId } = req.params;
-
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ message: "Invalid user ID" });
-        }
-
-        const cart = await Cart.findOne({ userId });
-        if (!cart) {
-            return res.status(404).json({ message: "Cart not found" });
-        }
-
-        cart.items = [];
-        await cart.save();
-
-        return res.json({
-            success: true,
-            message: "Cart cleared successfully",
-        });
-    } catch (error) {
-        console.error("Clear cart error:", error);
-        res.status(500).json({ message: "Failed to clear cart" });
+    if (cart.items.length === 0) {
+        await Cart.deleteOne({ userId });
+        return res.status(200).json({ message: "Cart cleared", cart: null });
     }
-};
+
+    await cart.save();
+    return res.status(200).json({ message: "Cart updated", cart });
+});
+
+const updateCart = asyncHandler(async (req, res) => {
+    const { userId, bookId, quantity } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid userId" });
+    }
+    if (!mongoose.Types.ObjectId.isValid(bookId)) {
+        return res.status(400).json({ message: "Invalid bookId" });
+    }
+    if (typeof quantity !== "number") {
+        return res.status(400).json({ message: "Quantity must be a number" });
+    }
+
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+    const idx = cart.items.findIndex(
+        (item) => String(item.bookId) === String(bookId)
+    );
+    if (idx === -1) {
+        return res.status(404).json({ message: "Item not found in cart" });
+    }
+
+    cart.items[idx].quantity += quantity;
+    if (cart.items[idx].quantity <= 0) cart.items.splice(idx, 1);
+
+    if (cart.items.length === 0) {
+        await Cart.deleteOne({ userId });
+        return res.status(200).json({ message: "Cart cleared", cart: null });
+    }
+
+    await cart.save();
+    return res.status(200).json({ message: "Cart updated", cart });
+});
+
+const deleteCart = asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ message: "Invalid Cart ID" });
+    }
+    await Cart.findByIdAndDelete(id);
+    return res.json({ status: "success", message: "Cart deleted successfully" });
+});
+
+const clearCart = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+        return res.status(400).json({ message: "Invalid user ID" });
+    }
+    const cart = await Cart.findOne({ userId });
+    if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+    cart.items = [];
+    await cart.save();
+    return res.json({ success: true, message: "Cart cleared successfully" });
+});
 
 export {
     getAllCart,
@@ -232,4 +178,5 @@ export {
     createOrUpdateCart,
     updateCart,
     deleteCart,
+    clearCart,
 };

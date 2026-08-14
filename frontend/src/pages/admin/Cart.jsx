@@ -1,87 +1,81 @@
-import React, { useEffect, useMemo, useState } from 'react'
-import { useLoaderData } from 'react-router-dom'
-import { getCart } from '../../data/cart.js';
-import CartTable from '../../components/admin/CartTable.jsx';
+import React, { useEffect, useMemo, useState, useCallback } from "react";
+import { useLoaderData } from "react-router-dom";
+import { getCart } from "../../data/cart.js";
+import CartTable from "../../components/admin/CartTable.jsx";
 
 function Cart() {
     const loader = useLoaderData();
+
     const [carts, setCarts] = useState(loader || []);
+    const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState("");
-    const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-    const [render, setRender] = useState(false);
-    
+
     useEffect(() => {
-        async function fetchCart() {
+        setCarts(loader || []);
+    }, [loader]);
+
+    const refresh = useCallback(async () => {
+        setRefreshing(true);
+        try {
             const data = await getCart();
-            setCarts(data);
-            setRender(false);
+            setCarts(data || []);
+        } finally {
+            setRefreshing(false);
         }
+    }, []);
 
-        if (render) {
-            fetchCart();
-        }
-    }, [render]);
+    const filteredCarts = useMemo(() => {
+        const term = search.trim().toLowerCase();
+        if (!term) return carts;
 
-    const filteredReviews = useMemo(() => {
-        const term = search?.toLowerCase();
-        return carts.filter(
-            (b) =>
-                b.user.first_name?.toLowerCase().includes(term) ||
-                b.book.title?.toLowerCase().includes(term)
-        );
+        return carts.filter((cart) => {
+            const user = cart.user
+                ? `${cart.user.first_name || ""} ${cart.user.last_name || ""} ${
+                      cart.user.username || ""
+                  } ${cart.user.email || ""}`.toLowerCase()
+                : "";
+
+            const hasBook = (cart.items || []).some((i) =>
+                i.book?.name?.toLowerCase().includes(term)
+            );
+
+            return user.includes(term) || hasBook;
+        });
     }, [carts, search]);
 
-    const totalPages = Math.max(1, Math.ceil(filteredReviews.length / rowsPerPage));
+    const totalPages = Math.max(1, Math.ceil(filteredCarts.length / rowsPerPage));
 
     const paginatedCarts = useMemo(() => {
         const safePage = Math.min(currentPage, totalPages);
         const start = (safePage - 1) * rowsPerPage;
-        return filteredReviews.slice(start, start + rowsPerPage);
-    }, [filteredReviews, currentPage, rowsPerPage, totalPages]);
-
-    const allVisibleIds = paginatedCarts.map((b) => b._id || b._id);
-    const isAllSelected =
-        allVisibleIds.length > 0 &&
-        allVisibleIds.every((id) => selectedIds.includes(id));
-
-    const toggleSelect = (id) => {
-        setSelectedIds((prev) =>
-            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-        );
-    };
-
-    const toggleSelectAll = () => {
-        if (isAllSelected) {
-            setSelectedIds((prev) => prev.filter((id) => !allVisibleIds.includes(id)));
-        } else {
-            setSelectedIds((prev) => Array.from(new Set([...prev, ...allVisibleIds])));
-        }
-    };
+        return filteredCarts.slice(start, start + rowsPerPage);
+    }, [filteredCarts, currentPage, rowsPerPage, totalPages]);
 
     const handlePaginationChange = (e) => {
-        const value = Number(e.target.value);
-        setRowsPerPage(value);
+        setRowsPerPage(Number(e.target.value));
         setCurrentPage(1);
     };
 
-    const handlePrevPage = () => {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
-    };
+    const handlePrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
+    const handleNextPage = () =>
+        setCurrentPage((p) => Math.min(totalPages, p + 1));
 
-    const handleNextPage = () => {
-        setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-    };
+    const startIndex =
+        filteredCarts.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const endIndex = Math.min(currentPage * rowsPerPage, filteredCarts.length);
 
-    const startIndex = filteredReviews.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const endIndex = Math.min(currentPage * rowsPerPage, filteredReviews.length);
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Cart</h2>
-                    {/* <p className="text-sm text-gray-500">Manage all school books and inventory.</p> */}
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                        Carts
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                        Active carts that haven’t been checked out.
+                    </p>
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto bg-white">
@@ -92,32 +86,80 @@ function Cart() {
                             setSearch(e.target.value);
                             setCurrentPage(1);
                         }}
-                        placeholder="Search by title, author, category..."
+                        placeholder="Search by customer or book..."
                         className="flex-1 sm:w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {/* <Link to={'/add-book'} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Add Book</Link> */}
+                    <button
+                        onClick={refresh}
+                        disabled={refreshing}
+                        className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                    >
+                        {refreshing ? "Refreshing..." : "Refresh"}
+                    </button>
                 </div>
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-                {selectedIds.length > 0 && (
-                    <div className="px-4 py-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
-                        <span>{selectedIds.length} Cart(s) selected</span>
-                        <button
-                            className="text-blue-600 hover:underline"
-                            onClick={() => setSelectedIds([])}
+                <CartTable paginatedCarts={paginatedCarts} />
+
+                <div className="border-t border-gray-100 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
+                    <div className="flex items-center gap-2">
+                        <span>Rows per page:</span>
+                        <select
+                            value={rowsPerPage}
+                            onChange={handlePaginationChange}
+                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
-                            Clear selection
+                            <option value={5}>5 rows</option>
+                            <option value={10}>10 rows</option>
+                            <option value={20}>20 rows</option>
+                            <option value={30}>30 rows</option>
+                        </select>
+                        <span className="hidden sm:inline">
+                            {filteredCarts.length > 0
+                                ? `Showing ${startIndex}–${endIndex} of ${filteredCarts.length} carts`
+                                : "Showing 0 of 0 carts"}
+                        </span>
+                    </div>
+
+                    <div className="flex items-center gap-3 justify-end">
+                        <button
+                            onClick={handlePrevPage}
+                            disabled={currentPage === 1}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
+                                currentPage === 1
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                            }`}
+                        >
+                            Prev
+                        </button>
+                        <span>
+                            Page{" "}
+                            <span className="font-semibold text-gray-700">
+                                {Math.min(currentPage, totalPages)}
+                            </span>{" "}
+                            of{" "}
+                            <span className="font-semibold text-gray-700">
+                                {totalPages}
+                            </span>
+                        </span>
+                        <button
+                            onClick={handleNextPage}
+                            disabled={currentPage >= totalPages}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
+                                currentPage >= totalPages
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                            }`}
+                        >
+                            Next
                         </button>
                     </div>
-                )}
-
-                <div className="overflow-x-auto">
-                    <CartTable paginatedCarts={paginatedCarts} />
                 </div>
             </div>
         </div>
-    )
+    );
 }
 
-export default Cart
+export default Cart;

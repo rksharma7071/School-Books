@@ -1,45 +1,64 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Link, useLoaderData } from "react-router-dom";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { useLoaderData } from "react-router-dom";
 import { getOrder } from "../../data/order.js";
 import OrderTable from "../../components/admin/OrderTable.jsx";
 
-
-
 function Order() {
     const loader = useLoaderData();
+
     const [orders, setOrders] = useState(loader || []);
+    const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-    const [render, setRender] = useState(false);
-
 
     useEffect(() => {
-        async function fetchOrder() {
-            const data = await getOrder();
-            setOrders(data);
-            setRender(false);
-        }
+        setOrders(loader || []);
+    }, [loader]);
 
-        if (render) {
-            fetchOrder();
+    const refresh = useCallback(async () => {
+        setRefreshing(true);
+        try {
+            const data = await getOrder();
+            setOrders(data || []);
+            setSelectedIds([]);
+        } finally {
+            setRefreshing(false);
         }
-    }, [render]);
+    }, []);
 
     const filteredOrders = useMemo(() => {
-        if (!search) return orders;
+        const term = search.trim().toLowerCase();
 
-        const term = search.toLowerCase();
+        return orders.filter((order) => {
+            if (statusFilter !== "all" && order.status !== statusFilter) {
+                return false;
+            }
 
-        return orders.filter((order) =>
-            order.orderNumber?.toLowerCase().includes(term) ||
-            order.status?.toLowerCase().includes(term) ||
-            String(order.total).includes(term)
-        );
-    }, [orders, search]);
+            if (!term) return true;
 
-    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / rowsPerPage));
+            const customer = order.user
+                ? `${order.user.first_name || ""} ${order.user.last_name || ""} ${
+                      order.user.email || ""
+                  }`.toLowerCase()
+                : "";
+
+            return (
+                String(order.orderNumber).includes(term) ||
+                order.status?.toLowerCase().includes(term) ||
+                String(order.total).includes(term) ||
+                order.paymentId?.toLowerCase().includes(term) ||
+                customer.includes(term)
+            );
+        });
+    }, [orders, search, statusFilter]);
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredOrders.length / rowsPerPage)
+    );
 
     const paginatedOrder = useMemo(() => {
         const safePage = Math.min(currentPage, totalPages);
@@ -47,7 +66,7 @@ function Order() {
         return filteredOrders.slice(start, start + rowsPerPage);
     }, [filteredOrders, currentPage, rowsPerPage, totalPages]);
 
-    const allVisibleIds = paginatedOrder.map((b) => b._id || b._id);
+    const allVisibleIds = paginatedOrder.map((o) => o._id);
     const isAllSelected =
         allVisibleIds.length > 0 &&
         allVisibleIds.every((id) => selectedIds.includes(id));
@@ -60,37 +79,57 @@ function Order() {
 
     const toggleSelectAll = () => {
         if (isAllSelected) {
-            setSelectedIds((prev) => prev.filter((id) => !allVisibleIds.includes(id)));
+            setSelectedIds((prev) =>
+                prev.filter((id) => !allVisibleIds.includes(id))
+            );
         } else {
-            setSelectedIds((prev) => Array.from(new Set([...prev, ...allVisibleIds])));
+            setSelectedIds((prev) =>
+                Array.from(new Set([...prev, ...allVisibleIds]))
+            );
         }
     };
 
     const handlePaginationChange = (e) => {
-        const value = Number(e.target.value);
-        setRowsPerPage(value);
+        setRowsPerPage(Number(e.target.value));
         setCurrentPage(1);
     };
 
-    const handlePrevPage = () => {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
-    };
+    const handlePrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
+    const handleNextPage = () =>
+        setCurrentPage((p) => Math.min(totalPages, p + 1));
 
-    const handleNextPage = () => {
-        setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-    };
-
-    const startIndex = filteredOrders.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const startIndex =
+        filteredOrders.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
     const endIndex = Math.min(currentPage * rowsPerPage, filteredOrders.length);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Order</h2>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                        Orders
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                        Track and fulfil customer orders.
+                    </p>
                 </div>
 
-                <div className="flex gap-2 w-full sm:w-auto bg-white">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto bg-white">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => {
+                            setStatusFilter(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="all">All statuses</option>
+                        <option value="in progress">In Progress</option>
+                        <option value="fulfilled">Fulfilled</option>
+                        <option value="unfulfilled">Unfulfilled</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+
                     <input
                         type="search"
                         value={search}
@@ -98,17 +137,24 @@ function Order() {
                             setSearch(e.target.value);
                             setCurrentPage(1);
                         }}
-                        placeholder="Search by title, author, category..."
-                        className="flex-1 sm:w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search by order #, customer, total..."
+                        className="flex-1 sm:w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {/* <Link to={'/add-book'} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Add Book</Link> */}
+
+                    <button
+                        onClick={refresh}
+                        disabled={refreshing}
+                        className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                    >
+                        {refreshing ? "Refreshing..." : "Refresh"}
+                    </button>
                 </div>
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 {selectedIds.length > 0 && (
-                    <div className="px-4 py-2 border-t border-gray-100 flex items-center justify-between text-xs text-gray-600">
-                        <span>{selectedIds.length} Review(s) selected</span>
+                    <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between text-xs text-gray-600">
+                        <span>{selectedIds.length} order(s) selected</span>
                         <button
                             className="text-blue-600 hover:underline"
                             onClick={() => setSelectedIds([])}
@@ -118,12 +164,16 @@ function Order() {
                     </div>
                 )}
 
-                {/* Table */}
                 <div className="overflow-x-auto">
-                    <OrderTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedOrder={paginatedOrder} selectedIds={selectedIds} toggleSelect={toggleSelect} />
+                    <OrderTable
+                        isAllSelected={isAllSelected}
+                        toggleSelectAll={toggleSelectAll}
+                        paginatedOrder={paginatedOrder}
+                        selectedIds={selectedIds}
+                        toggleSelect={toggleSelect}
+                    />
                 </div>
 
-                {/* Pagination footer */}
                 <div className="border-t border-gray-100 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
                     <div className="flex items-center gap-2">
                         <span>Rows per page:</span>
@@ -139,8 +189,8 @@ function Order() {
                         </select>
                         <span className="hidden sm:inline">
                             {filteredOrders.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredOrders.length} books`
-                                : "Showing 0 of 0 books"}
+                                ? `Showing ${startIndex}–${endIndex} of ${filteredOrders.length} orders`
+                                : "Showing 0 of 0 orders"}
                         </span>
                     </div>
 
@@ -148,20 +198,32 @@ function Order() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
+                                currentPage === 1
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                            }`}
                         >
                             Prev
                         </button>
                         <span>
                             Page{" "}
-                            <span className="font-semibold text-gray-700">{Math.min(currentPage, totalPages)}</span>{" "}
+                            <span className="font-semibold text-gray-700">
+                                {Math.min(currentPage, totalPages)}
+                            </span>{" "}
                             of{" "}
-                            <span className="font-semibold text-gray-700">{totalPages}</span>
+                            <span className="font-semibold text-gray-700">
+                                {totalPages}
+                            </span>
                         </span>
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
+                                currentPage >= totalPages
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                            }`}
                         >
                             Next
                         </button>

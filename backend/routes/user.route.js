@@ -9,25 +9,32 @@ import {
     handleGetPermissionUsingId,
     handleAllPermission,
 } from "../controllers/user.controller.js";
+import authMiddleware from "../middlewares/authentication.js";
+import { authorize, selfOrAdmin } from "../middlewares/authorize.js";
 
 const router = express.Router();
 
-router.route("/").get(handleGetAllUsers).post(handleCreateNewUser);
+router.use(authMiddleware);
+
+router
+    .route("/")
+    .get(authorize("admin"), handleGetAllUsers)
+    .post(authorize("admin"), handleCreateNewUser);
 
 router
     .route("/permission")
-    .get(handleAllPermission)
-    .post(handleUpdatePermission);
+    .get(authorize("admin"), handleAllPermission)
+    .post(authorize("admin"), handleUpdatePermission);
 
 router
     .route("/permission/:id")
-    .get(handleGetPermissionUsingId)
-    .patch(handleUpdatePermission);
+    .get(authorize("admin"), handleGetPermissionUsingId)
+    .patch(authorize("admin"), handleUpdatePermission);
 
 router
     .route("/:id")
-    .get(handleGetUserUinsgId)
-    .patch(handleUpdateUserUsingId)
-    .delete(handleDeleteUserUsingId);
+    .get(selfOrAdmin("id"), handleGetUserUinsgId)
+    .patch(selfOrAdmin("id"), handleUpdateUserUsingId)
+    .delete(authorize("admin"), handleDeleteUserUsingId);
 
 export default router;

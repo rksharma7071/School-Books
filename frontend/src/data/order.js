@@ -1,67 +1,42 @@
 import axios from "axios";
 
-const getOrder = async () => {
+const API = import.meta.env.VITE_API;
+
+const normalizeOrder = (order) => ({
+    ...order,
+    user: order.userId || null,
+    items: (order.items || []).map((item) => ({
+        ...item,
+        book: item.bookId || null,
+    })),
+});
+
+const getOrder = async ({ request } = {}) => {
     try {
-        const { data } = await axios.get(
-            `${import.meta.env.VITE_API}/api/order`
-        );
-        const [orderRes, usersRes, booksRes] = await Promise.all([
-            axios.get(`${import.meta.env.VITE_API}/api/order`),
-            axios.get(`${import.meta.env.VITE_API}/api/user`),
-            axios.get(`${import.meta.env.VITE_API}/api/book`),
-        ]);
-        const orders = orderRes.data.data || orderRes.data;
-        const users = usersRes.data.data || usersRes.data;
-        const books = booksRes.data.data;
-
-        const updatedOrders = orders.map((order) => {
-            const user = users.find((u) => u._id === order.userId._id);
-            const itemsWithBooks = order.items.map((item) => {
-                const book = books.find((b) => b._id === item.bookId._id);
-                return { ...item, book };
-            });
-
-            return {
-                ...order,
-                user,
-                items: itemsWithBooks,
-            };
+        const { data } = await axios.get(`${API}/api/order`, {
+            signal: request?.signal,
         });
-
-        return updatedOrders ?? [];
+        return (data || []).map(normalizeOrder);
     } catch (error) {
-        console.error("Failed to fetch order:", error);
+        if (axios.isCancel(error)) return [];
+        console.error("Failed to fetch orders:", error.message);
         return [];
     }
 };
 
-const getOrderById = async ({ params }) => {
+const getOrderById = async ({ params, request } = {}) => {
     try {
-        const [orderRes, usersRes, booksRes] = await Promise.all([
-            axios.get(`${import.meta.env.VITE_API}/api/order/${params.id}`),
-            axios.get(`${import.meta.env.VITE_API}/api/user`),
-            axios.get(`${import.meta.env.VITE_API}/api/book`),
-        ]);
-
-        const order = orderRes.data?.data || orderRes.data;
-        const users = usersRes.data?.data || usersRes.data;
-        const books = booksRes.data?.data;
-
-        const user = users.find((u) => u._id === (order.userId?._id || order.userId));
-
-        const itemsWithBooks = order.items.map((item) => {
-            const book = books.find((b) => b._id === (item.bookId?._id || item.bookId));
-            return { ...item, book };
+        const { data } = await axios.get(`${API}/api/order/${params.id}`, {
+            signal: request?.signal,
         });
-        
-        return {
-            ...order,
-            user,
-            items: itemsWithBooks,
-        };
+        return normalizeOrder(data);
     } catch (error) {
-        console.error("Failed to fetch order by ID:", error);
-        return {};
+        if (axios.isCancel(error)) return null;
+        console.error("Failed to fetch order by ID:", error.message);
+
+        throw new Response("Order not found", {
+            status: error.response?.status || 500,
+        });
     }
 };
 

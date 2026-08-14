@@ -47,6 +47,8 @@ const orderSchema = new mongoose.Schema(
     }
 );
 
+orderSchema.index({ userId: 1, createdAt: -1 });
+
 const Order = mongoose.model("Order", orderSchema);
 
 export { Order };

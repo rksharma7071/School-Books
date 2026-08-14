@@ -1,108 +1,103 @@
-import { createContext, useEffect, useState } from "react";
-import { getBook } from "../data/book.js";
-import { getCart, getCartById } from "../data/cart.js";
+import { createContext, useCallback, useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import { getCartById } from "../data/cart.js";
 
-export const BookContext = createContext("");
+export const BookContext = createContext(null);
+
+const API = import.meta.env.VITE_API;
 
 export const BookProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [search, setSearch] = useState("");
   const [books, setBooks] = useState([]);
+  const [booksLoading, setBooksLoading] = useState(true);
   const [cartItems, setCartItems] = useState([]);
-  const [carts, setCarts] = useState([]);
-  const [orders, setOrders] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [discounts, setDiscounts] = useState([]);
-  const [payments, setPayments] = useState([]);
-  const [reviews, setReviews] = useState([]);
+  const [address, setAddress] = useState(null);
   const [showToast, setShowToast] = useState(false);
   const [update, setUpdate] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [address, setAddress] = useState([]);
-  const [toastConfig, setToastConfig] = useState({ type: "success", title: "", message: "" });
+  const [toastConfig, setToastConfig] = useState({
+    type: "success",
+    title: "",
+    message: "",
+  });
 
   useEffect(() => {
-    const storedUser = localStorage.getItem("user");
-    if (storedUser)
-      setUser(JSON.parse(storedUser));
+    try {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) setUser(JSON.parse(storedUser));
+    } catch {
+      localStorage.removeItem("user");
+      localStorage.removeItem("token");
+    }
   }, []);
 
-  const adminLogout = () => {
+  useEffect(() => {
+    const controller = new AbortController();
+
+    axios
+      .get(`${API}/api/book`, { signal: controller.signal })
+      .then(({ data }) => setBooks(data.data || []))
+      .catch((e) => {
+        if (!axios.isCancel(e)) console.error("Books fetch failed:", e.message);
+      })
+      .finally(() => setBooksLoading(false));
+
+    return () => controller.abort();
+  }, []);
+
+  const userId = user?.id || user?._id || null;
+
+  useEffect(() => {
+    if (!userId) {
+      setCartItems([]);
+      return;
+    }
+
+    let active = true;
+
+    getCartById({ params: { id: userId } })
+      .then((cart) => {
+        if (active) setCartItems(cart?.items || []);
+      })
+      .catch(() => {
+        if (active) setCartItems([]);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [userId, update]);
+
+  useEffect(() => {
+    if (!userId) {
+      setAddress(null);
+      return;
+    }
+
+    const controller = new AbortController();
+
+    axios
+      .get(`${API}/api/address/user/${userId}`, { signal: controller.signal })
+      .then(({ data }) =>
+        setAddress(data.addresses?.find((a) => a.isDefault) || null)
+      )
+      .catch(() => setAddress(null));
+
+    return () => controller.abort();
+  }, [userId, update]);
+
+  const adminLogout = useCallback(() => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
-  };
-
-  useEffect(() => {
-
-  }, [toastConfig, toastConfig])
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchCart = async () => {
-      try {
-        setLoading(true);
-        const cart = await getCartById({
-          params: { id: user.id || user._id }
-        });
-
-        setCartItems(cart?.items || []);
-      } catch (error) {
-        console.error("Error fetching cart:", error);
-        setCartItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCart();
-  }, [user, update]);
-
-
-  useEffect(() => {
-    const fetchBooks = async () => {
-      try {
-        setLoading(true)
-        const bookData = await axios.get(`${import.meta.env.VITE_API}/api/book`);
-        const cartData = await axios.get(`${import.meta.env.VITE_API}/api/cart`);
-        const orderData = await axios.get(`${import.meta.env.VITE_API}/api/order`);
-        const userData = await axios.get(`${import.meta.env.VITE_API}/api/user`);
-        const discountData = await axios.get(`${import.meta.env.VITE_API}/api/discount`);
-        const paymentData = await axios.get(`${import.meta.env.VITE_API}/api/payment`);
-        const reviewData = await axios.get(`${import.meta.env.VITE_API}/api/review`);
-        const user = JSON.parse(localStorage.getItem("user"));
-        // console.log("user: ", user);
-
-        const addressData = await axios.get(`${import.meta.env.VITE_API}/api/address/user/${user?.id}`);
-        const address = addressData.data.addresses.find(addr => addr.isDefault) || null;
-        setAddress(address);
-        setBooks(bookData.data.data);
-        setCarts(cartData.data)
-        setOrders(orderData.data)
-        setUsers(userData.data)
-        setDiscounts(discountData.data)
-        setPayments(paymentData.data)
-        setReviews(reviewData.data)
-      } catch (error) {
-        console.error("Error: ", error.message);
-      } finally {
-        setLoading(false)
-      }
-    };
-
-    fetchBooks();
+    setCartItems([]);
+    setAddress(null);
   }, []);
 
-
-  return (
-    <BookContext.Provider value={{
-      toastConfig, update, setUpdate, setToastConfig, showToast, setShowToast, user, setUser,
-      adminLogout, carts, search, setSearch, books, setBooks, cartItems, setCartItems, orders, users, discounts,
-      payments, reviews, setReviews, loading, setLoading, address, setAddress,
-    }}>
-      {children}
-    </BookContext.Provider>
+  const value = useMemo(
+    () => ({ user, setUser, adminLogout,  books, setBooks, booksLoading, cartItems, setCartItems, address, setAddress, loading, setLoading, update, setUpdate, toastConfig, setToastConfig, showToast, setShowToast, }),
+    [ user, adminLogout, books, booksLoading, cartItems, address, loading, update, toastConfig, showToast ]
   );
+
+  return <BookContext.Provider value={value}>{children}</BookContext.Provider>;
 };

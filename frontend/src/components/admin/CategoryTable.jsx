@@ -21,13 +21,15 @@ function CategoryTable({ isAllSelected, toggleSelectAll, toggleSelect, paginated
                     </th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Title</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Total Books</th>
-                    
+
                 </tr>
             </thead>
             <tbody>
                 {paginatedCategories.length === 0 ? (
                     <tr>
-                        <td colSpan={7} className="px-4 py-6 text-center text-gray-500">No books found.</td>
+                        <td colSpan={3} className="px-4 py-6 text-center text-gray-500">
+                            No categories found.
+                        </td>
                     </tr>
                 ) : (
                     paginatedCategories.map((book) => {

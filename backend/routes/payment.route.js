@@ -5,11 +5,21 @@ import {
     getAllPayment,
     getPaymentById,
 } from "../controllers/payment.controller.js";
+import authMiddleware from "../middlewares/authentication.js";
+import { authorize } from "../middlewares/authorize.js";
 
 const router = express.Router();
 
-router.route("/").get(getAllPayment).post(createPayment);
+router.use(authMiddleware);
 
-router.route("/:id").get(getPaymentById).delete(deletePayment);
+router
+    .route("/")
+    .get(authorize("admin"), getAllPayment)
+    .post(authorize("admin"), createPayment);
+
+router
+    .route("/:id")
+    .get(authorize("admin"), getPaymentById)
+    .delete(authorize("admin"), deletePayment);
 
 export default router;

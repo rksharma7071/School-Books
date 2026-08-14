@@ -26,10 +26,16 @@ function Payment() {
     }, [render]);
 
     const filteredPayments = useMemo(() => {
-        const term = search?.toLowerCase();
-        return payments.filter((payment) => payment.orderId?.toLowerCase().includes(term)
-            || payment.provider?.toLowerCase().includes(term)
-            || payment.amount?.toLowerCase().includes(term)
+        const term = search.trim().toLowerCase();
+        if (!term) return payments;
+
+        return payments.filter(
+            (p) =>
+                p.transactionId?.toLowerCase().includes(term) ||
+                p.provider?.toLowerCase().includes(term) ||
+                p.status?.toLowerCase().includes(term) ||
+                String(p.amount).includes(term) ||
+                String(p.order?.orderNumber || "").includes(term)
         );
     }, [payments, search]);
 

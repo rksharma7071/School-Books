@@ -1,6 +1,6 @@
 import axios from 'axios';
 import React, { useContext } from 'react'
-import { Link, useLoaderData, useNavigate } from 'react-router-dom'
+import { Link, useLoaderData, useNavigate, useRevalidator } from 'react-router-dom'
 import { BookContext } from '../../context/School';
 import { FiPhone } from "react-icons/fi";
 
@@ -12,7 +12,9 @@ function AddressList() {
         if (window.confirm("Do you want to delete this Address?")) {
             try {
                 await axios.delete(`${import.meta.env.VITE_API}/api/address/${id}`);
-                setRender(true);
+                // setRender(true);
+                useRevalidator()
+                navigate(0)
                 setToastConfig({
                     type: "success",
                     message: "Address has been deleted successfully!",

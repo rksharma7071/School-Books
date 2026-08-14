@@ -65,7 +65,7 @@ function AddAddress() {
             await axios.post(
                 `${import.meta.env.VITE_API}/api/address`,
                 {
-                    userId: user?._id, // ✅ FIXED
+                    userId: user?.id || user?._id,
                     ...form,
                 }
             );
