@@ -55,31 +55,59 @@ import ChangePassword from './pages/frontend/ChangePassword.jsx'
 import AddAddress from './pages/frontend/AddAddress.jsx'
 import ResetPassword from './pages/frontend/ResetPassword.jsx'
 import { getAddress, getAddressById } from './data/address.js'
-
+// import StoreCategoriesPageClient from "./pages/frontend/StoreCategoriesPage.jsx";
+import Categories from "./pages/frontend/Category.jsx";
+import CategoryProducts from './pages/frontend/CategoryProducts.jsx'
 
 const router = createBrowserRouter([
   {
     path: "/",
     element: <Base />,
-    // errorElement: <NotFound />,
     children: [
       { path: "", element: <Home /> },
+      { path: "categories/all", element: <Categories /> },
+      { path: "categories/:categoryName", element: <CategoryProducts /> },
       { path: "cart", element: <FCart /> },
       { path: "products/:id", element: <BookById />, loader: getBookById },
       { path: "contact", element: <Contact /> },
       { path: "checkout", element: <Checkout /> },
       { path: "reset-password", element: <ResetPassword /> },
       {
-        path: "profile", element: <Profile />, loader: getProfile,
+        path: "profile",
+        element: <Profile />,
+        loader: getProfile,
         children: [
-          { index: true, element: <PersonalDetails />, loader: getProfile },
-          { path: "orders", element: <MyOrders />, loader: getProfile },
-          { path: "orders/:id", element: <OrderDetails />, loader: getOrderById },
-          { path: "address", element: <AddressList />, loader: getProfile },
-          { path: "address/new", element: <AddAddress />, loader: getProfile },
-          { path: "address/:id/edit", element: <EditAddress />, loader: getAddressById },
-          { path: "change-password", element: <ChangePassword />, loader: getProfile },
-        ]
+          {
+            index: true,
+            element: <PersonalDetails />,
+          },
+          {
+            path: "orders",
+            element: <MyOrders />,
+          },
+          {
+            path: "orders/:id",
+            element: <OrderDetails />,
+            loader: getOrderById,
+          },
+          {
+            path: "address",
+            element: <AddressList />,
+          },
+          {
+            path: "address/new",
+            element: <AddAddress />,
+          },
+          {
+            path: "address/:id/edit",
+            element: <EditAddress />,
+            loader: getAddressById,
+          },
+          {
+            path: "change-password",
+            element: <ChangePassword />,
+          },
+        ],
       },
       {
         path: "profile/address", element: <Profile />, loader: getProfile,
@@ -127,7 +155,6 @@ const router = createBrowserRouter([
     ]
   }
 ]);
-
 
 createRoot(document.getElementById('root')).render(
   <BookProvider>

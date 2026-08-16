@@ -1,20 +1,39 @@
 import mongoose from "mongoose";
 
-let cached = global._mongoose;
-if (!cached) cached = global._mongoose = { conn: null, promise: null };
+export const connectDB = async () => {
+    try {
+        if (!process.env.MONGODB_URL) {
+            throw new Error("MONGODB_URL is not configured");
+        }
 
-export async function connectDB() {
-    if (cached.conn) return cached.conn;
+        await mongoose.connect(
+            process.env.MONGODB_URL,
+            {
+                maxPoolSize: 20,
+                minPoolSize: 5,
 
-    if (!cached.promise) {
-        mongoose.set("strictQuery", true);
-        cached.promise = mongoose.connect(process.env.MONGODB_URL, {
-            maxPoolSize: 10,
-            minPoolSize: 0,
-            serverSelectionTimeoutMS: 5000,
-            socketTimeoutMS: 20000,
-        });
+                serverSelectionTimeoutMS: 5000,
+
+                socketTimeoutMS: 45000,
+
+                connectTimeoutMS: 10000,
+
+                family: 4,
+            }
+        );
+
+        console.log(`MongoDB connected: ${mongoose.connection.name}`);
+    } catch (error) {
+        console.error("MongoDB connection failed:", error.message);
+        throw error;
     }
-    cached.conn = await cached.promise;
-    return cached.conn;
-}
+};
+
+export const disconnectDB = async () => {
+    try {
+        await mongoose.disconnect();
+        console.log("MongoDB disconnected");
+    } catch (error) {
+        console.error("MongoDB disconnect error:", error.message);
+    }
+};

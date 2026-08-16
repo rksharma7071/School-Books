@@ -1,38 +1,28 @@
 import express from "express";
+
 import {
-    createBook,
-    deleteBook,
     getAllBooks,
-    getAllCategories,
     getBookById,
-    getCategoriesById,
+    getAdminBookById,
+    createBook,
     updateBook,
+    deleteBook,
 } from "../controllers/book.controller.js";
-import upload from "../config/multer.js";
-import authMiddleware from "../middlewares/authentication.js";
-import { authorize } from "../middlewares/authorize.js";
+
+import authentication from "../middlewares/authentication.js";
+import authorize from "../middlewares/authorize.js";
+import { validate } from "../middlewares/validate.js";
+
+import { createBookSchema, updateBookSchema, listBookQuerySchema } from "../validators/book.validator.js";
 
 const router = express.Router();
 
-router.get("/", getAllBooks);
-router.get("/category", getAllCategories);
-router.get("/category/:id", getCategoriesById);
+router.get("/", validate(listBookQuerySchema, "query"), getAllBooks);
 router.get("/:id", getBookById);
 
-router.post(
-    "/",
-    authMiddleware,
-    authorize("admin", "author"),
-    upload.fields([{ name: "images", maxCount: 10 }]),
-    createBook
-);
-router.patch(
-    "/:id",
-    authMiddleware,
-    authorize("admin", "author"),
-    upload.fields([{ name: "images", maxCount: 10 }]),
-    updateBook
-);
-router.delete("/:id", authMiddleware, authorize("admin"), deleteBook);
+router.get("/admin/:id", authentication, authorize("admin"), getAdminBookById);
+router.post("/", authentication, authorize("admin"), validate(createBookSchema), createBook);
+router.patch("/:id", authentication, authorize("admin"), validate(updateBookSchema), updateBook);
+router.delete("/:id", authentication, authorize("admin"), deleteBook);
 
 export default router;

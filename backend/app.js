@@ -1,13 +1,10 @@
 import express from "express";
+import cors from "cors";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 import "dotenv/config";
-import compression from "compression";
 
 import { connectDB } from "./config/database.js";
-import {
-    corsMiddleware,
-    helmetMiddleware,
-    globalLimiter,
-} from "./config/security.js";
 
 import bookRouter from "./routes/book.route.js";
 import userRouter from "./routes/user.route.js";
@@ -19,56 +16,117 @@ import discountRouter from "./routes/discount.route.js";
 import orderRouter from "./routes/order.route.js";
 import razorpayRoutes from "./routes/razorpay.routes.js";
 import addressRoutes from "./routes/address.route.js";
-import fileRouter from "./routes/file.route.js";
 
-import { Book } from "./models/book.model.js";
-import { User } from "./models/user.model.js";
-import { Cart } from "./models/cart.model.js";
-import { Order } from "./models/order.model.js";
-import { Payment } from "./models/payment.model.js";
-import { Review } from "./models/review.model.js";
-import { Discount } from "./models/discount.model.js";
+import { errorHandler } from "./middlewares/errorHandler.js";
 
 const app = express();
+
 const PORT = process.env.PORT || 3000;
 
-app.set("trust proxy", 1);
-
-app.use(helmetMiddleware);
-app.use(compression());
-app.use(corsMiddleware);
-app.use(express.urlencoded({ extended: true, limit: "1mb" }));
-app.use(express.json({ limit: "1mb" }));
-app.use(globalLimiter);
-
-app.get("/health", (req, res) => res.status(200).json({ status: "ok" }));
-
-app.use(async (req, res, next) => {
-    try {
-        await connectDB();
-        next();
-    } catch (e) {
-        console.error("DB connection failed:", e.message);
-        res.status(503).json({ message: "Database unavailable" });
+const normalizeOrigin = (origin) => {
+    if (!origin) {
+        return "";
     }
+
+    return origin.trim().replace(/\/+$/, "");
+};
+
+const allowedOrigins = (process.env.FRONTEND_URL || "")
+    .split(",")
+    .map(normalizeOrigin)
+    .filter(Boolean);
+
+console.log("Allowed CORS origins:", allowedOrigins);
+
+app.disable("x-powered-by");
+
+app.use(helmet({ crossOriginResourcePolicy: { policy: "cross-origin" } }));
+
+app.use(
+    cors({
+        origin: (origin, callback) => {
+            if (!origin) {
+                return callback(null, true);
+            }
+
+            const normalizedOrigin = normalizeOrigin(origin);
+
+            if (allowedOrigins.length === 0) {
+                console.warn("FRONTEND_URL is not configured. Allowing origin:", normalizedOrigin);
+
+                return callback(null, true);
+            }
+
+            if (
+                allowedOrigins.includes(normalizedOrigin)
+            ) {
+                return callback(null, true);
+            }
+
+            console.error(`CORS blocked origin: ${normalizedOrigin}`);
+
+            return callback(
+                new Error("CORS origin not allowed")
+            );
+        },
+
+        credentials: true,
+
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
+        exposedHeaders: ["Content-Length", "Content-Range"],
+
+        maxAge: 86400,
+        optionsSuccessStatus: 204,
+    })
+);
+
+app.options(
+    "*",
+    cors({
+        origin: (origin, callback) => {
+            if (!origin) {
+                return callback(null, true);
+            }
+
+            const normalizedOrigin = normalizeOrigin(origin);
+
+            if (
+                allowedOrigins.length === 0 ||
+                allowedOrigins.includes(normalizedOrigin)
+            ) {
+                return callback(null, true);
+            }
+
+            return callback(new Error("CORS origin not allowed"));
+        },
+
+        credentials: true,
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"],
+    })
+);
+
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
+
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000,
+    limit: 300,
+    standardHeaders: "draft-8",
+    legacyHeaders: false,
+    message: { success: false, message: "Too many requests. Please try again later." },
 });
 
-app.get("/api/stats", async (req, res, next) => {
-    try {
-        const [books, users, orders, carts, discounts, payments, reviews] =
-            await Promise.all([
-                Book.estimatedDocumentCount(),
-                User.estimatedDocumentCount(),
-                Order.estimatedDocumentCount(),
-                Cart.estimatedDocumentCount(),
-                Discount.estimatedDocumentCount(),
-                Payment.estimatedDocumentCount(),
-                Review.estimatedDocumentCount(),
-            ]);
-        res.json({ books, users, orders, carts, discounts, payments, reviews });
-    } catch (e) {
-        next(e);
-    }
+app.use("/api", apiLimiter);
+
+app.get("/health", (req, res) => {
+    res.status(200).json({
+        success: true,
+        status: "ok",
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || "development",
+    });
 });
 
 app.use("/api/book", bookRouter);
@@ -85,38 +143,44 @@ app.use("/api/file", fileRouter);
 
 app.get("/", (req, res) => {
     res.status(200).json({
-        "/health": "Liveness probe",
-        "/api/stats": "Dashboard counts",
-        "/api/book": "Books",
-        "/api/user": "Users",
-        "/api/auth": "Auth",
-        "/api/review": "Reviews",
-        "/api/cart": "Cart",
-        "/api/discount": "Discounts",
-        "/api/payment": "Payments",
-        "/api/order": "Orders",
-        "/api/address": "Addresses",
-        "/api/file": "File uploads",
-        "/api/razorpay": "Razorpay",
+        success: true,
+        message: "School Books API is running",
+
+        endpoints: {
+            health: "/health",
+            books: "/api/book",
+            users: "/api/user",
+            auth: "/api/auth",
+            reviews: "/api/review",
+            cart: "/api/cart",
+            payments: "/api/payment",
+            discounts: "/api/discount",
+            orders: "/api/order",
+            razorpay: "/api/razorpay",
+            addresses: "/api/address",
+        },
     });
 });
 
 app.use((req, res) => {
-    res.status(404).json({ message: "Route not found" });
+    res.status(404).json({ success: false, message: "Route not found", path: req.originalUrl });
 });
 
-app.use((err, req, res, next) => {
-    const status = err.status || 500;
-    if (status >= 500) console.error("Unhandled error:", err);
-    res.status(status).json({
-        message: status >= 500 ? "Internal Server Error" : err.message,
-    });
-});
+app.use(errorHandler);
 
-if (!process.env.VERCEL) {
-    app.listen(PORT, () =>
-        console.log(`Server running on http://localhost:${PORT}`)
-    );
-}
+const startServer = async () => {
+    try {
+        await connectDB();
+
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 export default app;

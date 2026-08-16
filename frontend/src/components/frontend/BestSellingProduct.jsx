@@ -1,28 +1,52 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
-import axios from "axios";
-import { BookContext } from "../../context/School.jsx";
+import { useEffect, useState } from "react";
+import { getBooks } from "../../data/book.js";
 import ProductCard from "./ProductCard.jsx";
+import Loading from "../UI/Loading.jsx";
+import { useContext } from "react";
+import { BookContext } from "../../context/School.jsx";
 
 function BestSellingProduct() {
-    const { books, booksLoading } = useContext(BookContext);
-    const [ratings, setRatings] = useState({});
+    const {
+        user,
+        cartItems,
+        setCartItems,
+    } = useContext(BookContext);
+
+    const [books, setBooks] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     // ONE request for all ratings, instead of one per card
     useEffect(() => {
-        const controller = new AbortController();
+        let mounted = true;
 
-        axios
-            .get(`${import.meta.env.VITE_API}/api/review/summary`, {
-                signal: controller.signal,
-            })
-            .then(({ data }) =>
-                setRatings(
-                    Object.fromEntries(data.map((r) => [r.bookId, r.avgRating]))
-                )
-            )
-            .catch(() => {});
+        const loadBooks = async () => {
+            try {
+                setLoading(true);
 
-        return () => controller.abort();
+                const response = await getBooks({
+                    page: 1,
+                    limit: 10,
+                    sortBy: "createdAt",
+                    sortOrder: "desc",
+                });
+
+                if (mounted) {
+                    setBooks(response?.data || []);
+                }
+            } catch (error) {
+                console.error("Failed to load books:", error);
+            } finally {
+                if (mounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        loadBooks();
+
+        return () => {
+            mounted = false;
+        };
     }, []);
 
     const visibleBooks = useMemo(
@@ -31,41 +55,38 @@ function BestSellingProduct() {
     );
 
     return (
-        <div className="bg-slate-50 py-12">
+        <section className="bg-slate-50 py-12">
             <div className="max-w-7xl mx-auto px-4">
+
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h2 className="text-2xl font-bold text-gray-900">Best Selling Books</h2>
-                        <p className="text-sm text-gray-500 mt-1">Most loved books by our readers</p>
+                        <h2 className="text-2xl font-bold text-gray-900">
+                            Best Selling Books
+                        </h2>
+
+                        <p className="text-sm text-gray-500 mt-1">
+                            Most loved books by our readers
+                        </p>
                     </div>
-                    <a href="/best-sellers" className="text-sm font-medium text-blue-600 hover:text-blue-700">
-                        View All →
-                    </a>
                 </div>
 
-                { booksLoading ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                        {Array.from({ length: 10 }).map((_, i) => (
-                            <div key={i} className="animate-pulse">
-                                <div className="aspect-square bg-gray-200 rounded-lg" />
-                                <div className="h-4 bg-gray-200 rounded mt-3" />
-                                <div className="h-3 bg-gray-200 rounded mt-2 w-2/3" />
-                            </div>
-                        ))}
-                    </div>
+                {loading ? (
+                    <Loading />
                 ) : (
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                        {visibleBooks.map((book) => (
+                        {books.map((book) => (
                             <ProductCard
                                 key={book._id}
                                 book={book}
-                                rating={ratings[book._id] ?? 0}
+                                user={user}
+                                cartItems={cartItems}
+                                setCartItems={setCartItems}
                             />
                         ))}
                     </div>
                 )}
             </div>
-        </div>
+        </section>
     );
 }
 

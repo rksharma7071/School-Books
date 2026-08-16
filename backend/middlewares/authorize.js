@@ -1,25 +1,15 @@
-
-export const authorize =
-    (...roles) =>
-    (req, res, next) => {
+const authorize = (...roles) => {
+    return (req, res, next) => {
         if (!req.user) {
-            return res.status(401).json({ message: "Not authenticated" });
+            return res.status(401).json({ success: false, message: "Authentication required" });
         }
-        if (roles.length && !roles.includes(req.user.role)) {
-            return res.status(403).json({ message: "Insufficient permissions" });
+
+        if (!roles.includes(req.user.role)) {
+            return res.status(403).json({ success: false, message: "You are not authorized to perform this action" });
         }
+
         next();
     };
-
-export const selfOrAdmin = (paramName = "id") => (req, res, next) => {
-    if (!req.user) {
-        return res.status(401).json({ message: "Not authenticated" });
-    }
-    if (req.user.role === "admin" || String(req.user.id) === String(req.params[paramName])) {
-        return next();
-    }
-    return res.status(403).json({ message: "Access denied" });
 };
 
-const authorizeAdmin = authorize("admin");
-export default authorizeAdmin;
+export default authorize;

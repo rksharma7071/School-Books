@@ -1,4 +1,4 @@
-import { createContext, useCallback, useEffect, useMemo, useState } from "react";
+import { createContext, useEffect, useState } from "react";
 import axios from "axios";
 import { getCartById } from "../data/cart.js";
 
@@ -8,96 +8,103 @@ const API = import.meta.env.VITE_API;
 
 export const BookProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [books, setBooks] = useState([]);
-  const [booksLoading, setBooksLoading] = useState(true);
   const [cartItems, setCartItems] = useState([]);
-  const [address, setAddress] = useState(null);
+
+  const [search, setSearch] = useState("");
+
   const [showToast, setShowToast] = useState(false);
-  const [update, setUpdate] = useState(false);
-  const [loading, setLoading] = useState(false);
   const [toastConfig, setToastConfig] = useState({
     type: "success",
     title: "",
     message: "",
   });
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
     try {
       const storedUser = localStorage.getItem("user");
-      if (storedUser) setUser(JSON.parse(storedUser));
+
+      if (storedUser) {
+        setUser(JSON.parse(storedUser));
+      }
     } catch {
       localStorage.removeItem("user");
       localStorage.removeItem("token");
     }
   }, []);
 
-  useEffect(() => {
-    const controller = new AbortController();
+  const adminLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
 
-    axios
-      .get(`${API}/api/book`, { signal: controller.signal })
-      .then(({ data }) => setBooks(data.data || []))
-      .catch((e) => {
-        if (!axios.isCancel(e)) console.error("Books fetch failed:", e.message);
-      })
-      .finally(() => setBooksLoading(false));
+    setUser(null);
+    setCartItems([]);
+  };
 
-    return () => controller.abort();
-  }, []);
-
-  const userId = user?.id || user?._id || null;
-
-  useEffect(() => {
+  const fetchUserCart = async (userId) => {
     if (!userId) {
       setCartItems([]);
       return;
     }
 
-    let active = true;
+    try {
+      const cart = await getCartByUserId(user.id);
+      setCartItems(cart?.items || []);
+    } catch (error) {
+      if (error.response?.status === 404) {
+        setCartItems([]);
+        return;
+      }
 
-    getCartById({ params: { id: userId } })
-      .then((cart) => {
-        if (active) setCartItems(cart?.items || []);
-      })
-      .catch(() => {
-        if (active) setCartItems([]);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [userId, update]);
+      console.error("Failed to fetch cart:", error);
+      setCartItems([]);
+    }
+  };
 
   useEffect(() => {
-    if (!userId) {
-      setAddress(null);
+    if (!user?.id && !user?._id) {
+      setCartItems([]);
       return;
     }
 
-    const controller = new AbortController();
+    fetchUserCart(user.id || user._id);
+  }, [user?.id, user?._id]);
 
-    axios
-      .get(`${API}/api/address/user/${userId}`, { signal: controller.signal })
-      .then(({ data }) =>
-        setAddress(data.addresses?.find((a) => a.isDefault) || null)
-      )
-      .catch(() => setAddress(null));
+  const refreshCart = async () => {
+    const userId = user?.id || user?._id;
 
-    return () => controller.abort();
-  }, [userId, update]);
+    if (!userId) return;
 
-  const adminLogout = useCallback(() => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    setUser(null);
-    setCartItems([]);
-    setAddress(null);
-  }, []);
+    await fetchUserCart(userId);
+  };
 
-  const value = useMemo(
-    () => ({ user, setUser, adminLogout,  books, setBooks, booksLoading, cartItems, setCartItems, address, setAddress, loading, setLoading, update, setUpdate, toastConfig, setToastConfig, showToast, setShowToast, }),
-    [ user, adminLogout, books, booksLoading, cartItems, address, loading, update, toastConfig, showToast ]
+  return (
+    <BookContext.Provider
+      value={{
+        user,
+        setUser,
+
+        cartItems,
+        setCartItems,
+        refreshCart,
+
+        search,
+        setSearch,
+
+        adminLogout,
+
+        loading,
+        setLoading,
+
+        toastConfig,
+        setToastConfig,
+
+        showToast,
+        setShowToast,
+      }}
+    >
+      {children}
+    </BookContext.Provider>
   );
-
-  return <BookContext.Provider value={value}>{children}</BookContext.Provider>;
 };

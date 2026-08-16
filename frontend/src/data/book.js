@@ -2,19 +2,47 @@ import axios from "axios";
 
 const API = import.meta.env.VITE_API;
 
-export const getBook = async () => {
-    const { data } = await axios.get(`${API}/api/book`);
+export const getBooks = async ({
+    page = 1,
+    limit = 12,
+    search = "",
+    category = "",
+    author = "",
+    subject = "",
+    language = "",
+    classLevel = "",
+    minPrice = "",
+    maxPrice = "",
+    sortBy = "createdAt",
+    sortOrder = "desc",
+} = {}) => {
+    const params = new URLSearchParams();
+
+    params.set("page", page);
+    params.set("limit", limit);
+    params.set("sortBy", sortBy);
+    params.set("sortOrder", sortOrder);
+
+    if (search) params.set("search", search);
+    if (category) params.set("category", category);
+    if (author) params.set("author", author);
+    if (subject) params.set("subject", subject);
+    if (language) params.set("language", language);
+    if (classLevel) params.set("classLevel", classLevel);
+    if (minPrice !== "") params.set("minPrice", minPrice);
+    if (maxPrice !== "") params.set("maxPrice", maxPrice);
+
+    const { data } = await axios.get(
+        `${API}/api/book?${params.toString()}`
+    );
+
     return data;
 };
 
 export const getBookById = async ({ params }) => {
-    const [bookRes, reviewRes] = await Promise.all([
-        axios.get(`${API}/api/book/${params.id}`),
-        axios.get(`${API}/api/review/book/${params.id}`),
-    ]);
+    const { data } = await axios.get(
+        `${API}/api/book/${params.id}`
+    );
 
-    return {
-        ...bookRes.data.data,
-        review: reviewRes.data.reviews || [],
-    };
+    return data?.data || null;
 };

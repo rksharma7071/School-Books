@@ -1,35 +1,29 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { User, Permission } from "../models/user.model.js";
-import { asyncHandler } from "../middlewares/asyncHandler.js";
+import bcrypt from "bcrypt";
 
 async function handleGetAllUsers(req, res) {
-    const page = Math.max(1, Number(req.query.page) || 1);
-    const limit = Math.min(100, Number(req.query.limit) || 20);
-
-    const [data, total] = await Promise.all([
-        User.find({})
-            .sort({ createdAt: -1 })
-            .skip((page - 1) * limit)
-            .limit(limit)
-            .lean(),
-        User.countDocuments({}),
-    ]);
-
-    return res.json({
-        data,
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-    });
+    const users = await User.find({})
+        .select("-password -otp -otpExpiry")
+        .lean();
+    return res.json(users);
 }
 
 async function handleCreateNewUser(req, res) {
     const { username, email, password, first_name, last_name, role } = req.body;
 
-    if (!username || !email || !password || !first_name || !last_name) {
-        return res.status(400).json({ message: "All fields are required..." });
-    }
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(body.password, salt);
+
+        const result = await User.create({
+            username: body.username,
+            email: body.email,
+            password: hashedPassword,
+            first_name: body.first_name,
+            last_name: body.last_name,
+            role: "author",
+        });
 
     const existing = await User.findOne({
         $or: [{ email: email.toLowerCase() }, { username }],
@@ -59,12 +53,9 @@ async function handleCreateNewUser(req, res) {
 }
 
 async function handleGetUserUinsgId(req, res) {
-    const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: "Invalid user id" });
-    }
-    const user = await User.findById(id).lean();
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const user = await User.findById(req.params.id)
+        .select("-password -otp -otpExpiry")
+        .lean();
     return res.json(user);
 }
 

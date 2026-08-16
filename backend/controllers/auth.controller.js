@@ -35,8 +35,30 @@ function hashOTP(otp) {
     return crypto.createHash("sha256").update(otp).digest("hex");
 }
 
-const handleAuthSignUp = asyncHandler(async (req, res) => {
-    const { username, email, password, first_name, last_name } = req.body;
+    try {
+        // Check if user already exists
+        const existingUser = await User.findOne({
+            $or: [{ email }, { username }],
+        });
+        if (existingUser) {
+            return res
+                .status(400)
+                .json({ message: "Email or username already in use" });
+        }
+
+        // Hash password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // Create new user
+        const newUser = new User({
+            username,
+            email,
+            password: hashedPassword,
+            first_name,
+            last_name,
+            role: "customer",
+        });
 
     if (!username || !email || !password) {
         return res
