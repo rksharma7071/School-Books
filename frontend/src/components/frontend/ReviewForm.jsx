@@ -12,18 +12,24 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
         e.preventDefault();
 
         try {
-            const res = await axios.post(`${import.meta.env.VITE_API}/api/review`, {
-                rating,
-                title,
-                body,
-                bookId,
-                userId,
-            });
+            const res = await axios.post(
+                `${import.meta.env.VITE_API}/api/review`,
+                {
+                    rating,
+                    title,
+                    body,
+                    bookId,
+                },
+                {
+                    headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+                }
+            );
 
             onSubmit(res.data);
             setRating(0);
             setTitle("");
             setBody("");
+            onClose();
 
         } catch (error) {
             console.error("Review Add Error:", error.response?.data || error.message);

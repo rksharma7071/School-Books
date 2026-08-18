@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API = import.meta.env.VITE_API;
+import api from "../utils/api.js";
 
 export const getBooks = async ({
     page = 1,
@@ -32,17 +30,16 @@ export const getBooks = async ({
     if (minPrice !== "") params.set("minPrice", minPrice);
     if (maxPrice !== "") params.set("maxPrice", maxPrice);
 
-    const { data } = await axios.get(
-        `${API}/api/book?${params.toString()}`
-    );
-
+    const { data } = await api.get(`/api/book?${params.toString()}`);
     return data;
 };
 
 export const getBookById = async ({ params }) => {
-    const { data } = await axios.get(
-        `${API}/api/book/${params.id}`
-    );
+    const { data } = await api.get(`/api/book/${params.id}`);
+    return data?.data || null;
+};
 
+export const getBookBySlug = async ({ params }) => {
+    const { data } = await api.get(`/api/book/slug/${params.slug}`);
     return data?.data || null;
 };

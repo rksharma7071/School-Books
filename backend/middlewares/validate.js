@@ -1,6 +1,8 @@
 export const validate = (schema, source = "body") => {
     return (req, res, next) => {
-        const result = schema.safeParse(req[source]);
+        const data = req[source];
+        
+        const result = schema.safeParse(data);
 
         if (!result.success) {
             return res.status(400).json({
@@ -10,7 +12,19 @@ export const validate = (schema, source = "body") => {
             });
         }
 
-        req[source] = result.data;
+        const descriptor = Object.getOwnPropertyDescriptor(req, source);
+        
+        if (descriptor && descriptor.set) {
+            req[source] = result.data;
+        } else if (source === "query") {
+            Object.keys(result.data).forEach(key => {
+                req.query[key] = result.data[key];
+            });
+            req.validatedQuery = result.data;
+        } else {
+            req[source] = result.data;
+        }
+        
         next();
     };
 };

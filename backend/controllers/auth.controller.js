@@ -28,42 +28,21 @@ function publicUser(u) {
 }
 
 function generateOTP() {
-    return String(crypto.randomInt(100000, 1000000)); 
+    return String(crypto.randomInt(100000, 1000000));
 }
 
 function hashOTP(otp) {
     return crypto.createHash("sha256").update(otp).digest("hex");
 }
 
-    try {
-        // Check if user already exists
-        const existingUser = await User.findOne({
-            $or: [{ email }, { username }],
-        });
-        if (existingUser) {
-            return res
-                .status(400)
-                .json({ message: "Email or username already in use" });
-        }
+const handleAuthSignUp = asyncHandler(async (req, res) => {
+    const { username, email, password, first_name, last_name } = req.body;
 
-        // Hash password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-
-        // Create new user
-        const newUser = new User({
-            username,
-            email,
-            password: hashedPassword,
-            first_name,
-            last_name,
-            role: "customer",
-        });
-
+    // Validation
     if (!username || !email || !password) {
         return res
             .status(400)
-            .json({ message: "username, email and password are required" });
+            .json({ message: "Username, email and password are required" });
     }
     if (!EMAIL_RE.test(email)) {
         return res.status(400).json({ message: "Invalid email format" });
@@ -74,20 +53,24 @@ function hashOTP(otp) {
             .json({ message: "Password must be at least 8 characters" });
     }
 
+    // Check if user already exists
     const existingUser = await User.findOne({
         $or: [{ email: email.toLowerCase() }, { username }],
     }).lean();
+
     if (existingUser) {
         return res
             .status(409)
             .json({ message: "Email or username already in use" });
     }
 
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create new user
     const newUser = await User.create({
         username,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         first_name,
         last_name,

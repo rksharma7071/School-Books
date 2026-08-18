@@ -38,11 +38,23 @@ const getAllCart = asyncHandler(async (req, res) => {
 
 const getCartByUserId = asyncHandler(async (req, res) => {
     const { id } = req.params;
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid id" });
     }
 
-    const cart = await Cart.findOne({ $or: [{ userId: id }, { _id: id }] })
+    // ✅ Verify user is requesting their own cart or is admin
+    if (
+        req.user.role !== "admin" &&
+        String(id) !== String(req.user.id)
+    ) {
+        return res.status(403).json({
+            success: false,
+            message: "You can only view your own cart",
+        });
+    }
+
+    const cart = await Cart.findOne({ userId: id })
         .populate("userId", "first_name last_name username email role")
         .populate(
             "items.bookId",
@@ -66,15 +78,13 @@ const getCartByUserId = asyncHandler(async (req, res) => {
 });
 
 const createOrUpdateCart = asyncHandler(async (req, res) => {
-    const { userId, bookId, quantity = 1 } = req.body;
+    const userId = req.user.id;
+    const { bookId, quantity = 1 } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        return res.status(400).json({ message: "Invalid userId" });
-    }
     if (!mongoose.Types.ObjectId.isValid(bookId)) {
         return res.status(400).json({ message: "Invalid bookId" });
     }
-    if (typeof quantity !== "number") {
+    if (typeof quantity !== "number" || isNaN(quantity)) {
         return res.status(400).json({ message: "Quantity must be a number" });
     }
 
@@ -82,9 +92,7 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
 
     if (!cart) {
         if (quantity <= 0) {
-            return res
-                .status(400)
-                .json({ message: "Quantity must be greater than 0" });
+            return res.status(400).json({ message: "Quantity must be greater than 0" });
         }
         cart = await Cart.create({ userId, items: [{ bookId, quantity }] });
         return res.status(201).json({ message: "Cart created", cart });
@@ -116,15 +124,13 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
 });
 
 const updateCart = asyncHandler(async (req, res) => {
-    const { userId, bookId, quantity } = req.body;
+    const userId = req.user.id; // ✅ Use authenticated user ID
+    const { bookId, quantity } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        return res.status(400).json({ message: "Invalid userId" });
-    }
     if (!mongoose.Types.ObjectId.isValid(bookId)) {
         return res.status(400).json({ message: "Invalid bookId" });
     }
-    if (typeof quantity !== "number") {
+    if (typeof quantity !== "number" || isNaN(quantity)) {
         return res.status(400).json({ message: "Quantity must be a number" });
     }
 
@@ -152,29 +158,100 @@ const updateCart = asyncHandler(async (req, res) => {
 
 const deleteCart = asyncHandler(async (req, res) => {
     const { id } = req.params;
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid Cart ID" });
     }
+
+    // ✅ Verify user owns the cart or is admin
+    const cart = await Cart.findById(id);
+    if (!cart) {
+        return res.status(404).json({ message: "Cart not found" });
+    }
+
+    if (
+        req.user.role !== "admin" &&
+        String(cart.userId) !== String(req.user.id)
+    ) {
+        return res.status(403).json({
+            success: false,
+            message: "You can only delete your own cart",
+        });
+    }
+
     await Cart.findByIdAndDelete(id);
     return res.json({ status: "success", message: "Cart deleted successfully" });
 });
 
 const clearCart = asyncHandler(async (req, res) => {
-    const { userId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(userId)) {
-        return res.status(400).json({ message: "Invalid user ID" });
+    const { userId: paramUserId } = req.params;
+
+    if (paramUserId) {
+        if (req.user.role !== "admin") {
+            return res.status(403).json({
+                success: false,
+                message: "Only admins can clear another user's cart",
+            });
+        }
+
+        const cart = await Cart.findOne({ userId: paramUserId });
+        if (!cart) return res.status(404).json({ message: "Cart not found" });
+        cart.items = [];
+        await cart.save();
+        return res.json({ success: true, message: "Cart cleared successfully" });
     }
+
+    const userId = req.user.id;
     const cart = await Cart.findOne({ userId });
-    if (!cart) return res.status(404).json({ message: "Cart not found" });
+
+    if (!cart) {
+        return res.status(404).json({
+            success: false,
+            message: "Cart not found"
+        });
+    }
 
     cart.items = [];
     await cart.save();
-    return res.json({ success: true, message: "Cart cleared successfully" });
+
+    return res.json({
+        success: true,
+        message: "Cart cleared successfully"
+    });
+});
+
+const getMyCart = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
+
+    const cart = await Cart.findOne({ userId })
+        .populate("userId", "first_name last_name username email role")
+        .populate(
+            "items.bookId",
+            "name price coverImage author stockQty subject classLevel"
+        )
+        .lean();
+
+    if (!cart) return res.status(200).json({ userId, items: [], total: 0 });
+
+    return res.status(200).json({
+        ...cart,
+        user: cart.userId,
+        items: cart.items
+            .filter((i) => i.bookId)
+            .map((i) => ({
+                bookId: String(i.bookId._id),
+                quantity: i.quantity,
+                book: i.bookId,
+            })),
+        totalItems: cart.items.reduce((sum, item) => sum + item.quantity, 0),
+        totalAmount: cart.items.reduce((sum, item) => sum + (item.bookId?.price || 0) * item.quantity, 0),
+    });
 });
 
 export {
     getAllCart,
     getCartByUserId,
+    getMyCart,
     createOrUpdateCart,
     updateCart,
     deleteCart,

@@ -16,8 +16,6 @@ function Header() {
     const [searchOpen, setSearchOpen] = useState(false);
     const [mobileOpen, setMobileOpen] = useState(false);
 
-    /* search is local — it used to live in context and
-       re-rendered every consumer on each keystroke */
     const [search, setSearch] = useState("");
     const [results, setResults] = useState([]);
     const [searching, setSearching] = useState(false);
@@ -35,7 +33,6 @@ function Header() {
         navigate("/");
     };
 
-    /* ---------- DEBOUNCED SERVER SEARCH ---------- */
     useEffect(() => {
         const term = search.trim();
 
@@ -67,7 +64,6 @@ function Header() {
         };
     }, [search]);
 
-    /* ---------- CLOSE / RESET ON NAVIGATION ---------- */
     useEffect(() => {
         setSearch("");
         setResults([]);
@@ -75,7 +71,6 @@ function Header() {
         setMobileOpen(false);
     }, [location.pathname]);
 
-    /* ---------- CLICK OUTSIDE USER MENU ---------- */
     useEffect(() => {
         const handleClick = (e) =>
             menuRef.current &&
@@ -86,7 +81,6 @@ function Header() {
         return () => document.removeEventListener("mousedown", handleClick);
     }, []);
 
-    /* ---------- KEYBOARD: ESC + "/" ---------- */
     useEffect(() => {
         const handleKey = (e) => {
             if (e.key === "Escape") {
@@ -130,10 +124,10 @@ function Header() {
 
                 <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-blue-100">
                     <Link to="/" className="hover:text-white">Home</Link>
-                    <Link to="/categories" className="hover:text-white">Categories</Link>
-                    <Link to="/best-sellers" className="hover:text-white">Best Sellers</Link>
-                    <Link to="/new-arrivals" className="hover:text-white">New Arrivals</Link>
-                    <Link to="/offers" className="hover:text-white">Offers</Link>
+                    <Link to="/categories/all" className="hover:text-white">Categories</Link>
+                    {/* <Link to="/best-sellers" className="hover:text-white">Best Sellers</Link> */}
+                    {/* <Link to="/new-arrivals" className="hover:text-white">New Arrivals</Link> */}
+                    {/* <Link to="/offers" className="hover:text-white">Offers</Link> */}
                     <Link to="/reviews" className="hover:text-white">Reviews</Link>
                     <Link to="/contact" className="hover:text-white">Contact Us</Link>
                 </nav>
@@ -238,7 +232,6 @@ function Header() {
                 </div>
             </div>
 
-            {/* ---------- MOBILE DRAWER ---------- */}
             {mobileOpen && (
                 <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm">
                     <div className="absolute top-0 left-0 h-full w-72 bg-blue-950 shadow-xl p-6 animate-slideIn overflow-y-auto">
@@ -257,7 +250,7 @@ function Header() {
 
                         <nav className="flex flex-col gap-4 text-blue-100 text-sm font-medium">
                             <Link onClick={() => setMobileOpen(false)} to="/" className="hover:text-white">Home</Link>
-                            <Link onClick={() => setMobileOpen(false)} to="/categories" className="hover:text-white">Categories</Link>
+                            <Link onClick={() => setMobileOpen(false)} to="/categories/all" className="hover:text-white">Categories</Link>
                             <Link onClick={() => setMobileOpen(false)} to="/best-sellers" className="hover:text-white">Best Sellers</Link>
                             <Link onClick={() => setMobileOpen(false)} to="/new-arrivals" className="hover:text-white">New Arrivals</Link>
                             <Link onClick={() => setMobileOpen(false)} to="/offers" className="hover:text-white">Offers</Link>
@@ -308,7 +301,6 @@ function Header() {
                 </div>
             )}
 
-            {/* ---------- SEARCH MODAL ---------- */}
             {searchOpen && (
                 <div
                     className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-24 px-4"

@@ -1,3 +1,4 @@
+// routes/review.route.js
 import express from "express";
 import {
     getAllReview,
@@ -7,6 +8,8 @@ import {
     getReviewById,
     getReviewSummary,
     getReviewsByBook,
+    getMyReviews,
+    getAllPublishedReviews,
 } from "../controllers/review.controller.js";
 import authMiddleware from "../middlewares/authentication.js";
 import { authorize } from "../middlewares/authorize.js";
@@ -15,16 +18,21 @@ const router = express.Router();
 
 router.get("/summary", getReviewSummary);
 router.get("/book/:bookId", getReviewsByBook);
+router.get("/published", getAllPublishedReviews);
+
+router.use(authMiddleware);
+
+router.get("/my-reviews", getMyReviews);
 
 router
     .route("/")
-    .get(authMiddleware, authorize("admin"), getAllReview)
-    .post(authMiddleware, createReview); 
+    .get(authorize("admin"), getAllReview)
+    .post(createReview);
 
 router
     .route("/:id")
     .get(getReviewById)
-    .patch(authMiddleware, authorize("admin"), updateReview) 
-    .delete(authMiddleware, authorize("admin"), deleteReview);
+    .patch(authorize("admin"), updateReview)
+    .delete(deleteReview);
 
 export default router;

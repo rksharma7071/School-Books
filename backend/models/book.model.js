@@ -3,10 +3,31 @@ import mongoose from "mongoose";
 const categorySchema = new mongoose.Schema(
     {
         name: { type: String, required: true, trim: true, unique: true, },
+        slug: { type: String, required: true, unique: true, trim: true, index: true, },
         description: { type: String, trim: true, },
     },
     { timestamps: true }
 );
+
+categorySchema.pre('save', function(next) {
+    if (this.isModified('name') && !this.slug) {
+        this.slug = this.name
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+    }
+    next();
+});
+
+categorySchema.post('save', function(error, doc, next) {
+    if (error.name === 'MongoServerError' && error.code === 11000) {
+        next(new Error('Category with this slug already exists'));
+    } else {
+        next(error);
+    }
+});
 
 const imageSubSchema = new mongoose.Schema(
     {
@@ -20,6 +41,7 @@ const imageSubSchema = new mongoose.Schema(
 const bookSchema = new mongoose.Schema(
     {
         name: { type: String, required: true, trim: true, maxlength: 200, },
+        slug: { type: String, required: true, unique: true, trim: true, index: true, },
         description: { type: String, trim: true, maxlength: 5000, },
         price: { type: Number, default: 0, min: 0, },
         cost: { type: Number, default: 0, min: 0, },
@@ -37,6 +59,18 @@ const bookSchema = new mongoose.Schema(
     },
     { timestamps: true, versionKey: false, }
 );
+
+bookSchema.pre('save', function(next) {
+    if (this.isModified('name') && !this.slug) {
+        this.slug = this.name
+            .toLowerCase()
+            .replace(/[^a-zA-Z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .trim();
+    }
+    next();
+});
 
 bookSchema.index({ isActive: 1, createdAt: -1, });
 bookSchema.index({ category: 1, isActive: 1, createdAt: -1, });

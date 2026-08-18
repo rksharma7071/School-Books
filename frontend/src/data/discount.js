@@ -1,8 +1,8 @@
-import axios from "axios";
+import api from "../utils/api.js";
 
 const getDiscount = async () => {
     try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API}/api/discount`);
+        const { data } = await api.get(`/api/discount`);
         return data ?? [];
     } catch (error) {
         console.error("Failed to fetch discounts:", error);
@@ -12,7 +12,7 @@ const getDiscount = async () => {
 
 const getDiscountById = async ({ params }) => {
     try {
-        const { data } = await axios.get(`${import.meta.env.VITE_API}/api/discount/${params.id}`);
+        const { data } = await api.get(`/api/discount/${params.id}`);
         return data ?? {};
     } catch (error) {
         console.error("Failed to fetch discounts:", error);

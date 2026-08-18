@@ -31,18 +31,19 @@ function CategoryProducts() {
             .toLowerCase();
     };
 
+    console.log(category, books);
+    
     useEffect(() => {
         const fetchCategoryProducts = async () => {
             try {
                 setLoading(true);
                 setError("");
 
-                const categoryResponse = await axios.get(`${API}/api/book/category`);
+                const categoryResponse = await axios.get(`${API}/api/categories/all`);
 
                 const categories = categoryResponse.data?.data || [];
 
-                const requestedCategory =
-                    normalizeCategory(categoryName);
+                const requestedCategory = normalizeCategory(categoryName);
 
                 const matchedCategory = categories.find(
                     (category) => normalizeCategory(category.name) === requestedCategory

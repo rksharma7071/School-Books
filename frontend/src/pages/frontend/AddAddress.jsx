@@ -23,9 +23,6 @@ function AddAddress() {
 
     const [errors, setErrors] = useState({});
 
-    /* =====================
-       VALIDATION
-    ===================== */
     const validateForm = () => {
         const newErrors = {};
 
@@ -62,11 +59,14 @@ function AddAddress() {
         setLoading(true);
 
         try {
+            // ✅ userId is NOT sent - it will be taken from req.user.id on the server
             await axios.post(
                 `${import.meta.env.VITE_API}/api/address`,
+                form, // ✅ No userId in the request body
                 {
-                    userId: user?.id || user?._id,
-                    ...form,
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
                 }
             );
 
@@ -99,34 +99,79 @@ function AddAddress() {
                 className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
                 <Field error={errors.fullName}>
-                    <InputField name="fullName" placeholder="Full Name" value={form.fullName} onChange={handleChange} />
+                    <InputField
+                        name="fullName"
+                        placeholder="Full Name"
+                        value={form.fullName}
+                        onChange={handleChange}
+                    />
                 </Field>
 
                 <Field error={errors.phone}>
-                    <InputField name="phone" placeholder="Phone Number" value={form.phone} onChange={handleChange} />
+                    <InputField
+                        name="phone"
+                        placeholder="Phone Number"
+                        value={form.phone}
+                        onChange={handleChange}
+                    />
                 </Field>
 
                 <Field error={errors.address} className="sm:col-span-2">
-                    <InputField name="address" placeholder="Street Address" value={form.address} onChange={handleChange} textarea rows={3} className="sm:col-span-2" />
+                    <InputField
+                        name="address"
+                        placeholder="Street Address"
+                        value={form.address}
+                        onChange={handleChange}
+                        textarea
+                        rows={3}
+                        className="sm:col-span-2"
+                    />
                 </Field>
 
                 <Field error={errors.city}>
-                    <InputField name="city" placeholder="City" value={form.city} onChange={handleChange} />
+                    <InputField
+                        name="city"
+                        placeholder="City"
+                        value={form.city}
+                        onChange={handleChange}
+                    />
                 </Field>
 
                 <Field error={errors.state}>
-                    <InputField name="state" placeholder="State" value={form.state} onChange={handleChange} />
+                    <InputField
+                        name="state"
+                        placeholder="State"
+                        value={form.state}
+                        onChange={handleChange}
+                    />
                 </Field>
 
                 <Field error={errors.pincode}>
-                    <InputField name="pincode" placeholder="Pincode" value={form.pincode} onChange={handleChange} />
+                    <InputField
+                        name="pincode"
+                        placeholder="Pincode"
+                        value={form.pincode}
+                        onChange={handleChange}
+                    />
                 </Field>
 
-                <InputField name="country" value={form.country} disabled />
+                <InputField
+                    name="country"
+                    value={form.country}
+                    disabled
+                />
 
                 <div className="sm:col-span-2 flex items-center gap-2 mt-2">
-                    <input type="checkbox" name="isDefault" checked={form.isDefault} onChange={handleChange} className="h-4 w-4" />
-                    <label className="text-sm text-gray-700">Set as default address</label>
+                    <input
+                        type="checkbox"
+                        name="isDefault"
+                        checked={form.isDefault}
+                        onChange={handleChange}
+                        className="h-4 w-4"
+                    />
+                    <label className="text-sm text-gray-700">
+                        Set as default address
+                    </label>
                 </div>
 
                 <div className="sm:col-span-2 flex gap-4 mt-6">

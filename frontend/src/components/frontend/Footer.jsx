@@ -33,7 +33,7 @@ function Footer() {
                         <ul className="space-y-2 text-sm text-blue-200">
                             <li><Link to="/" className="hover:text-white">Home</Link></li>
                             <li><Link to="/books" className="hover:text-white">Shop</Link></li>
-                            <li><Link to="/categories" className="hover:text-white">Categories</Link></li>
+                            <li><Link to="/categories/all" className="hover:text-white">Categories</Link></li>
                             <li><Link to="/best-sellers" className="hover:text-white">Best Sellers</Link></li>
                             <li><Link to="/new-arrivals" className="hover:text-white">New Arrivals</Link></li>
                             <li><Link to="/offers" className="hover:text-white">Offers</Link></li>

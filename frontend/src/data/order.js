@@ -1,6 +1,4 @@
-import axios from "axios";
-
-const API = import.meta.env.VITE_API;
+import api from "../utils/api.js";
 
 const normalizeOrder = (order) => ({
     ...order,
@@ -13,7 +11,7 @@ const normalizeOrder = (order) => ({
 
 const getOrder = async ({ request } = {}) => {
     try {
-        const { data } = await axios.get(`${API}/api/order`, {
+        const { data } = await api.get(`/api/order`, {
             signal: request?.signal,
         });
         return (data || []).map(normalizeOrder);
@@ -26,7 +24,7 @@ const getOrder = async ({ request } = {}) => {
 
 const getOrderById = async ({ params, request } = {}) => {
     try {
-        const { data } = await axios.get(`${API}/api/order/${params.id}`, {
+        const { data } = await api.get(`/api/order/${params.id}`, {
             signal: request?.signal,
         });
         return normalizeOrder(data);

@@ -1,9 +1,11 @@
+// routes/payment.route.js
 import express from "express";
 import {
     createPayment,
     deletePayment,
     getAllPayment,
     getPaymentById,
+    getPaymentByOrderId,
 } from "../controllers/payment.controller.js";
 import authMiddleware from "../middlewares/authentication.js";
 import { authorize } from "../middlewares/authorize.js";
@@ -11,6 +13,8 @@ import { authorize } from "../middlewares/authorize.js";
 const router = express.Router();
 
 router.use(authMiddleware);
+
+router.get("/order/:orderId", authorize("admin"), getPaymentByOrderId);
 
 router
     .route("/")

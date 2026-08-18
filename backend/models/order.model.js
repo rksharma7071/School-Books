@@ -24,11 +24,11 @@ const shipmentSchema = new mongoose.Schema(
 const orderSchema = new mongoose.Schema(
     {
         orderNumber: { type: Number, required: true, unique: true, index: true },
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true,},
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true, },
         items: {
             type: [orderItemSchema],
             required: true,
-            validate: [ (v) => v.length > 0, "Order must have at least one item"],
+            validate: [(v) => v.length > 0, "Order must have at least one item"],
         },
         shipment: shipmentSchema,
         shipping: { type: Number, required: true, min: 0 },
@@ -40,7 +40,11 @@ const orderSchema = new mongoose.Schema(
         placed_at: { type: Date, default: Date.now },
         shipping_address: { type: String, required: true },
         billing_address: { type: String, required: true },
-        paymentId: { type: String, index: true },
+        paymentId: { type: String },
+        razorpayOrderId: { type: String, sparse: true },
+        razorpayOrderDetails: { amount: Number, currency: String, receipt: String, createdAt: Date },
+        paymentVerified: { type: Boolean, default: false },
+        paymentDate: { type: Date },
     },
     {
         timestamps: true,

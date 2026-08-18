@@ -15,23 +15,49 @@ function Categories() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        const fetchCategories = async () => {
-            try {
-                setLoading(true);
-                setError("");
-                const response = await axios.get(`${API}/api/book/category`);
-                setCategories(response.data?.data || []);
-            } catch (err) {
-                console.error("Failed to fetch categories:", err);
-                setError(err.response?.data?.message ||"Unable to load categories.");
-            } finally {
-                setLoading(false);
-            }
-        };
+    // useEffect(() => {
+    //     const fetchCategories = async () => {
+    //         try {
+    //             setLoading(true);
+    //             setError("");
+    //             const response = await axios.get(`${API}/api/book/category`);
+    //             setCategories(response.data?.data || []);
+    //         } catch (err) {
+    //             console.error("Failed to fetch categories:", err);
+    //             setError(err.response?.data?.message || "Unable to load categories.");
+    //         } finally {
+    //             setLoading(false);
+    //         }
+    //     };
 
+    //     fetchCategories();
+    // }, []);
+
+    useEffect(() => {
         fetchCategories();
     }, []);
+
+    console.log("categories: ", categories);
+    
+
+    const fetchCategories = async () => {
+        try {
+            const response = await fetch(`${API}/api/categories/all?sortBy=bookCount&sortOrder=desc`);
+            const data = await response.json();
+
+            if (data.success) {
+                setCategories(data.data);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    console.log("Categories", categories);
+    
+
 
     const filteredCategories = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -66,15 +92,11 @@ function Categories() {
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900">All Categories</h2>
-
                         <p className="mt-1 text-sm text-gray-500">{categories.length} categories available</p>
                     </div>
 
                     <div className="relative w-full md:w-80">
-                        <FiSearch
-                            className="absolute left-3 top-1/2 -translate-y-1/2
-                            text-gray-400"
-                        />
+                        <FiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
 
                         <input
                             type="search"
@@ -93,21 +115,14 @@ function Categories() {
                 {loading && (
                     <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {Array.from({ length: 8 }).map((_, index) => (
-                            <div
-                                key={index}
-                                className="h-36 rounded-2xl bg-white
-                                border border-gray-200 animate-pulse"
-                            />
+                            <div key={index} className="h-36 rounded-2xl bg-white border border-gray-200 animate-pulse" />
                         ))}
                     </div>
                 )}
 
                 {/* Error */}
                 {!loading && error && (
-                    <div className="mt-10 rounded-xl border border-red-200
-                        bg-red-50 p-5 text-sm text-red-600">
-                        {error}
-                    </div>
+                    <div className="mt-10 rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-600">{error}</div>
                 )}
 
                 {/* Categories */}
@@ -118,13 +133,9 @@ function Categories() {
                                 border-gray-200 p-12 text-center">
                                 <FiBookOpen className="mx-auto text-4xl text-gray-300" />
 
-                                <h3 className="mt-4 text-lg font-semibold text-gray-900">
-                                    No categories found
-                                </h3>
+                                <h3 className="mt-4 text-lg font-semibold text-gray-900">No categories found</h3>
 
-                                <p className="mt-2 text-sm text-gray-500">
-                                    Try searching with another category name.
-                                </p>
+                                <p className="mt-2 text-sm text-gray-500">Try searching with another category name.</p>
                             </div>
                         ) : (
                             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
@@ -132,7 +143,7 @@ function Categories() {
                                     <Link
                                         key={category._id}
                                         to={`/categories/${encodeURIComponent(
-                                            category.name
+                                            category.slug
                                         )}`}
                                         state={{
                                             categoryId: category._id,

@@ -1,3 +1,4 @@
+// controllers/payment.controller.js
 import mongoose from "mongoose";
 import { Order } from "../models/order.model.js";
 import { Payment } from "../models/payment.model.js";
@@ -57,40 +58,100 @@ async function getPaymentById(req, res) {
     }
 }
 
+// ✅ FIXED: Payment creation with proper validation
 async function createPayment(req, res) {
     try {
-        const { orderId, provider, status, amount, transactionId, currency } =
-            req.body;
+        const {
+            orderId,
+            provider,
+            status,
+            amount, // ❌ This should be verified
+            transactionId,
+            currency,
+        } = req.body;
 
-        if (
-            !orderId ||
-            !provider ||
-            !status ||
-            !amount ||
-            !transactionId ||
-            !currency
-        ) {
-            return res.status(400).json({ message: "All fields are required" });
+        // ✅ Validate required fields
+        if (!orderId || !provider || !status || !transactionId) {
+            return res.status(400).json({
+                message: "orderId, provider, status, and transactionId are required"
+            });
         }
 
         if (!mongoose.Types.ObjectId.isValid(orderId)) {
             return res.status(400).json({ message: "Invalid order ID" });
         }
 
-        const existingOrder = await Order.findById(orderId).select("_id").lean();
+        // ✅ Validate provider
+        const validProviders = ["stripe", "paypal", "razorpay", "shopify_payments"];
+        if (!validProviders.includes(provider)) {
+            return res.status(400).json({
+                message: `Invalid provider. Must be one of: ${validProviders.join(", ")}`
+            });
+        }
 
-        if (!existingOrder) {
+        // ✅ Validate status
+        const validStatuses = ["pending", "paid", "failed", "refunded"];
+        if (!validStatuses.includes(status)) {
+            return res.status(400).json({
+                message: `Invalid status. Must be one of: ${validStatuses.join(", ")}`
+            });
+        }
+
+        // ✅ Verify order exists and get order details
+        const order = await Order.findById(orderId);
+        if (!order) {
             return res.status(404).json({ message: "Order does not exist" });
         }
 
+        // ✅ CRITICAL: Verify amount matches order total
+        // This prevents admin from creating payments with incorrect amounts
+        const expectedAmount = order.total;
+        const providedAmount = amount !== undefined ? Number(amount) : expectedAmount;
+
+        if (providedAmount !== expectedAmount) {
+            return res.status(400).json({
+                message: `Amount mismatch. Expected ${expectedAmount}, got ${providedAmount}`
+            });
+        }
+
+        // ✅ Use verified amount and currency
+        const verifiedAmount = expectedAmount;
+        const verifiedCurrency = currency || "INR";
+
+        // ✅ Check if payment already exists for this order
+        const existingPayment = await Payment.findOne({ orderId: order._id });
+        if (existingPayment) {
+            return res.status(409).json({
+                message: "A payment already exists for this order"
+            });
+        }
+
+        // ✅ Check if transactionId is unique
+        const existingTransaction = await Payment.findOne({ transactionId });
+        if (existingTransaction) {
+            return res.status(409).json({
+                message: "A payment with this transaction ID already exists"
+            });
+        }
+
+        // ✅ Create payment with verified data
         const payment = await Payment.create({
             orderId,
             provider,
             status,
-            amount,
+            amount: verifiedAmount, // ✅ Use verified amount
             transactionId,
-            currency,
+            currency: verifiedCurrency, // ✅ Use verified currency
+            paymentDate: status === "paid" ? new Date() : null,
         });
+
+        // ✅ Update order status if payment is marked as paid
+        if (status === "paid" && order.status !== "fulfilled") {
+            order.status = "fulfilled";
+            order.paymentId = transactionId;
+            order.paymentDate = new Date();
+            await order.save();
+        }
 
         return res.status(201).json({
             message: "Payment successfully created",
@@ -102,7 +163,7 @@ async function createPayment(req, res) {
         if (error.code === 11000) {
             return res
                 .status(409)
-                .json({ message: "A payment already exists for this order" });
+                .json({ message: "A payment already exists for this order or transaction ID" });
         }
 
         return res.status(500).json({ message: "Internal server error" });
@@ -133,4 +194,34 @@ async function deletePayment(req, res) {
     }
 }
 
-export { getAllPayment, getPaymentById, createPayment, deletePayment };
+// ✅ Get payment by order ID
+async function getPaymentByOrderId(req, res) {
+    try {
+        const { orderId } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(orderId)) {
+            return res.status(400).json({ message: "Invalid order ID" });
+        }
+
+        const payment = await Payment.findOne({ orderId })
+            .populate(ORDER_POPULATE)
+            .lean();
+
+        if (!payment) {
+            return res.status(404).json({ message: "Payment not found" });
+        }
+
+        return res.json(normalize(payment));
+    } catch (error) {
+        console.error("Get payment by order error:", error);
+        return res.status(500).json({ message: "Failed to fetch payment" });
+    }
+}
+
+export {
+    getAllPayment,
+    getPaymentById,
+    getPaymentByOrderId,
+    createPayment,
+    deletePayment,
+};

@@ -11,25 +11,20 @@ import { useSEO } from "../../seo/SEO.jsx";
 
 function BookById() {
     const book = useLoaderData();
-    const { user, setCartItems, setToastConfig, setShowToast, } = useContext(BookContext);
+    const { user, setCartItems, setToastConfig, setShowToast } = useContext(BookContext);
     const navigate = useNavigate();
     const [showReviewForm, setShowReviewForm] = useState(false);
     const reviewSectionRef = useRef(null);
     const navigation = useNavigation();
-    const pageLoading = navigation.state === "loading";
 
-    // if (pageLoading) {
-    //     return <Loading />
-    // }
     const scrollToReviews = () => {
         reviewSectionRef.current?.scrollIntoView({
             behavior: "smooth",
             block: "start",
         });
     };
-    const bookId = book?._id;
-    const userId = user?.id;
 
+    const bookId = book?._id;
 
     const {
         _id,
@@ -45,6 +40,7 @@ function BookById() {
         coverImage,
         review = [],
     } = book;
+
     const [expanded, setExpanded] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(false);
@@ -89,10 +85,11 @@ function BookById() {
         });
 
         try {
-            await axios.post(`${import.meta.env.VITE_API}/api/cart`, {
-                userId: user.id,
-                bookId: _id, quantity,
+            await api.post(`/api/cart`, {
+                bookId: _id,
+                quantity,
             });
+
             setToastConfig({
                 type: "success",
                 title: "Added to cart",
@@ -100,13 +97,17 @@ function BookById() {
             });
         } catch (error) {
             console.error("Error adding to cart:", error);
+            setToastConfig({
+                type: "error",
+                title: "Failed",
+                message: error.response?.data?.message || "Could not add to cart. Please try again.",
+            });
         } finally {
             setLoading(false);
-            setShowToast(true)
+            setShowToast(true);
         }
     };
 
-    // console.log("Review: ", review);
 
     const jsonLdSchema = {
         "@context": "https://schema.org",
@@ -155,7 +156,7 @@ function BookById() {
     useSEO({
         title: `${book.name} | Buy Online`,
         description: book.description,
-        canonical: `https://schoolbook.lol/products/${book._id}`,
+        canonical: `https://schoolbook.lol/products/${book.slug}`,
         ogTitle: book.name,
         jsonLd: jsonLdSchema,
     })

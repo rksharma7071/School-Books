@@ -19,8 +19,8 @@ function ProductCard({ book, rating = 0 }) {
             const item = prev.find((i) => i.bookId === book._id);
             return item
                 ? prev.map((i) =>
-                      i.bookId === book._id ? { ...i, quantity: i.quantity + 1 } : i
-                  )
+                    i.bookId === book._id ? { ...i, quantity: i.quantity + 1 } : i
+                )
                 : [...prev, { bookId: book._id, quantity: 1, book }];
         });
 
@@ -29,6 +29,10 @@ function ProductCard({ book, rating = 0 }) {
                 userId: user.id,
                 bookId: book._id,
                 quantity: 1,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             });
             setToastConfig({
                 type: "success",
@@ -54,7 +58,7 @@ function ProductCard({ book, rating = 0 }) {
     return (
         <div className="group bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300">
             <Link
-                to={`products/${book._id}`}
+                to={`products/${book.slug}`}
                 className="relative aspect-square bg-gray-50 flex items-center justify-center overflow-hidden"
             >
                 <img
@@ -73,7 +77,7 @@ function ProductCard({ book, rating = 0 }) {
 
             <div className="p-4 flex flex-col gap-2">
                 <Link
-                    to={`products/${book._id}`}
+                    to={`/products/${book.slug}`}
                     className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug"
                 >
                     {book.name}

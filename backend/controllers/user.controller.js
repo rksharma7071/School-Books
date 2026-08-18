@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { User, Permission } from "../models/user.model.js";
-import bcrypt from "bcrypt";
+import { asyncHandler } from "../middlewares/asyncHandler.js";
 
 async function handleGetAllUsers(req, res) {
     const users = await User.find({})
@@ -13,43 +13,32 @@ async function handleGetAllUsers(req, res) {
 async function handleCreateNewUser(req, res) {
     const { username, email, password, first_name, last_name, role } = req.body;
 
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(body.password, salt);
-
-        const result = await User.create({
-            username: body.username,
-            email: body.email,
-            password: hashedPassword,
-            first_name: body.first_name,
-            last_name: body.last_name,
-            role: "author",
-        });
-
     const existing = await User.findOne({
-        $or: [{ email: email.toLowerCase() }, { username }],
+        $or: [
+            { email: email.toLowerCase() },
+            { username },
+        ],
     }).lean();
+
     if (existing) {
-        return res
-            .status(409)
-            .json({ message: "Email or username already in use" });
+        return res.status(409).json({ message: "Email or username already in use" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const created = await User.create({
         username,
-        email,
+        email: email.toLowerCase(),
         password: hashedPassword,
         first_name,
         last_name,
         role: ["customer", "author", "admin"].includes(role) ? role : "author",
     });
 
-    const obj = created.toObject();
-    delete obj.password;
-    return res
-        .status(201)
-        .json({ message: "User created successfully", user: obj });
+    const user = created.toObject();
+    delete user.password;
+
+    return res.status(201).json({ message: "User created successfully", user });
 }
 
 async function handleGetUserUinsgId(req, res) {
@@ -93,16 +82,7 @@ async function handleDeleteUserUsingId(req, res) {
     return res.json({ status: "success", message: "User deleted successfully" });
 }
 
-const permissionFields = [
-    "createUser",
-    "updateUser",
-    "deleteUser",
-    "readUser",
-    "createBook",
-    "updateBook",
-    "deleteBook",
-    "readBook",
-];
+const permissionFields = ["createUser", "updateUser", "deleteUser", "readUser", "createBook", "updateBook", "deleteBook", "readBook"];
 
 const toBool = (v) => v === true || v === "true" || v === 1 || v === "1";
 

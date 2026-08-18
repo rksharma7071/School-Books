@@ -4,10 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { BookContext } from "../../context/School.jsx";
 import InputField from "../../components/UI/InputField.jsx";
 import Button from "../../components/UI/Button.jsx";
+import { createRazorpayOrder, verifyRazorpayPayment } from "../../data/razorpay.js"; // ✅ Import helpers
 
 function Checkout() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast, address } = useContext(BookContext);
-    console.log("Address: ", address);
 
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
@@ -32,12 +32,29 @@ function Checkout() {
     const validateShipping = () => shipping.name && shipping.phone && shipping.address && shipping.city && shipping.state && shipping.pincode;
 
     const clearCart = async () => {
-        await axios.delete(`${import.meta.env.VITE_API}/api/cart/clear/${user.id}`);
-        setCartItems([]);
+        try {
+            await clearMyCart();
+            setCartItems([]);
+        } catch (error) {
+            console.error("Failed to clear cart:", error);
+        }
     };
 
-    const deleteOrder = async (orderId) => {
-        await axios.delete(`${import.meta.env.VITE_API}/api/order/${orderId}`);
+    const cancelOrder = async (orderId) => {
+        try {
+            const token = localStorage.getItem("token");
+            await axios.post(
+                `${import.meta.env.VITE_API}/api/order/${orderId}/cancel`,
+                { reason: "Payment failed or cancelled" },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+            console.log("Order cancelled successfully");
+        } catch (error) {
+            console.error("Failed to cancel order:", error);
+            throw error;
+        }
     };
 
     const handleUseAddress = (address) => {
@@ -71,7 +88,6 @@ function Checkout() {
 
         setDiscountLoading(true);
         try {
-            // console.log("data: ",{ code: coupon, amount: subtotal });
             const { data } = await axios.post(`${import.meta.env.VITE_API}/api/discount/apply`, { code: coupon, amount: subtotal });
 
             setDiscountAmount(data.discountAmount);
@@ -107,7 +123,11 @@ function Checkout() {
         setLoading(true);
 
         try {
-            const orderRes = await axios.post(`${import.meta.env.VITE_API}/api/order`,
+            const token = localStorage.getItem("token");
+
+            // Create order
+            const orderRes = await axios.post(
+                `${import.meta.env.VITE_API}/api/order`,
                 {
                     userId: user.id,
                     items: cartItems.map((item) => ({
@@ -120,29 +140,24 @@ function Checkout() {
                     coupon: appliedCoupon,
                     shipping_address: `${shipping.name}%20${shipping.phone}%20${shipping.address}%20${shipping.city}%20${shipping.state}%20${shipping.pincode}`,
                     billing_address: `${shipping.name}%20${shipping.phone}%20${shipping.address}%20${shipping.city}%20${shipping.state}%20${shipping.pincode}`,
+                },
+                {
+                    headers: { Authorization: `Bearer ${token}` }
                 }
             );
-            // const addressRes = await axios.post(`${import.meta.env.VITE_API}/api/address`, {
-            //     userId: user.id || user_id,
-            //     fullName: shipping.name,
-            //     phone: shipping.phone,
-            //     address: shipping.address,
-            //     city: shipping.city,
-            //     state: shipping.state,
-            //     pincode: shipping.pincode,
-            //     country: "India",
-            //     isDefault: false
-            // })
 
             const order = orderRes.data;
 
-            const razorpayRes = await axios.post(`${import.meta.env.VITE_API}/api/razorpay/create-order`,
-                { orderId: order._id }
-            );
+            // ✅ FIXED: Use the razorpay helper with Authorization header
+            const razorpayRes = await createRazorpayOrder(order._id);
 
-            openRazorpay(razorpayRes.data.razorpayOrder, order._id);
+            openRazorpay(razorpayRes.razorpayOrder, order._id);
         } catch (error) {
-            setToastConfig({ type: "error", message: "Checkout failed" });
+            console.error("Order creation error:", error);
+            setToastConfig({
+                type: "error",
+                message: error.response?.data?.message || "Checkout failed",
+            });
             setShowToast(true);
         } finally {
             setLoading(false);
@@ -160,15 +175,13 @@ function Checkout() {
 
             handler: async function (response) {
                 try {
-                    await axios.post(
-                        `${import.meta.env.VITE_API}/api/razorpay/verify-payment`,
-                        {
-                            razorpay_order_id: response.razorpay_order_id,
-                            razorpay_payment_id: response.razorpay_payment_id,
-                            razorpay_signature: response.razorpay_signature,
-                            orderId,
-                        }
-                    );
+                    // ✅ FIXED: Use the razorpay helper with Authorization header
+                    await verifyRazorpayPayment({
+                        razorpay_order_id: response.razorpay_order_id,
+                        razorpay_payment_id: response.razorpay_payment_id,
+                        razorpay_signature: response.razorpay_signature,
+                        orderId,
+                    });
 
                     await clearCart();
                     setToastConfig({
@@ -176,19 +189,22 @@ function Checkout() {
                         message: "Payment successful!",
                     });
                     setShowToast(true);
-                    navigate("/");
+                    navigate("/profile/orders");
                 } catch (error) {
-                    await deleteOrder(orderId);
+                    console.error("Payment verification failed:", error);
+                    // ✅ FIXED: Cancel order using PATCH (not DELETE)
+                    await cancelOrder(orderId);
                     setToastConfig({
                         type: "error",
-                        message: "Payment verification failed",
+                        message: error.response?.data?.message || "Payment verification failed",
                     });
                     setShowToast(true);
                 }
             },
             modal: {
                 ondismiss: async () => {
-                    await deleteOrder(orderId);
+                    // ✅ FIXED: Cancel order using PATCH (not DELETE)
+                    await cancelOrder(orderId);
                     setToastConfig({
                         type: "error",
                         message: "Payment cancelled",
@@ -276,7 +292,6 @@ function Checkout() {
                             >
                                 {discountLoading ? "Applying..." : "Apply"}
                             </button>
-                            {/* <Button children={discountLoading ? "Applying..." : "Apply"} variant={"primary"} disabled={discountLoading || appliedCoupon} onClick={applyCoupon} className='' /> */}
                         </div>
                     </div>
 

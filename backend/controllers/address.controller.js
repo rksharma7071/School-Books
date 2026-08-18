@@ -13,8 +13,8 @@ async function getAddresses(req, res) {
 
 async function createAddress(req, res) {
     try {
+        const userId = req.user.id; // ✅ Use authenticated user ID
         const {
-            userId,
             fullName,
             phone,
             address,
@@ -23,10 +23,9 @@ async function createAddress(req, res) {
             pincode,
             country = "India",
             isDefault = false,
-        } = req.body;
+        } = req.body; // ✅ Removed userId from body
 
         if (
-            !userId ||
             !fullName ||
             !phone ||
             !address ||
@@ -39,9 +38,7 @@ async function createAddress(req, res) {
                 .json({ message: "All required fields must be provided" });
         }
 
-        if (!mongoose.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ message: "Invalid userId" });
-        }
+        // ✅ If setting as default, unset other defaults for this user
         if (isDefault) {
             await Address.updateMany(
                 { userId },
@@ -50,7 +47,7 @@ async function createAddress(req, res) {
         }
 
         const newAddress = await Address.create({
-            userId,
+            userId, // ✅ Use authenticated user ID
             fullName,
             phone,
             address,
@@ -79,6 +76,17 @@ async function getAddressByUserId(req, res) {
             return res.status(400).json({ message: "Invalid userId" });
         }
 
+        // ✅ Verify user is requesting their own addresses or is admin
+        if (
+            req.user.role !== "admin" &&
+            String(userId) !== String(req.user.id)
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "You can only view your own addresses",
+            });
+        }
+
         const addresses = await Address.find({ userId }).sort({
             isDefault: -1,
             createdAt: -1,
@@ -96,6 +104,41 @@ async function getAddressByUserId(req, res) {
     }
 }
 
+async function getAddressById(req, res) {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ message: "Invalid address id" });
+        }
+
+        const address = await Address.findById(id);
+
+        if (!address) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+
+        // ✅ Verify ownership
+        if (
+            req.user.role !== "admin" &&
+            String(address.userId) !== String(req.user.id)
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. You can only view your own addresses.",
+            });
+        }
+
+        return res.status(200).json({
+            message: "Address fetched successfully",
+            address,
+        });
+    } catch (error) {
+        console.error("Get address by id error:", error);
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
 async function updateAddress(req, res) {
     try {
         const { id } = req.params;
@@ -104,15 +147,26 @@ async function updateAddress(req, res) {
             return res.status(400).json({ message: "Invalid address id" });
         }
 
-        const myaddress = await Address.findById(id);
-        if (!myaddress) {
+        const address = await Address.findById(id);
+        if (!address) {
             return res.status(404).json({ message: "Address not found" });
+        }
+
+        // ✅ Verify ownership before updating
+        if (
+            req.user.role !== "admin" &&
+            String(address.userId) !== String(req.user.id)
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. You can only update your own addresses.",
+            });
         }
 
         const {
             fullName,
             phone,
-            address,
+            address: addressLine,
             city,
             state,
             pincode,
@@ -120,25 +174,28 @@ async function updateAddress(req, res) {
             isDefault,
         } = req.body;
 
-        if (fullName !== undefined) myaddress.fullName = fullName;
-        if (phone !== undefined) myaddress.phone = phone;
-        if (address !== undefined) myaddress.address = address;
-        if (city !== undefined) myaddress.city = city;
-        if (state !== undefined) myaddress.state = state;
-        if (pincode !== undefined) myaddress.pincode = pincode;
-        if (country !== undefined) myaddress.country = country;
+        // Update fields
+        if (fullName !== undefined) address.fullName = fullName;
+        if (phone !== undefined) address.phone = phone;
+        if (addressLine !== undefined) address.address = addressLine;
+        if (city !== undefined) address.city = city;
+        if (state !== undefined) address.state = state;
+        if (pincode !== undefined) address.pincode = pincode;
+        if (country !== undefined) address.country = country;
 
+        // Handle default address logic
         if (isDefault !== undefined) {
             if (isDefault === true) {
+                // Unset other defaults for this user
                 await Address.updateMany(
-                    { userId: myaddress.userId },
+                    { userId: address.userId },
                     { isDefault: false }
                 );
             }
-            myaddress.isDefault = isDefault;
+            address.isDefault = isDefault;
         }
 
-        const result = await myaddress.save();
+        const result = await address.save();
 
         return res.status(200).json({
             message: "Address updated successfully",
@@ -158,39 +215,39 @@ async function deleteAddress(req, res) {
             return res.status(400).json({ message: "Invalid address id" });
         }
 
-        const address = await Address.findByIdAndDelete(id);
+        // ✅ First check if address exists and belongs to user
+        const address = await Address.findById(id);
         if (!address) {
             return res.status(404).json({ message: "Address not found" });
         }
+
+        // ✅ Verify ownership before deletion
+        if (
+            req.user.role !== "admin" &&
+            String(address.userId) !== String(req.user.id)
+        ) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. You can only delete your own addresses.",
+            });
+        }
+
+        // If this was the default address, set another as default
+        if (address.isDefault) {
+            const nextAddress = await Address.findOneAndUpdate(
+                { userId: address.userId, _id: { $ne: id } },
+                { $set: { isDefault: true } },
+                { sort: { createdAt: 1 } }
+            );
+        }
+
+        await Address.findByIdAndDelete(id);
+
         return res.status(200).json({
             message: "Address deleted successfully",
         });
     } catch (error) {
         console.error("Delete address error:", error);
-        return res.status(500).json({ message: "Internal Server Error" });
-    }
-}
-
-async function getAddressById(req, res) {
-    try {
-        const { id } = req.params;
-
-        if (!mongoose.Types.ObjectId.isValid(id)) {
-            return res.status(400).json({ message: "Invalid address id" });
-        }
-
-        const address = await Address.findById(id);
-
-        if (!address) {
-            return res.status(404).json({ message: "Address not found" });
-        }
-
-        return res.status(200).json({
-            message: "Address fetched successfully",
-            address,
-        });
-    } catch (error) {
-        console.error("Get address by id error:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }

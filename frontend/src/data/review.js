@@ -1,23 +1,21 @@
-import axios from "axios";
+import api from "../utils/api.js";
 
 export const getReview = async () => {
     try {
-        const res = await axios.get(`${import.meta.env.VITE_API}/api/review`);
-        const book = res?.data || {};
-        return book;
+        const res = await api.get(`/api/review`);
+        return res?.data || {};
     } catch (error) {
-        console.error("Edit User Error:", error);
-
-        throw error?.response?.data || { message: "Failed to fetch user data" };
+        console.error("Get Review Error:", error);
+        throw error?.response?.data || { message: "Failed to fetch review data" };
     }
 };
 
 export const getReview1 = async () => {
     try {
         const [usersRes, booksRes, reviewRes] = await Promise.all([
-            axios.get(`${import.meta.env.VITE_API}/api/user`),
-            axios.get(`${import.meta.env.VITE_API}/api/book`),
-            axios.get(`${import.meta.env.VITE_API}/api/review`),
+            api.get(`/api/user`),
+            api.get(`/api/book`),
+            api.get(`/api/review`),
         ]);
 
         const users = usersRes.data;
@@ -37,8 +35,6 @@ export const getReview1 = async () => {
         return updatedReviews;
     } catch (error) {
         console.error("Get Review Error:", error);
-        throw (
-            error?.response?.data || { message: "Failed to fetch review data" }
-        );
+        throw error?.response?.data || { message: "Failed to fetch review data" };
     }
 };

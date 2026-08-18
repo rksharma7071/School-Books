@@ -1,10 +1,8 @@
-import axios from "axios";
-
-const API = import.meta.env.VITE_API;
+import api from "../utils/api.js";
 
 const getPayment = async ({ request } = {}) => {
     try {
-        const { data } = await axios.get(`${API}/api/payment`, {
+        const { data } = await api.get(`/api/payment`, {
             signal: request?.signal,
         });
         return data || [];
@@ -17,7 +15,7 @@ const getPayment = async ({ request } = {}) => {
 
 const getPaymentById = async ({ params, request } = {}) => {
     try {
-        const { data } = await axios.get(`${API}/api/payment/${params.id}`, {
+        const { data } = await api.get(`/api/payment/${params.id}`, {
             signal: request?.signal,
         });
         return data;
