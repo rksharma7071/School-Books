@@ -87,11 +87,46 @@ const findCategoryByIdentifier = async (identifier) => {
     return await Category.findOne(query).lean();
 };
 
-export const getAllBooks = async (req, res, next) => {
+function calculateDistribution(ratings) {
+    const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+
+    if (Array.isArray(ratings)) {
+        ratings.forEach(rating => {
+            if (distribution.hasOwnProperty(rating)) {
+                distribution[rating]++;
+            }
+        });
+    }
+
+    return distribution;
+}
+
+function formatReview(review) {
+    return {
+        id: review._id,
+        rating: review.rating,
+        title: review.title,
+        body: review.body,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+        user: review.userId ? {
+            id: review.userId._id,
+            username: review.userId.username,
+            firstName: review.userId.first_name,
+            lastName: review.userId.last_name,
+            fullName: [review.userId.first_name, review.userId.last_name]
+                .filter(Boolean)
+                .join(" ") || review.userId.username
+        } : null
+    };
+}
+
+const getAllBooks = async (req, res, next) => {
     try {
         const {
             page, limit, search, category, author, subject, language,
-            classLevel, minPrice, maxPrice, isActive, sortBy, sortOrder
+            classLevel, minPrice, maxPrice, isActive, sortBy, sortOrder,
+            includeReviews = false, reviewLimit = 3
         } = req.query;
 
         const filter = {};
@@ -154,8 +189,11 @@ export const getAllBooks = async (req, res, next) => {
         const sort = { [sortBy || 'createdAt']: sortOrder === "asc" ? 1 : -1 };
 
         const includeTotal = req.query.includeTotal === "true";
+        const shouldIncludeReviews = includeReviews === true || includeReviews === "true";
+        const reviewLimitNum = Math.min(10, parseInt(reviewLimit) || 3);
 
-        const query = Book.find(filter)
+        // Get books
+        const books = await Book.find(filter)
             .select(LIST_PROJECTION)
             .populate("category", "name slug description")
             .sort(sort)
@@ -163,14 +201,89 @@ export const getAllBooks = async (req, res, next) => {
             .limit(limitNum)
             .lean();
 
-        const [books, total] = await Promise.all([
-            query,
-            includeTotal ? Book.countDocuments(filter) : Promise.resolve(null)
-        ]);
+        // Get total count if requested
+        const total = includeTotal ? await Book.countDocuments(filter) : null;
+
+        // If reviews are requested, fetch them for all books
+        let booksWithReviews = books;
+
+        if (shouldIncludeReviews && books.length > 0) {
+            const bookIds = books.map(book => book._id);
+
+            // Fetch reviews for all books in parallel
+            const [reviewsData, ratingStats] = await Promise.all([
+                Review.find({
+                    bookId: { $in: bookIds },
+                    approved: true
+                })
+                    .populate("userId", "first_name last_name username")
+                    .sort({ createdAt: -1 })
+                    .lean(),
+                Review.aggregate([
+                    {
+                        $match: {
+                            bookId: { $in: bookIds },
+                            approved: true
+                        }
+                    },
+                    {
+                        $group: {
+                            _id: "$bookId",
+                            averageRating: { $avg: "$rating" },
+                            totalReviews: { $sum: 1 },
+                            ratings: { $push: "$rating" }
+                        }
+                    }
+                ])
+            ]);
+
+            // Create maps for quick lookup
+            const reviewsByBook = new Map();
+            const statsByBook = new Map();
+
+            // Group reviews by book
+            reviewsData.forEach(review => {
+                const bookIdStr = review.bookId.toString();
+                if (!reviewsByBook.has(bookIdStr)) {
+                    reviewsByBook.set(bookIdStr, []);
+                }
+                reviewsByBook.get(bookIdStr).push(review);
+            });
+
+            // Group stats by book
+            ratingStats.forEach(stat => {
+                statsByBook.set(stat._id.toString(), {
+                    averageRating: parseFloat(stat.averageRating.toFixed(1)),
+                    totalReviews: stat.totalReviews,
+                    distribution: calculateDistribution(stat.ratings)
+                });
+            });
+
+            // Attach reviews and stats to each book
+            booksWithReviews = books.map(book => {
+                const bookIdStr = book._id.toString();
+                const bookReviews = reviewsByBook.get(bookIdStr) || [];
+                const stats = statsByBook.get(bookIdStr) || {
+                    averageRating: 0,
+                    totalReviews: 0,
+                    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+                };
+
+                return {
+                    ...book,
+                    rating: stats.averageRating,
+                    reviewCount: stats.totalReviews,
+                    reviews: shouldIncludeReviews ? {
+                        summary: stats,
+                        recent: bookReviews.slice(0, reviewLimitNum).map(formatReview)
+                    } : undefined
+                };
+            });
+        }
 
         const response = {
             success: true,
-            data: books,
+            data: booksWithReviews,
             pagination: {
                 page: pageNum,
                 limit: limitNum,
@@ -190,14 +303,13 @@ export const getAllBooks = async (req, res, next) => {
     }
 };
 
-
-export const getBooksByCategorySlug = async (req, res, next) => {
+const getBooksByCategorySlug = async (req, res, next) => {
     try {
         const { categorySlug } = req.params;
         const {
             page, limit, search, author, subject, language,
             classLevel, minPrice, maxPrice, isActive, sortBy, sortOrder
-        } = req.query;   
+        } = req.query;
 
         const category = await Category.findOne({ slug: categorySlug, isActive: true })
             .select("_id name slug description")
@@ -299,12 +411,15 @@ export const getBooksByCategorySlug = async (req, res, next) => {
     }
 };
 
-export const getBookBySlug = async (req, res, next) => {
+const getBookBySlug = async (req, res, next) => {
     try {
         const { slug } = req.params;
 
         if (!slug) {
-            return res.status(400).json({ success: false, message: "Slug is required" });
+            return res.status(400).json({
+                success: false,
+                message: "Slug is required"
+            });
         }
 
         const book = await Book.findOne({ slug, isActive: true })
@@ -313,16 +428,93 @@ export const getBookBySlug = async (req, res, next) => {
             .lean();
 
         if (!book) {
-            return res.status(404).json({ success: false, message: "Book not found" });
+            return res.status(404).json({
+                success: false,
+                message: "Book not found"
+            });
         }
 
-        return res.status(200).json({ success: true, data: book });
+        const reviews = await Review.find({
+            bookId: book._id,
+            approved: true
+        })
+            .populate("userId", "first_name last_name username")
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean();
+
+        const ratingStats = await Review.aggregate([
+            {
+                $match: {
+                    bookId: book._id,
+                    approved: true
+                }
+            },
+            {
+                $group: {
+                    _id: null,
+                    averageRating: { $avg: "$rating" },
+                    totalReviews: { $sum: 1 },
+                    ratingDistribution: {
+                        $push: "$rating"
+                    }
+                }
+            }
+        ]);
+
+        const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        let averageRating = 0;
+        let totalReviews = 0;
+
+        if (ratingStats.length > 0) {
+            averageRating = parseFloat(ratingStats[0].averageRating.toFixed(1));
+            totalReviews = ratingStats[0].totalReviews;
+
+            ratingStats[0].ratingDistribution.forEach(rating => {
+                if (distribution.hasOwnProperty(rating)) {
+                    distribution[rating]++;
+                }
+            });
+        }
+
+        const formattedReviews = reviews.map((review) => ({
+            id: review._id,
+            rating: review.rating,
+            title: review.title,
+            body: review.body,
+            createdAt: review.createdAt,
+            updatedAt: review.updatedAt,
+            user: review.userId ? {
+                id: review.userId._id,
+                username: review.userId.username,
+                firstName: review.userId.first_name,
+                lastName: review.userId.last_name,
+                fullName: [review.userId.first_name, review.userId.last_name]
+                    .filter(Boolean)
+                    .join(" ") || review.userId.username
+            } : null
+        }));
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                ...book,
+                reviews: {
+                    summary: {
+                        averageRating,
+                        totalReviews,
+                        distribution
+                    },
+                    recent: formattedReviews
+                }
+            }
+        });
     } catch (error) {
         next(error);
     }
 };
 
-export const getBookById = async (req, res, next) => {
+const getBookById = async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -341,7 +533,7 @@ export const getBookById = async (req, res, next) => {
     }
 };
 
-export const createBook = async (req, res, next) => {
+const createBook = async (req, res, next) => {
     try {
         const data = req.body;
 
@@ -389,7 +581,7 @@ export const createBook = async (req, res, next) => {
     }
 };
 
-export const updateBook = async (req, res, next) => {
+const updateBook = async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -464,7 +656,7 @@ export const updateBook = async (req, res, next) => {
     }
 };
 
-export const deleteBook = async (req, res, next) => {
+const deleteBook = async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -490,7 +682,7 @@ export const deleteBook = async (req, res, next) => {
     }
 };
 
-export const getAdminBookById = async (req, res, next) => {
+const getAdminBookById = async (req, res, next) => {
     try {
         const { id } = req.params;
 
@@ -508,3 +700,14 @@ export const getAdminBookById = async (req, res, next) => {
         next(error);
     }
 };
+
+export {
+    getAllBooks,
+    getBooksByCategorySlug,
+    getBookBySlug,
+    getBookById,
+    createBook,
+    updateBook,
+    deleteBook,
+    getAdminBookById
+}

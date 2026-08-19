@@ -1,6 +1,6 @@
 import api from "../utils/api.js";
 
-export const getReview = async () => {
+const getReview = async () => {
     try {
         const res = await api.get(`/api/review`);
         return res?.data || {};
@@ -10,7 +10,7 @@ export const getReview = async () => {
     }
 };
 
-export const getReview1 = async () => {
+const getReview1 = async () => {
     try {
         const [usersRes, booksRes, reviewRes] = await Promise.all([
             api.get(`/api/user`),
@@ -38,3 +38,9 @@ export const getReview1 = async () => {
         throw error?.response?.data || { message: "Failed to fetch review data" };
     }
 };
+
+
+export {
+    getReview,
+    getReview1
+}

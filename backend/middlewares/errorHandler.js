@@ -1,4 +1,4 @@
-export const errorHandler = (error, req, res, next) => {
+const errorHandler = (error, req, res, next) => {
     console.error(`[${req.method}] ${req.originalUrl}`, error);
 
     if (error.message === "CORS origin not allowed") {
@@ -35,3 +35,8 @@ export const errorHandler = (error, req, res, next) => {
         ...(process.env.NODE_ENV !== "production" && { stack: error.stack }),
     });
 };
+
+
+export {
+    errorHandler
+}

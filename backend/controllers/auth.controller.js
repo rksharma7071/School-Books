@@ -128,14 +128,32 @@ const handleAuthChangePassword = asyncHandler(async (req, res) => {
 
 const handleAuthRequestOTP = asyncHandler(async (req, res) => {
     const { email } = req.body;
-    if (!email) return res.status(400).json({ message: "Email is required" });
+
+    if (!email) {
+        return res.status(400).json({ success: false, message: "Email is required" });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        return res.status(400).json({ success: false, message: "Invalid email format" });
+    }
 
     const user = await User.findOne({ email: email.toLowerCase() });
 
-    if (user) {
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "No account found. Please check your email or sign up."
+        });
+    }
+
+    try {
         const otp = generateOTP();
         user.otp = hashOTP(otp);
         user.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
+        user.resetToken = null;
+        user.resetTokenExpiry = null;
+
         await user.save();
 
         const transporter = nodemailer.createTransport({
@@ -158,9 +176,19 @@ const handleAuthRequestOTP = asyncHandler(async (req, res) => {
                 <p>This OTP expires in <b>5 minutes</b>.</p>
               </div>`,
         });
-    }
 
-    res.json({ message: "If the account exists, an OTP has been sent." });
+        return res.status(200).json({
+            success: true,
+            message: "OTP has been sent to your email address."
+        });
+
+    } catch (error) {
+        console.error("Error sending OTP email:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Failed to send OTP. Please try again later."
+        });
+    }
 });
 
 const handleAuthVerifyOTP = asyncHandler(async (req, res) => {
@@ -169,55 +197,53 @@ const handleAuthVerifyOTP = asyncHandler(async (req, res) => {
         return res.status(400).json({ message: "Email and OTP are required" });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select(
-        "+otp +otpExpiry"
-    );
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+otp +otpExpiry");
 
-    if (
-        !user ||
-        !user.otp ||
-        user.otp !== hashOTP(otp) ||
-        !user.otpExpiry ||
-        Date.now() > user.otpExpiry.getTime()
-    ) {
+    if (!user || !user.otp || user.otp !== hashOTP(otp) || !user.otpExpiry || Date.now() > user.otpExpiry.getTime()) {
         return res.status(400).json({ message: "Invalid or expired OTP" });
     }
+    // Generate temporary reset token
+    const resetToken = crypto.randomBytes(32).toString("hex");
 
-    res.json({ message: "OTP verified, you can reset password now" });
+    user.resetToken = hashOTP(resetToken);
+    user.resetTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
+
+    // OTP should not be usable again
+    user.otp = null;
+    user.otpExpiry = null;
+
+    await user.save();
+
+    res.json({ message: "OTP verified, you can reset password now", resetToken: resetToken });
 });
 
 const handleAuthResetPassword = asyncHandler(async (req, res) => {
-    const { email, otp, password } = req.body;
-    if (!email || !otp || !password) {
-        return res
-            .status(400)
-            .json({ message: "Email, OTP and new password are required" });
+    const { email, resetToken, password } = req.body;
+
+    if (!email || !resetToken || !password) {
+        return res.status(400).json({ message: "Email, reset token and new password are required" });
     }
+
     if (String(password).length < 8) {
-        return res
-            .status(400)
-            .json({ message: "Password must be at least 8 characters" });
+        return res.status(400).json({ message: "Password must be at least 8 characters" });
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() }).select(
-        "+otp +otpExpiry"
-    );
-    if (
-        !user ||
-        !user.otp ||
-        user.otp !== hashOTP(otp) ||
-        !user.otpExpiry ||
-        Date.now() > user.otpExpiry.getTime()
-    ) {
-        return res.status(400).json({ message: "Invalid or expired OTP" });
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+resetToken +resetTokenExpiry");
+
+    if (!user || !user.resetToken || user.resetToken !== hashOTP(resetToken) || !user.resetTokenExpiry || Date.now() > user.resetTokenExpiry.getTime()) {
+        return res.status(400).json({ message: "Invalid or expired reset token", });
     }
 
+    // Update password
     user.password = await bcrypt.hash(password, 10);
-    user.otp = null;
-    user.otpExpiry = null;
+
+    // Invalidate reset token
+    user.resetToken = null;
+    user.resetTokenExpiry = null;
+
     await user.save();
 
-    res.json({ message: "Password reset successfully" });
+    return res.status(200).json({ message: "Password reset successfully" });
 });
 
 export {

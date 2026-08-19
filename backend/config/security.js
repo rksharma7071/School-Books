@@ -22,7 +22,7 @@ if (process.env.NODE_ENV === "production" && allowedOrigins.length === 0) {
 
 console.log(`[Security] CORS allowed origins: ${allowedOrigins.length > 0 ? allowedOrigins.join(", ") : "ALL (development mode)"}`);
 
-export const corsMiddleware = cors({
+const corsMiddleware = cors({
     origin: (origin, callback) => {
         // Allow requests with no origin (like mobile apps, curl, etc.)
         if (!origin) {
@@ -61,7 +61,7 @@ export const corsMiddleware = cors({
 });
 
 // ✅ Preflight handler
-export const handlePreflight = (req, res) => {
+const handlePreflight = (req, res) => {
     res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
@@ -69,7 +69,7 @@ export const handlePreflight = (req, res) => {
     res.sendStatus(204);
 };
 
-export const helmetMiddleware = helmet({
+const helmetMiddleware = helmet({
     crossOriginResourcePolicy: { policy: "cross-origin" },
     contentSecurityPolicy: {
         directives: {
@@ -94,7 +94,7 @@ export const helmetMiddleware = helmet({
 });
 
 
-export const globalLimiter = rateLimit({
+const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // 1000 requests per window
     standardHeaders: "draft-8",
@@ -105,7 +105,7 @@ export const globalLimiter = rateLimit({
     },
 });
 
-export const authLimiter = rateLimit({
+const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 20, // 20 requests per window
     standardHeaders: "draft-8",
@@ -116,7 +116,7 @@ export const authLimiter = rateLimit({
     },
 });
 
-export const razorpayLimiter = rateLimit({
+const razorpayLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 10, // 10 requests per window
     standardHeaders: "draft-8",
@@ -127,7 +127,7 @@ export const razorpayLimiter = rateLimit({
     },
 });
 
-export const apiLimiter = rateLimit({
+const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 300, // 300 requests per window
     standardHeaders: "draft-8",
@@ -138,7 +138,7 @@ export const apiLimiter = rateLimit({
     },
 });
 
-export const validateProductionConfig = () => {
+const validateProductionConfig = () => {
     if (process.env.NODE_ENV !== "production") {
         console.warn("[Security] Running in development mode with relaxed security");
         return;
@@ -170,3 +170,14 @@ export const validateProductionConfig = () => {
 
     console.log("[Security] Production configuration validated successfully");
 };
+
+export {
+    corsMiddleware,
+    handlePreflight,
+    helmetMiddleware,
+    globalLimiter,
+    authLimiter,
+    razorpayLimiter,
+    apiLimiter,
+    validateProductionConfig
+}

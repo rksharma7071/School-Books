@@ -23,4 +23,8 @@ const reviewSchema = new mongoose.Schema(
 
 reviewSchema.index({ bookId: 1, approved: 1 });
 
-export const Review = mongoose.model("Review", reviewSchema);
+const Review = mongoose.model("Review", reviewSchema);
+
+export {
+    Review
+}

@@ -2,7 +2,7 @@ import axiosInstance from "../utils/axiosConfig.js";
 
 const API = import.meta.env.VITE_API;
 
-export const createRazorpayOrder = async (orderId) => {
+const createRazorpayOrder = async (orderId) => {
     const response = await axiosInstance.post(
         `${API}/api/razorpay/create-order`,
         { orderId }
@@ -10,10 +10,15 @@ export const createRazorpayOrder = async (orderId) => {
     return response.data;
 };
 
-export const verifyRazorpayPayment = async (paymentData) => {
+const verifyRazorpayPayment = async (paymentData) => {
     const response = await axiosInstance.post(
         `${API}/api/razorpay/verify-payment`,
         paymentData
     );
     return response.data;
 };
+
+export {
+    createRazorpayOrder,
+    verifyRazorpayPayment
+}

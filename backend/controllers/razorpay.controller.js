@@ -44,7 +44,7 @@ const verifyRazorpayPaymentDetails = async (razorpayPaymentId, expectedAmount, e
     }
 };
 
-export const createRazorpayOrder = asyncHandler(async (req, res) => {
+const createRazorpayOrder = asyncHandler(async (req, res) => {
     const { orderId } = req.body;
 
     if (!orderId) {
@@ -145,7 +145,7 @@ export const createRazorpayOrder = asyncHandler(async (req, res) => {
     }
 });
 
-export const verifyRazorpayPayment = asyncHandler(async (req, res) => {
+const verifyRazorpayPayment = asyncHandler(async (req, res) => {
     const {
         razorpay_order_id,
         razorpay_payment_id,
@@ -317,7 +317,7 @@ export const verifyRazorpayPayment = asyncHandler(async (req, res) => {
     }
 });
 
-export const handleRazorpayWebhook = asyncHandler(async (req, res) => {
+const handleRazorpayWebhook = asyncHandler(async (req, res) => {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     const signature = req.headers["x-razorpay-signature"];
 
@@ -508,3 +508,9 @@ export const handleRazorpayWebhook = asyncHandler(async (req, res) => {
         });
     }
 });
+
+export {
+    createRazorpayOrder,
+    verifyRazorpayPayment,
+    handleRazorpayWebhook
+}

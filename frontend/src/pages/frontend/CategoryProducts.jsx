@@ -12,6 +12,8 @@ const API = import.meta.env.VITE_API;
 
 function CategoryProducts() {
     const { categoryName } = useParams();
+    // console.log("categoryName: ",categoryName);
+    
     const { user } = useContext(BookContext);
 
     const [category, setCategory] = useState(null);
@@ -24,14 +26,14 @@ function CategoryProducts() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    const normalizeCategory = (value = "") => {
-        return decodeURIComponent(value)
-            .replace(/-/g, " ")
-            .trim()
-            .toLowerCase();
-    };
+    // const normalizeCategory = (value = "") => {
+    //     return decodeURIComponent(value)
+    //         .replace(/-/g, " ")
+    //         .trim()
+    //         .toLowerCase();
+    // };
 
-    console.log(category, books);
+    // console.log(category, books);
     
     useEffect(() => {
         const fetchCategoryProducts = async () => {
@@ -39,39 +41,39 @@ function CategoryProducts() {
                 setLoading(true);
                 setError("");
 
-                const categoryResponse = await axios.get(`${API}/api/categories/all`);
+                const categoryResponse = await axios.get(`${API}/api/categories/${categoryName}`);
 
                 const categories = categoryResponse.data?.data || [];
+                // console.log("categories: ",categories.books);
+                
+                // const requestedCategory = normalizeCategory(categoryName);
 
-                const requestedCategory = normalizeCategory(categoryName);
+                // const matchedCategory = categories.find(
+                //     (category) => normalizeCategory(category.name) === requestedCategory
+                // );
+                // if (!matchedCategory) {
+                //     setCategory(null);
+                //     setBooks([]);
+                //     setError(`Category "${categoryName}" was not found.`);
+                //     return;
+                // }
 
-                const matchedCategory = categories.find(
-                    (category) => normalizeCategory(category.name) === requestedCategory
-                );
-                if (!matchedCategory) {
-                    setCategory(null);
-                    setBooks([]);
-                    setError(`Category "${categoryName}" was not found.`);
-                    return;
-                }
+                setCategory(categories.category);
+                setBooks(categories.books || []);
 
-                setCategory(matchedCategory);
-
-                const response = await axios.get(
-                    `${API}/api/book`,
-                    {
-                        params: {
-                            page: 1,
-                            limit: 50,
-                            category: matchedCategory._id,
-                            search: search || undefined,
-                            sortBy,
-                            sortOrder,
-                        },
-                    }
-                );
-
-                setBooks(response.data?.data || []);
+                // const response = await axios.get(
+                //     `${API}/api/book`,
+                //     {
+                //         params: {
+                //             page: 1,
+                //             limit: 50,
+                //             category: matchedCategory._id,
+                //             search: search || undefined,
+                //             sortBy,
+                //             sortOrder,
+                //         },
+                //     }
+                // );
             } catch (error) {
                 console.error("Category products error:", error);
                 setError(error.response?.data?.message || "Failed to load category products.");
@@ -82,6 +84,8 @@ function CategoryProducts() {
 
         fetchCategoryProducts();
     }, [categoryName, search, sortBy, sortOrder]);
+    
+    // console.log("Books: ", books);
 
     return (
         <main className="min-h-screen bg-slate-50">

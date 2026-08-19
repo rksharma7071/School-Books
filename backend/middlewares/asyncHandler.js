@@ -1,4 +1,4 @@
-export const asyncHandler = (fn) => (req, res, next) =>
+const asyncHandler = (fn) => (req, res, next) =>
     Promise.resolve(fn(req, res, next)).catch(next);
 
 export class ApiError extends Error {
@@ -6,4 +6,8 @@ export class ApiError extends Error {
         super(message);
         this.status = status;
     }
+}
+
+export {
+    asyncHandler
 }

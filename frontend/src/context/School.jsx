@@ -2,15 +2,15 @@
 import { createContext, useEffect, useState } from "react";
 import { getMyCart } from "../data/cart.js";
 
-export const BookContext = createContext(null);
+const BookContext = createContext(null);
 
 const API = import.meta.env.VITE_API;
 
-export const BookProvider = ({ children }) => {
+const BookProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [cartItems, setCartItems] = useState([]);
     const [search, setSearch] = useState("");
-    
+
     // ✅ Add this state
     const [update, setUpdate] = useState(false);
 
@@ -102,3 +102,8 @@ export const BookProvider = ({ children }) => {
         </BookContext.Provider>
     );
 };
+
+export {
+    BookContext,
+    BookProvider
+}

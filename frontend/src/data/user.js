@@ -1,6 +1,6 @@
 import axios from "axios";
 
-export const editUser = async ({ params }) => {
+const editUser = async ({ params }) => {
     try {
         const [userRes, permisssionRes] = await Promise.all([
             axios.get(`${import.meta.env.VITE_API}/api/user/${params.id}`),
@@ -16,3 +16,8 @@ export const editUser = async ({ params }) => {
         throw error?.response?.data || { message: "Failed to fetch user data" };
     }
 };
+
+
+export {
+    editUser
+}

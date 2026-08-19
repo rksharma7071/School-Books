@@ -9,7 +9,7 @@ const booleanFromQuery = z.preprocess((value) => {
     return value;
 }, z.boolean().optional());
 
-export const createBookSchema = z.object({
+const createBookSchema = z.object({
     name: z
         .string()
         .trim()
@@ -87,7 +87,7 @@ export const createBookSchema = z.object({
     isActive: booleanFromQuery.default(true),
 });
 
-export const updateBookSchema =
+const updateBookSchema =
     createBookSchema.partial().extend({
         removeImagePublicIds: z
             .array(z.string())
@@ -98,7 +98,7 @@ export const updateBookSchema =
             .optional(),
     });
 
-export const listBookQuerySchema = z.object({
+const listBookQuerySchema = z.object({
     page: z.coerce
         .number()
         .int()
@@ -163,3 +163,9 @@ export const listBookQuerySchema = z.object({
     sortBy: z.enum(["createdAt", "updatedAt", "price", "name", "stockQty"]).default("createdAt"),
     sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
+
+export {
+    createBookSchema,
+    updateBookSchema,
+    listBookQuerySchema
+}

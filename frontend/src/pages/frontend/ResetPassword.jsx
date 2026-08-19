@@ -2,12 +2,14 @@ import React, { useContext, useState } from "react";
 import axios from "axios";
 import InputField from "../../components/UI/InputField";
 import { BookContext } from "../../context/School";
+import { useNavigate } from 'react-router';
 
 function ResetPassword() {
     const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const { setToastConfig, setShowToast } = useContext(BookContext);
-
+    const [resetToken, setResetToken] = useState(null);
+    const navigate = useNavigate()
     const [form, setForm] = useState({
         email: "",
         otp: "",
@@ -57,14 +59,16 @@ function ResetPassword() {
         setLoading(true);
 
         try {
-            await axios.post(
+            const response = await axios.post(
                 `${import.meta.env.VITE_API}/api/auth/verify-otp`,
                 {
                     email: form.email,
                     otp: form.otp,
                 }
             );
-
+            // console.log("Response: ", response);
+            setResetToken(response.data?.resetToken)
+            
             setToastConfig({
                 type: "success",
                 message: "OTP verified successfully",
@@ -107,6 +111,7 @@ function ResetPassword() {
                 `${import.meta.env.VITE_API}/api/auth/reset-password`,
                 {
                     email: form.email,
+                    resetToken: resetToken,
                     password: form.password,
                 }
             );
@@ -118,7 +123,8 @@ function ResetPassword() {
             setShowToast(true);
 
             setTimeout(() => {
-                window.location.href = "/login";
+                navigate("/login");
+                // window.location.href = "/login";
             }, 1500);
         } catch (error) {
             setToastConfig({

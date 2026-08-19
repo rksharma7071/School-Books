@@ -1,6 +1,6 @@
 import api from "../utils/api.js";
 
-export const getBooks = async ({
+const getBooks = async ({
     page = 1,
     limit = 12,
     search = "",
@@ -34,12 +34,18 @@ export const getBooks = async ({
     return data;
 };
 
-export const getBookById = async ({ params }) => {
+const getBookById = async ({ params }) => {
     const { data } = await api.get(`/api/book/${params.id}`);
     return data?.data || null;
 };
 
-export const getBookBySlug = async ({ params }) => {
-    const { data } = await api.get(`/api/book/slug/${params.slug}`);
+const getBookBySlug = async ({ params }) => {
+    const { data } = await api.get(`/api/book/${params.slug}`);
     return data?.data || null;
 };
+
+export {
+    getBooks,
+    getBookById,
+    getBookBySlug
+}

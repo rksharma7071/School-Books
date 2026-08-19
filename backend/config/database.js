@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-export const connectDB = async () => {
+const connectDB = async () => {
     try {
         if (!process.env.MONGODB_URL) {
             throw new Error("MONGODB_URL is not configured");
@@ -29,7 +29,7 @@ export const connectDB = async () => {
     }
 };
 
-export const disconnectDB = async () => {
+const disconnectDB = async () => {
     try {
         await mongoose.disconnect();
         console.log("MongoDB disconnected");
@@ -37,3 +37,7 @@ export const disconnectDB = async () => {
         console.error("MongoDB disconnect error:", error.message);
     }
 };
+
+export {
+    connectDB, disconnectDB
+}

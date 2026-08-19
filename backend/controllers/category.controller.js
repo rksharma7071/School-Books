@@ -1,11 +1,11 @@
 import mongoose from "mongoose";
 import { Category, Book } from "../models/book.model.js";
 
-export const getAllCategoriesWithCount = async (req, res, next) => {
+const getAllCategoriesWithCount = async (req, res, next) => {
     try {
         const { isActive, sortBy, sortOrder, limit } = req.query;
         const filter = {};
-        
+
         const sort = {};
         const sortField = sortBy || 'name';
         const sortDirection = sortOrder === 'desc' ? -1 : 1;
@@ -66,7 +66,7 @@ export const getAllCategoriesWithCount = async (req, res, next) => {
     }
 };
 
-export const getCategoryWithBooks = async (req, res, next) => {
+const getCategoryWithBooks = async (req, res, next) => {
     try {
         const { identifier } = req.params;
         const { page, limit, sortBy, sortOrder } = req.query;
@@ -96,7 +96,7 @@ export const getCategoryWithBooks = async (req, res, next) => {
         const pageNum = parseInt(page) || 1;
         const limitNum = parseInt(limit) || 10;
         const skip = (pageNum - 1) * limitNum;
-        
+
         const sort = {};
         const sortField = sortBy || 'createdAt';
         const sortDirection = sortOrder === 'asc' ? 1 : -1;
@@ -142,7 +142,7 @@ export const getCategoryWithBooks = async (req, res, next) => {
     }
 };
 
-export const getCategoryStatistics = async (req, res, next) => {
+const getCategoryStatistics = async (req, res, next) => {
     try {
         const stats = await Category.aggregate([
             {
@@ -213,7 +213,7 @@ export const getCategoryStatistics = async (req, res, next) => {
     }
 };
 
-export const getPopularCategories = async (req, res, next) => {
+const getPopularCategories = async (req, res, next) => {
     try {
         const { limit = 5 } = req.query;
 
@@ -266,7 +266,7 @@ export const getPopularCategories = async (req, res, next) => {
     }
 };
 
-export const createCategory = async (req, res, next) => {
+const createCategory = async (req, res, next) => {
     try {
         const { name, description } = req.body;
 
@@ -306,7 +306,7 @@ export const createCategory = async (req, res, next) => {
     }
 };
 
-export const updateCategory = async (req, res, next) => {
+const updateCategory = async (req, res, next) => {
     try {
         const { identifier } = req.params;
         const { name, description } = req.body;
@@ -333,29 +333,19 @@ export const updateCategory = async (req, res, next) => {
         );
 
         if (!category) {
-            return res.status(404).json({
-                success: false,
-                message: "Category not found"
-            });
+            return res.status(404).json({ success: false, message: "Category not found" });
         }
 
-        return res.status(200).json({
-            success: true,
-            message: "Category updated successfully",
-            data: category
-        });
+        return res.status(200).json({ success: true, message: "Category updated successfully", data: category });
     } catch (error) {
         if (error.code === 11000) {
-            return res.status(400).json({
-                success: false,
-                message: "Category with this slug already exists"
-            });
+            return res.status(400).json({ success: false, message: "Category with this slug already exists" });
         }
         next(error);
     }
 };
 
-export const deleteCategory = async (req, res, next) => {
+const deleteCategory = async (req, res, next) => {
     try {
         const { identifier } = req.params;
 
@@ -368,10 +358,7 @@ export const deleteCategory = async (req, res, next) => {
 
         const category = await Category.findOne(query);
         if (!category) {
-            return res.status(404).json({
-                success: false,
-                message: "Category not found"
-            });
+            return res.status(404).json({ success: false, message: "Category not found" });
         }
 
         const bookCount = await Book.countDocuments({ category: category._id });
@@ -392,3 +379,13 @@ export const deleteCategory = async (req, res, next) => {
         next(error);
     }
 };
+
+export {
+    getAllCategoriesWithCount,
+    getCategoryWithBooks,
+    getCategoryStatistics,
+    getPopularCategories,
+    createCategory,
+    updateCategory,
+    deleteCategory
+}

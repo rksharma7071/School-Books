@@ -3,7 +3,7 @@ import { File } from "../models/file.model.js";
 import cloudinary from "../config/cloudinary.js";
 import { asyncHandler } from "../middlewares/asyncHandler.js";
 
-export const uploadFiles = asyncHandler(async (req, res) => {
+const uploadFiles = asyncHandler(async (req, res) => {
     const uploaded = Object.values(req.files || {}).flat();
     if (req.file) uploaded.push(req.file);
 
@@ -22,12 +22,12 @@ export const uploadFiles = asyncHandler(async (req, res) => {
     return res.status(201).json({ message: "Files uploaded", files: saved });
 });
 
-export const getFiles = asyncHandler(async (req, res) => {
+const getFiles = asyncHandler(async (req, res) => {
     const files = await File.find({}).sort({ _id: -1 }).lean();
     return res.status(200).json(files);
 });
 
-export const deleteFile = asyncHandler(async (req, res) => {
+const deleteFile = asyncHandler(async (req, res) => {
     const { id } = req.params;
     if (!mongoose.Types.ObjectId.isValid(id)) {
         return res.status(400).json({ message: "Invalid file id" });
@@ -45,3 +45,10 @@ export const deleteFile = asyncHandler(async (req, res) => {
     await File.deleteOne({ _id: id });
     return res.status(200).json({ message: "File deleted successfully" });
 });
+
+
+export {
+    uploadFiles,
+    getFiles,
+    deleteFile
+}

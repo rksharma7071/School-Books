@@ -10,4 +10,8 @@ const fileSchema = new mongoose.Schema(
     }
 );
 
-export const File = mongoose.model("File", fileSchema);
+const File = mongoose.model("File", fileSchema);
+
+export {
+    File
+}

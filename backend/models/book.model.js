@@ -79,5 +79,10 @@ bookSchema.index({ subject: 1, isActive: 1, });
 bookSchema.index({ price: 1, isActive: 1, });
 bookSchema.index({ name: "text", author: "text", isbn: "text", description: "text" });
 
-export const Book = mongoose.model("Book", bookSchema);
-export const Category = mongoose.model("Category", categorySchema);
+const Book = mongoose.model("Book", bookSchema);
+const Category = mongoose.model("Category", categorySchema);
+
+export {
+    Book,
+    Category
+}

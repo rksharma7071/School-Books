@@ -157,17 +157,77 @@ const getReviewSummary = asyncHandler(async (req, res) => {
 
 const getReviewsByBook = asyncHandler(async (req, res) => {
     const { bookId } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(bookId)) {
-        return res.status(400).json({ message: "Invalid bookId" });
+    
+    if (!bookId) {
+        return res.status(400).json({ 
+            success: false,
+            message: "Book ID or slug is required" 
+        });
     }
-    const reviews = await Review.find({ bookId, approved: true })
+
+    let bookIdentifier;
+    let isObjectId = false;
+    
+    if (mongoose.Types.ObjectId.isValid(bookId)) {
+        bookIdentifier = bookId;
+        isObjectId = true;
+    } else {
+        bookIdentifier = bookId;
+        isObjectId = false;
+    }
+
+    try {
+        let query = {};
+        
+        if (isObjectId) {
+            query = { _id: bookIdentifier };
+        } else {
+            const Book = mongoose.model('Book');
+            const book = await Book.findOne({ slug: bookIdentifier }).select('_id').lean();
+            
+            if (!book) {
+                return res.status(404).json({ 
+                    success: false,
+                    message: "Book not found" 
+                });
+            }
+            
+            query = { _id: book._id };
+        }
+        
+        const reviews = await Review.find({ 
+            bookId: query._id, 
+            approved: true 
+        })
         .populate("userId", "first_name last_name username")
         .sort({ createdAt: -1 })
         .limit(50)
         .lean();
-    return res.json({
-        reviews: reviews.map((r) => ({ ...r, user: r.userId })),
-    });
+        
+        const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+        const averageRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0;
+        
+        const formattedReviews = reviews.map((r) => ({
+            ...r,
+            user: r.userId,
+            userId: undefined,
+        }));
+        
+        return res.status(200).json({
+            success: true,
+            bookId: query._id,
+            averageRating: parseFloat(averageRating),
+            totalReviews: reviews.length,
+            reviews: formattedReviews,
+        });
+        
+    } catch (error) {
+        console.error("Error fetching reviews by book:", error);
+        return res.status(500).json({ 
+            success: false,
+            message: "Failed to fetch reviews" 
+        });
+    }
 });
 
 // ✅ Get user's own reviews

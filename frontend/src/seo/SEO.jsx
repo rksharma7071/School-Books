@@ -44,7 +44,7 @@ const setJsonLd = (schema) => {
     script.textContent = JSON.stringify(schema);
 };
 
-export const useSEO = ({ title, description, canonical, ogTitle, jsonLd }) => {
+const useSEO = ({ title, description, canonical, ogTitle, jsonLd }) => {
     useEffect(() => {
         if (title) document.title = title;
         if (description) setMeta("description", description);
@@ -53,3 +53,7 @@ export const useSEO = ({ title, description, canonical, ogTitle, jsonLd }) => {
         if (jsonLd) setJsonLd(jsonLd);
     }, [title, description, canonical, ogTitle, jsonLd]);
 };
+
+export {
+    useSEO
+}
