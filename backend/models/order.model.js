@@ -24,7 +24,7 @@ const shipmentSchema = new mongoose.Schema(
 const orderSchema = new mongoose.Schema(
     {
         orderNumber: { type: Number, required: true, unique: true, index: true },
-        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true, },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true, index: true },
         items: {
             type: [orderItemSchema],
             required: true,
@@ -36,7 +36,12 @@ const orderSchema = new mongoose.Schema(
         tax: { type: Number, required: true, min: 0 },
         discount: { type: Number, default: 0, min: 0 },
         total: { type: Number, required: true, min: 0 },
-        status: { type: String, enum: ["in progress", "fulfilled", "unfulfilled", "cancelled"], default: "in progress", index: true },
+        status: {
+            type: String,
+            enum: ["in progress", "fulfilled", "unfulfilled", "cancelled"],
+            default: "in progress",
+            index: true,
+        },
         placed_at: { type: Date, default: Date.now },
         shipping_address: { type: String, required: true },
         billing_address: { type: String, required: true },
@@ -46,9 +51,7 @@ const orderSchema = new mongoose.Schema(
         paymentVerified: { type: Boolean, default: false },
         paymentDate: { type: Date },
     },
-    {
-        timestamps: true,
-    }
+    { timestamps: true }
 );
 
 orderSchema.index({ userId: 1, createdAt: -1 });

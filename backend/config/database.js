@@ -6,21 +6,14 @@ const connectDB = async () => {
             throw new Error("MONGODB_URL is not configured");
         }
 
-        await mongoose.connect(
-            process.env.MONGODB_URL,
-            {
-                maxPoolSize: 20,
-                minPoolSize: 5,
-
-                serverSelectionTimeoutMS: 5000,
-
-                socketTimeoutMS: 45000,
-
-                connectTimeoutMS: 10000,
-
-                family: 4,
-            }
-        );
+        await mongoose.connect(process.env.MONGODB_URL, {
+            maxPoolSize: 20,
+            minPoolSize: 5,
+            serverSelectionTimeoutMS: 5000,
+            socketTimeoutMS: 45000,
+            connectTimeoutMS: 10000,
+            family: 4,
+        });
 
         console.log(`MongoDB connected: ${mongoose.connection.name}`);
     } catch (error) {
@@ -38,6 +31,4 @@ const disconnectDB = async () => {
     }
 };
 
-export {
-    connectDB, disconnectDB
-}
+export { connectDB, disconnectDB };

@@ -1,13 +1,13 @@
 import express from "express";
 import {
-    handleGetAllUsers,
-    handleCreateNewUser,
-    handleGetUserUinsgId,
-    handleUpdateUserUsingId,
-    handleDeleteUserUsingId,
-    handleUpdatePermission,
-    handleGetPermissionUsingId,
-    handleAllPermission,
+    getAllUsers,
+    createNewUser,
+    getUserById,
+    updateUser,
+    deleteUser,
+    updatePermission,
+    getPermissionById,
+    getAllPermissions,
 } from "../controllers/user.controller.js";
 import authMiddleware from "../middlewares/authentication.js";
 import { authorize, selfOrAdmin } from "../middlewares/authorize.js";
@@ -16,25 +16,21 @@ const router = express.Router();
 
 router.use(authMiddleware);
 
-router
-    .route("/")
-    .get(authorize("admin"), handleGetAllUsers)
-    .post(authorize("admin"), handleCreateNewUser);
+router.route("/")
+    .get(authorize("admin"), getAllUsers)
+    .post(authorize("admin"), createNewUser);
 
-router
-    .route("/permission")
-    .get(authorize("admin"), handleAllPermission)
-    .post(authorize("admin"), handleUpdatePermission);
+router.route("/permission")
+    .get(authorize("admin"), getAllPermissions)
+    .post(authorize("admin"), updatePermission);
 
-router
-    .route("/permission/:id")
-    .get(authorize("admin"), handleGetPermissionUsingId)
-    .patch(authorize("admin"), handleUpdatePermission);
+router.route("/permission/:id")
+    .get(authorize("admin"), getPermissionById)
+    .patch(authorize("admin"), updatePermission);
 
-router
-    .route("/:id")
-    .get(selfOrAdmin("id"), handleGetUserUinsgId)
-    .patch(selfOrAdmin("id"), handleUpdateUserUsingId)
-    .delete(authorize("admin"), handleDeleteUserUsingId);
+router.route("/:id")
+    .get(selfOrAdmin("id"), getUserById)
+    .patch(selfOrAdmin("id"), updateUser)
+    .delete(authorize("admin"), deleteUser);
 
 export default router;

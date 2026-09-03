@@ -1,40 +1,33 @@
 import mongoose from "mongoose";
 import { File } from "../models/file.model.js";
 import cloudinary from "../config/cloudinary.js";
-import { asyncHandler } from "../middlewares/asyncHandler.js";
+import { asyncHandler, ApiError } from "../middlewares/asyncHandler.js";
 
-const uploadFiles = asyncHandler(async (req, res) => {
+export const uploadFiles = asyncHandler(async (req, res) => {
     const uploaded = Object.values(req.files || {}).flat();
     if (req.file) uploaded.push(req.file);
 
-    if (!uploaded.length) {
-        return res.status(400).json({ message: "No files uploaded" });
-    }
+    if (!uploaded.length) throw new ApiError(400, "No files uploaded");
 
     const docs = uploaded
-        .map((f) => ({
-            url: f.path || f.secure_url || f.url,
-            publicId: f.filename || f.public_id,
-        }))
+        .map((f) => ({ url: f.path || f.secure_url || f.url, publicId: f.filename || f.public_id }))
         .filter((d) => d.url && d.publicId);
 
     const saved = await File.insertMany(docs);
-    return res.status(201).json({ message: "Files uploaded", files: saved });
+    res.status(201).json({ message: "Files uploaded", files: saved });
 });
 
-const getFiles = asyncHandler(async (req, res) => {
+export const getFiles = asyncHandler(async (req, res) => {
     const files = await File.find({}).sort({ _id: -1 }).lean();
-    return res.status(200).json(files);
+    res.status(200).json(files);
 });
 
-const deleteFile = asyncHandler(async (req, res) => {
+export const deleteFile = asyncHandler(async (req, res) => {
     const { id } = req.params;
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: "Invalid file id" });
-    }
+    if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid file id");
 
     const file = await File.findById(id);
-    if (!file) return res.status(404).json({ message: "File not found" });
+    if (!file) throw new ApiError(404, "File not found");
 
     try {
         await cloudinary.uploader.destroy(file.publicId, { invalidate: true });
@@ -43,12 +36,5 @@ const deleteFile = asyncHandler(async (req, res) => {
     }
 
     await File.deleteOne({ _id: id });
-    return res.status(200).json({ message: "File deleted successfully" });
+    res.status(200).json({ message: "File deleted successfully" });
 });
-
-
-export {
-    uploadFiles,
-    getFiles,
-    deleteFile
-}

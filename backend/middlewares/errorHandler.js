@@ -10,7 +10,6 @@ const errorHandler = (error, req, res, next) => {
             field: item.path,
             message: item.message,
         }));
-
         return res.status(400).json({ success: false, message: "Validation failed", errors });
     }
 
@@ -19,24 +18,17 @@ const errorHandler = (error, req, res, next) => {
     }
 
     if (error.code === 11000) {
-        return res.status(409).json({
-            success: false,
-            message: "Duplicate resource",
-            fields: error.keyValue,
-        });
+        return res.status(409).json({ success: false, message: "Duplicate resource", fields: error.keyValue });
     }
 
-    const statusCode = error.statusCode || 500;
+    const statusCode = error.status || error.statusCode || 500;
+    const message = process.env.NODE_ENV === "production" ? "Internal server error" : error.message;
 
     return res.status(statusCode).json({
         success: false,
-        message:
-            process.env.NODE_ENV === "production" ? "Internal server error" : error.message,
+        message,
         ...(process.env.NODE_ENV !== "production" && { stack: error.stack }),
     });
 };
 
-
-export {
-    errorHandler
-}
+export { errorHandler };

@@ -44,12 +44,7 @@ app.post(
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-
 app.use("/api", apiLimiter);
-
-// ============================================
-// HEALTH CHECK
-// ============================================
 
 app.get("/health", (req, res) => {
     res.status(200).json({
@@ -63,7 +58,6 @@ app.get("/health", (req, res) => {
     });
 });
 
-
 app.use("/api/book", bookRouter);
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
@@ -75,7 +69,6 @@ app.use("/api/order", orderRouter);
 app.use("/api/razorpay", razorpayRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/categories", categoryRouter);
-
 
 app.get("/", (req, res) => {
     res.status(200).json({

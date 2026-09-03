@@ -8,6 +8,4 @@ export class ApiError extends Error {
     }
 }
 
-export {
-    asyncHandler
-}
+export { asyncHandler };

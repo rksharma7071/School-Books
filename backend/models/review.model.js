@@ -2,16 +2,8 @@ import mongoose from "mongoose";
 
 const reviewSchema = new mongoose.Schema(
     {
-        bookId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "Book",
-            required: true,
-        },
-        userId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
+        bookId: { type: mongoose.Schema.Types.ObjectId, ref: "Book", required: true },
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         rating: { type: Number, required: true, min: 1, max: 5 },
         title: { type: String, required: true, trim: true },
         body: { type: String, required: true, trim: true },
@@ -25,6 +17,4 @@ reviewSchema.index({ bookId: 1, approved: 1 });
 
 const Review = mongoose.model("Review", reviewSchema);
 
-export {
-    Review
-}
+export { Review };

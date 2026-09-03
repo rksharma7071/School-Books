@@ -1,4 +1,3 @@
-// routes/review.route.js
 import express from "express";
 import {
     getAllReview,
@@ -20,17 +19,15 @@ router.get("/summary", getReviewSummary);
 router.get("/book/:bookId", getReviewsByBook);
 router.get("/published", getAllPublishedReviews);
 
+router.route("/")
+    .get(getAllReview)
+    .post(createReview);
+
 router.use(authMiddleware);
 
 router.get("/my-reviews", getMyReviews);
 
-router
-    .route("/")
-    .get(authorize("admin"), getAllReview)
-    .post(createReview);
-
-router
-    .route("/:id")
+router.route("/:id")
     .get(getReviewById)
     .patch(authorize("admin"), updateReview)
     .delete(deleteReview);

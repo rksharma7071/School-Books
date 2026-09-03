@@ -1,8 +1,18 @@
 import mongoose from "mongoose";
 import { Cart } from "../models/cart.model.js";
-import { asyncHandler } from "../middlewares/asyncHandler.js";
+import { asyncHandler, ApiError } from "../middlewares/asyncHandler.js";
 
-const getAllCart = asyncHandler(async (req, res) => {
+const formatCart = (cart) => ({
+    ...cart,
+    user: cart.userId,
+    items: cart.items.filter((i) => i.bookId).map((i) => ({
+        bookId: String(i.bookId._id),
+        quantity: i.quantity,
+        book: i.bookId,
+    })),
+});
+
+export const getAllCart = asyncHandler(async (req, res) => {
     const page = Math.max(1, Number(req.query.page) || 1);
     const limit = Math.min(100, Number(req.query.limit) || 20);
     const filter = { "items.0": { $exists: true } };
@@ -18,99 +28,43 @@ const getAllCart = asyncHandler(async (req, res) => {
         Cart.countDocuments(filter),
     ]);
 
-    return res.status(200).json({
-        data: carts.map((cart) => ({
-            ...cart,
-            user: cart.userId,
-            items: cart.items
-                .filter((i) => i.bookId)
-                .map((i) => ({
-                    bookId: String(i.bookId._id),
-                    quantity: i.quantity,
-                    book: i.bookId,
-                })),
-        })),
-        total,
-        page,
-        pages: Math.ceil(total / limit),
-    });
+    res.status(200).json({ data: carts.map(formatCart), total, page, pages: Math.ceil(total / limit) });
 });
 
-const getCartByUserId = asyncHandler(async (req, res) => {
+export const getCartByUserId = asyncHandler(async (req, res) => {
     const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: "Invalid id" });
-    }
-
-    // ✅ Verify user is requesting their own cart or is admin
-    if (
-        req.user.role !== "admin" &&
-        String(id) !== String(req.user.id)
-    ) {
-        return res.status(403).json({
-            success: false,
-            message: "You can only view your own cart",
-        });
-    }
+    if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid id");
+    if (req.user.role !== "admin" && String(id) !== String(req.user.id)) throw new ApiError(403, "You can only view your own cart");
 
     const cart = await Cart.findOne({ userId: id })
         .populate("userId", "first_name last_name username email role")
-        .populate(
-            "items.bookId",
-            "name price coverImage author stockQty subject classLevel"
-        )
+        .populate("items.bookId", "name price coverImage author stockQty subject classLevel")
         .lean();
 
     if (!cart) return res.status(200).json({ userId: id, items: [] });
-
-    return res.status(200).json({
-        ...cart,
-        user: cart.userId,
-        items: cart.items
-            .filter((i) => i.bookId)
-            .map((i) => ({
-                bookId: String(i.bookId._id),
-                quantity: i.quantity,
-                book: i.bookId,
-            })),
-    });
+    res.status(200).json(formatCart(cart));
 });
 
-const createOrUpdateCart = asyncHandler(async (req, res) => {
+export const createOrUpdateCart = asyncHandler(async (req, res) => {
     const userId = req.user.id;
     const { bookId, quantity = 1 } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(bookId)) {
-        return res.status(400).json({ message: "Invalid bookId" });
-    }
-    if (typeof quantity !== "number" || isNaN(quantity)) {
-        return res.status(400).json({ message: "Quantity must be a number" });
-    }
+    if (!mongoose.Types.ObjectId.isValid(bookId)) throw new ApiError(400, "Invalid bookId");
+    if (typeof quantity !== "number" || isNaN(quantity)) throw new ApiError(400, "Quantity must be a number");
 
     let cart = await Cart.findOne({ userId });
-
     if (!cart) {
-        if (quantity <= 0) {
-            return res.status(400).json({ message: "Quantity must be greater than 0" });
-        }
+        if (quantity <= 0) throw new ApiError(400, "Quantity must be greater than 0");
         cart = await Cart.create({ userId, items: [{ bookId, quantity }] });
         return res.status(201).json({ message: "Cart created", cart });
     }
 
-    const idx = cart.items.findIndex(
-        (item) => String(item.bookId) === String(bookId)
-    );
-
+    const idx = cart.items.findIndex((item) => String(item.bookId) === String(bookId));
     if (idx !== -1) {
         cart.items[idx].quantity += quantity;
         if (cart.items[idx].quantity <= 0) cart.items.splice(idx, 1);
     } else {
-        if (quantity <= 0) {
-            return res
-                .status(400)
-                .json({ message: "Quantity must be greater than 0" });
-        }
+        if (quantity <= 0) throw new ApiError(400, "Quantity must be greater than 0");
         cart.items.push({ bookId, quantity });
     }
 
@@ -120,29 +74,21 @@ const createOrUpdateCart = asyncHandler(async (req, res) => {
     }
 
     await cart.save();
-    return res.status(200).json({ message: "Cart updated", cart });
+    res.status(200).json({ message: "Cart updated", cart });
 });
 
-const updateCart = asyncHandler(async (req, res) => {
-    const userId = req.user.id; // ✅ Use authenticated user ID
+export const updateCart = asyncHandler(async (req, res) => {
+    const userId = req.user.id;
     const { bookId, quantity } = req.body;
 
-    if (!mongoose.Types.ObjectId.isValid(bookId)) {
-        return res.status(400).json({ message: "Invalid bookId" });
-    }
-    if (typeof quantity !== "number" || isNaN(quantity)) {
-        return res.status(400).json({ message: "Quantity must be a number" });
-    }
+    if (!mongoose.Types.ObjectId.isValid(bookId)) throw new ApiError(400, "Invalid bookId");
+    if (typeof quantity !== "number" || isNaN(quantity)) throw new ApiError(400, "Quantity must be a number");
 
     const cart = await Cart.findOne({ userId });
-    if (!cart) return res.status(404).json({ message: "Cart not found" });
+    if (!cart) throw new ApiError(404, "Cart not found");
 
-    const idx = cart.items.findIndex(
-        (item) => String(item.bookId) === String(bookId)
-    );
-    if (idx === -1) {
-        return res.status(404).json({ message: "Item not found in cart" });
-    }
+    const idx = cart.items.findIndex((item) => String(item.bookId) === String(bookId));
+    if (idx === -1) throw new ApiError(404, "Item not found in cart");
 
     cart.items[idx].quantity += quantity;
     if (cart.items[idx].quantity <= 0) cart.items.splice(idx, 1);
@@ -153,49 +99,27 @@ const updateCart = asyncHandler(async (req, res) => {
     }
 
     await cart.save();
-    return res.status(200).json({ message: "Cart updated", cart });
+    res.status(200).json({ message: "Cart updated", cart });
 });
 
-const deleteCart = asyncHandler(async (req, res) => {
+export const deleteCart = asyncHandler(async (req, res) => {
     const { id } = req.params;
+    if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid Cart ID");
 
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-        return res.status(400).json({ message: "Invalid Cart ID" });
-    }
-
-    // ✅ Verify user owns the cart or is admin
     const cart = await Cart.findById(id);
-    if (!cart) {
-        return res.status(404).json({ message: "Cart not found" });
-    }
-
-    if (
-        req.user.role !== "admin" &&
-        String(cart.userId) !== String(req.user.id)
-    ) {
-        return res.status(403).json({
-            success: false,
-            message: "You can only delete your own cart",
-        });
-    }
+    if (!cart) throw new ApiError(404, "Cart not found");
+    if (req.user.role !== "admin" && String(cart.userId) !== String(req.user.id)) throw new ApiError(403, "You can only delete your own cart");
 
     await Cart.findByIdAndDelete(id);
-    return res.json({ status: "success", message: "Cart deleted successfully" });
+    res.json({ status: "success", message: "Cart deleted successfully" });
 });
 
-const clearCart = asyncHandler(async (req, res) => {
+export const clearCart = asyncHandler(async (req, res) => {
     const { userId: paramUserId } = req.params;
-
     if (paramUserId) {
-        if (req.user.role !== "admin") {
-            return res.status(403).json({
-                success: false,
-                message: "Only admins can clear another user's cart",
-            });
-        }
-
+        if (req.user.role !== "admin") throw new ApiError(403, "Only admins can clear another user's cart");
         const cart = await Cart.findOne({ userId: paramUserId });
-        if (!cart) return res.status(404).json({ message: "Cart not found" });
+        if (!cart) throw new ApiError(404, "Cart not found");
         cart.items = [];
         await cart.save();
         return res.json({ success: true, message: "Cart cleared successfully" });
@@ -203,57 +127,24 @@ const clearCart = asyncHandler(async (req, res) => {
 
     const userId = req.user.id;
     const cart = await Cart.findOne({ userId });
-
-    if (!cart) {
-        return res.status(404).json({
-            success: false,
-            message: "Cart not found"
-        });
-    }
-
+    if (!cart) throw new ApiError(404, "Cart not found");
     cart.items = [];
     await cart.save();
-
-    return res.json({
-        success: true,
-        message: "Cart cleared successfully"
-    });
+    res.json({ success: true, message: "Cart cleared successfully" });
 });
 
-const getMyCart = asyncHandler(async (req, res) => {
+export const getMyCart = asyncHandler(async (req, res) => {
     const userId = req.user.id;
-
     const cart = await Cart.findOne({ userId })
         .populate("userId", "first_name last_name username email role")
-        .populate(
-            "items.bookId",
-            "name price coverImage author stockQty subject classLevel"
-        )
+        .populate("items.bookId", "name price coverImage author stockQty subject classLevel")
         .lean();
 
     if (!cart) return res.status(200).json({ userId, items: [], total: 0 });
 
-    return res.status(200).json({
-        ...cart,
-        user: cart.userId,
-        items: cart.items
-            .filter((i) => i.bookId)
-            .map((i) => ({
-                bookId: String(i.bookId._id),
-                quantity: i.quantity,
-                book: i.bookId,
-            })),
+    res.status(200).json({
+        ...formatCart(cart),
         totalItems: cart.items.reduce((sum, item) => sum + item.quantity, 0),
         totalAmount: cart.items.reduce((sum, item) => sum + (item.bookId?.price || 0) * item.quantity, 0),
     });
 });
-
-export {
-    getAllCart,
-    getCartByUserId,
-    getMyCart,
-    createOrUpdateCart,
-    updateCart,
-    deleteCart,
-    clearCart,
-};

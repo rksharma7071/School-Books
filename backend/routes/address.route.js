@@ -1,4 +1,3 @@
-// routes/address.route.js
 import express from "express";
 import {
     getAddresses,
@@ -6,7 +5,7 @@ import {
     getAddressById,
     getAddressByUserId,
     updateAddress,
-    deleteAddress
+    deleteAddress,
 } from "../controllers/address.controller.js";
 import authMiddleware from "../middlewares/authentication.js";
 import { authorize } from "../middlewares/authorize.js";
@@ -17,7 +16,6 @@ router.use(authMiddleware);
 
 router.get("/", authorize("admin"), getAddresses);
 router.post("/", createAddress);
-
 router.get("/user/:id", getAddressByUserId);
 
 router.route("/:id")

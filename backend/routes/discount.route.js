@@ -14,13 +14,11 @@ const router = express.Router();
 
 router.post("/apply", authMiddleware, applyDiscount);
 
-router
-    .route("/")
+router.route("/")
     .get(authMiddleware, authorize("admin"), getAllDiscount)
     .post(authMiddleware, authorize("admin"), createDiscount);
 
-router
-    .route("/:id")
+router.route("/:id")
     .get(authMiddleware, authorize("admin"), getDiscountById)
     .patch(authMiddleware, authorize("admin"), updateDiscount)
     .delete(authMiddleware, authorize("admin"), deleteDiscount);

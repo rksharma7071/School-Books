@@ -9,13 +9,11 @@ const authMiddleware = (req, res, next) => {
         }
 
         const token = authHeader.slice(7).trim();
-
         if (!token) {
             return res.status(401).json({ success: false, message: "Authentication token is missing" });
         }
 
-        const decoded = jwt.verify( token, process.env.JWT_SECRET );
-        req.user = decoded;
+        req.user = jwt.verify(token, process.env.JWT_SECRET);
         next();
     } catch {
         return res.status(401).json({ success: false, message: "Invalid or expired token" });

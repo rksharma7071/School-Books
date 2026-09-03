@@ -1,391 +1,159 @@
 import mongoose from "mongoose";
 import { Category, Book } from "../models/book.model.js";
+import { asyncHandler, ApiError } from "../middlewares/asyncHandler.js";
 
-const getAllCategoriesWithCount = async (req, res, next) => {
-    try {
-        const { isActive, sortBy, sortOrder, limit } = req.query;
-        const filter = {};
-
-        const sort = {};
-        const sortField = sortBy || 'name';
-        const sortDirection = sortOrder === 'desc' ? -1 : 1;
-        sort[sortField] = sortDirection;
-
-        const categories = await Category.aggregate([
-            {
-                $lookup: {
-                    from: "books",
-                    let: { categoryId: "$_id" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ["$category", "$$categoryId"] },
-                                        { $eq: ["$isActive", true] }
-                                    ]
-                                }
-                            }
-                        },
-                        { $count: "count" }
-                    ],
-                    as: "bookCount"
-                }
-            },
-            {
-                $addFields: {
-                    bookCount: {
-                        $ifNull: [
-                            { $arrayElemAt: ["$bookCount.count", 0] },
-                            0
-                        ]
-                    }
-                }
-            },
-            {
-                $project: {
-                    bookCount: 0
-                }
-            },
-            { $sort: sort },
-            ...(limit ? [{ $limit: parseInt(limit) }] : [])
-        ]);
-
-        const totalBooks = await Book.countDocuments({ isActive: true });
-
-        return res.status(200).json({
-            success: true,
-            data: categories,
-            meta: {
-                totalCategories: categories.length,
-                totalBooks: totalBooks
-            }
-        });
-    } catch (error) {
-        next(error);
-    }
+const bookCountLookup = {
+    $lookup: {
+        from: "books",
+        let: { categoryId: "$_id" },
+        pipeline: [
+            { $match: { $expr: { $and: [{ $eq: ["$category", "$$categoryId"] }, { $eq: ["$isActive", true] }] } } },
+            { $count: "count" },
+        ],
+        as: "bookCount",
+    },
 };
 
-const getCategoryWithBooks = async (req, res, next) => {
-    try {
-        const { identifier } = req.params;
-        const { page, limit, sortBy, sortOrder } = req.query;
+export const getAllCategoriesWithCount = asyncHandler(async (req, res) => {
+    const { sortBy = "name", sortOrder = "asc", limit } = req.query;
+    const sort = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
 
-        // ✅ Handle admin route - should have been caught earlier, but just in case
-        if (identifier === "admin" || identifier === "admin/stats") {
-            return res.status(404).json({
-                success: false,
-                message: "Category not found"
-            });
-        }
+    const categories = await Category.aggregate([
+        bookCountLookup,
+        { $addFields: { bookCount: { $ifNull: [{ $arrayElemAt: ["$bookCount.count", 0] }, 0] } } },
+        { $project: { bookCount: 0 } },
+        { $sort: sort },
+        ...(limit ? [{ $limit: parseInt(limit) }] : []),
+    ]);
 
-        let category;
-        if (mongoose.Types.ObjectId.isValid(identifier)) {
-            category = await Category.findById(identifier).lean();
-        } else {
-            category = await Category.findOne({ slug: identifier }).lean();
-        }
+    const totalBooks = await Book.countDocuments({ isActive: true });
+    res.status(200).json({
+        success: true,
+        data: categories,
+        meta: { totalCategories: categories.length, totalBooks },
+    });
+});
 
-        if (!category) {
-            return res.status(404).json({
-                success: false,
-                message: "Category not found"
-            });
-        }
+export const getCategoryWithBooks = asyncHandler(async (req, res) => {
+    const { identifier } = req.params;
+    const { page = 1, limit = 10, sortBy = "createdAt", sortOrder = "desc" } = req.query;
 
-        const pageNum = parseInt(page) || 1;
-        const limitNum = parseInt(limit) || 10;
-        const skip = (pageNum - 1) * limitNum;
+    if (identifier === "admin" || identifier === "admin/stats") throw new ApiError(404, "Category not found");
 
-        const sort = {};
-        const sortField = sortBy || 'createdAt';
-        const sortDirection = sortOrder === 'asc' ? 1 : -1;
-        sort[sortField] = sortDirection;
+    const category = mongoose.Types.ObjectId.isValid(identifier)
+        ? await Category.findById(identifier).lean()
+        : await Category.findOne({ slug: identifier }).lean();
 
-        const filter = {
-            category: category._id,
-            isActive: true
-        };
+    if (!category) throw new ApiError(404, "Category not found");
 
-        const [books, totalBooks] = await Promise.all([
-            Book.find(filter)
-                .select("name slug price coverImage author")
-                .sort(sort)
-                .skip(skip)
-                .limit(limitNum)
-                .lean(),
-            Book.countDocuments(filter)
-        ]);
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+    const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+    const filter = { category: category._id, isActive: true };
 
-        return res.status(200).json({
-            success: true,
-            data: {
-                category: {
-                    id: category._id,
-                    name: category.name,
-                    slug: category.slug,
-                    description: category.description
-                },
-                books: books,
-                pagination: {
-                    page: pageNum,
-                    limit: limitNum,
-                    total: totalBooks,
-                    totalPages: Math.ceil(totalBooks / limitNum),
-                    hasNextPage: pageNum * limitNum < totalBooks,
-                    hasPreviousPage: pageNum > 1
-                }
-            }
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+    const [books, totalBooks] = await Promise.all([
+        Book.find(filter).select("name slug price coverImage author").sort(sort).skip(skip).limit(limitNum).lean(),
+        Book.countDocuments(filter),
+    ]);
 
-const getCategoryStatistics = async (req, res, next) => {
-    try {
-        const stats = await Category.aggregate([
-            {
-                $lookup: {
-                    from: "books",
-                    let: { categoryId: "$_id" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ["$category", "$$categoryId"] },
-                                        { $eq: ["$isActive", true] }
-                                    ]
-                                }
-                            }
-                        },
-                        {
-                            $group: {
-                                _id: null,
-                                count: { $sum: 1 },
-                                avgPrice: { $avg: "$price" },
-                                minPrice: { $min: "$price" },
-                                maxPrice: { $max: "$price" }
-                            }
-                        }
-                    ],
-                    as: "bookStats"
-                }
+    res.status(200).json({
+        success: true,
+        data: {
+            category: { id: category._id, name: category.name, slug: category.slug, description: category.description },
+            books,
+            pagination: {
+                page: pageNum,
+                limit: limitNum,
+                total: totalBooks,
+                totalPages: Math.ceil(totalBooks / limitNum),
+                hasNextPage: pageNum * limitNum < totalBooks,
+                hasPreviousPage: pageNum > 1,
             },
-            {
-                $addFields: {
-                    bookCount: {
-                        $ifNull: [{ $arrayElemAt: ["$bookStats.count", 0] }, 0]
-                    },
-                    avgPrice: {
-                        $ifNull: [{ $arrayElemAt: ["$bookStats.avgPrice", 0] }, 0]
-                    },
-                    minPrice: {
-                        $ifNull: [{ $arrayElemAt: ["$bookStats.minPrice", 0] }, 0]
-                    },
-                    maxPrice: {
-                        $ifNull: [{ $arrayElemAt: ["$bookStats.maxPrice", 0] }, 0]
-                    }
-                }
+        },
+    });
+});
+
+export const getCategoryStatistics = asyncHandler(async (req, res) => {
+    const stats = await Category.aggregate([
+        {
+            $lookup: {
+                from: "books",
+                let: { categoryId: "$_id" },
+                pipeline: [
+                    { $match: { $expr: { $and: [{ $eq: ["$category", "$$categoryId"] }, { $eq: ["$isActive", true] }] } } },
+                    { $group: { _id: null, count: { $sum: 1 }, avgPrice: { $avg: "$price" }, minPrice: { $min: "$price" }, maxPrice: { $max: "$price" } } },
+                ],
+                as: "bookStats",
             },
-            {
-                $project: {
-                    name: 1,
-                    slug: 1,
-                    description: 1,
-                    bookCount: 1,
-                    avgPrice: 1,
-                    minPrice: 1,
-                    maxPrice: 1,
-                    createdAt: 1
-                }
+        },
+        {
+            $addFields: {
+                bookCount: { $ifNull: [{ $arrayElemAt: ["$bookStats.count", 0] }, 0] },
+                avgPrice: { $ifNull: [{ $arrayElemAt: ["$bookStats.avgPrice", 0] }, 0] },
+                minPrice: { $ifNull: [{ $arrayElemAt: ["$bookStats.minPrice", 0] }, 0] },
+                maxPrice: { $ifNull: [{ $arrayElemAt: ["$bookStats.maxPrice", 0] }, 0] },
             },
-            { $sort: { bookCount: -1 } }
-        ]);
+        },
+        { $project: { name: 1, slug: 1, description: 1, bookCount: 1, avgPrice: 1, minPrice: 1, maxPrice: 1, createdAt: 1 } },
+        { $sort: { bookCount: -1 } },
+    ]);
 
-        return res.status(200).json({
-            success: true,
-            data: stats
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+    res.status(200).json({ success: true, data: stats });
+});
 
-const getPopularCategories = async (req, res, next) => {
-    try {
-        const { limit = 5 } = req.query;
+export const getPopularCategories = asyncHandler(async (req, res) => {
+    const { limit = 5 } = req.query;
 
-        const categories = await Category.aggregate([
-            {
-                $lookup: {
-                    from: "books",
-                    let: { categoryId: "$_id" },
-                    pipeline: [
-                        {
-                            $match: {
-                                $expr: {
-                                    $and: [
-                                        { $eq: ["$category", "$$categoryId"] },
-                                        { $eq: ["$isActive", true] }
-                                    ]
-                                }
-                            }
-                        },
-                        { $count: "count" }
-                    ],
-                    as: "bookCount"
-                }
-            },
-            {
-                $addFields: {
-                    bookCount: {
-                        $ifNull: [{ $arrayElemAt: ["$bookCount.count", 0] }, 0]
-                    }
-                }
-            },
-            { $sort: { bookCount: -1 } },
-            { $limit: parseInt(limit) },
-            {
-                $project: {
-                    name: 1,
-                    slug: 1,
-                    description: 1,
-                    bookCount: 1
-                }
-            }
-        ]);
+    const categories = await Category.aggregate([
+        bookCountLookup,
+        { $addFields: { bookCount: { $ifNull: [{ $arrayElemAt: ["$bookCount.count", 0] }, 0] } } },
+        { $sort: { bookCount: -1 } },
+        { $limit: parseInt(limit) },
+        { $project: { name: 1, slug: 1, description: 1, bookCount: 1 } },
+    ]);
 
-        return res.status(200).json({
-            success: true,
-            data: categories
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+    res.status(200).json({ success: true, data: categories });
+});
 
-const createCategory = async (req, res, next) => {
-    try {
-        const { name, description } = req.body;
+export const createCategory = asyncHandler(async (req, res) => {
+    const { name, description } = req.body;
+    if (!name) throw new ApiError(400, "Category name is required");
 
-        if (!name) {
-            return res.status(400).json({
-                success: false,
-                message: "Category name is required"
-            });
-        }
+    const existingCategory = await Category.findOne({
+        $or: [{ name: name.trim() }, { slug: name.toLowerCase().replace(/\s+/g, "-") }],
+    });
+    if (existingCategory) throw new ApiError(400, "Category with this name or slug already exists");
 
-        const existingCategory = await Category.findOne({
-            $or: [
-                { name: name.trim() },
-                { slug: name.toLowerCase().replace(/\s+/g, '-') }
-            ]
-        });
+    const category = await Category.create({ name: name.trim(), description: description?.trim() });
+    res.status(201).json({ success: true, message: "Category created successfully", data: category });
+});
 
-        if (existingCategory) {
-            return res.status(400).json({
-                success: false,
-                message: "Category with this name or slug already exists"
-            });
-        }
+export const updateCategory = asyncHandler(async (req, res) => {
+    const { identifier } = req.params;
+    const { name, description } = req.body;
 
-        const category = await Category.create({
-            name: name.trim(),
-            description: description?.trim()
-        });
+    const query = mongoose.Types.ObjectId.isValid(identifier) ? { _id: identifier } : { slug: identifier };
+    const updateData = {};
+    if (name) updateData.name = name.trim();
+    if (description !== undefined) updateData.description = description?.trim();
 
-        return res.status(201).json({
-            success: true,
-            message: "Category created successfully",
-            data: category
-        });
-    } catch (error) {
-        next(error);
-    }
-};
+    const category = await Category.findOneAndUpdate(query, { $set: updateData }, { new: true, runValidators: true });
+    if (!category) throw new ApiError(404, "Category not found");
 
-const updateCategory = async (req, res, next) => {
-    try {
-        const { identifier } = req.params;
-        const { name, description } = req.body;
+    res.status(200).json({ success: true, message: "Category updated successfully", data: category });
+});
 
-        let query = {};
-        if (mongoose.Types.ObjectId.isValid(identifier)) {
-            query = { _id: identifier };
-        } else {
-            query = { slug: identifier };
-        }
+export const deleteCategory = asyncHandler(async (req, res) => {
+    const { identifier } = req.params;
+    const query = mongoose.Types.ObjectId.isValid(identifier) ? { _id: identifier } : { slug: identifier };
 
-        const updateData = {};
-        if (name) {
-            updateData.name = name.trim();
-        }
-        if (description !== undefined) {
-            updateData.description = description?.trim();
-        }
+    const category = await Category.findOne(query);
+    if (!category) throw new ApiError(404, "Category not found");
 
-        const category = await Category.findOneAndUpdate(
-            query,
-            { $set: updateData },
-            { new: true, runValidators: true }
-        );
+    const bookCount = await Book.countDocuments({ category: category._id });
+    if (bookCount > 0) throw new ApiError(400, `Cannot delete category with ${bookCount} books. Please reassign or delete the books first.`);
 
-        if (!category) {
-            return res.status(404).json({ success: false, message: "Category not found" });
-        }
-
-        return res.status(200).json({ success: true, message: "Category updated successfully", data: category });
-    } catch (error) {
-        if (error.code === 11000) {
-            return res.status(400).json({ success: false, message: "Category with this slug already exists" });
-        }
-        next(error);
-    }
-};
-
-const deleteCategory = async (req, res, next) => {
-    try {
-        const { identifier } = req.params;
-
-        let query = {};
-        if (mongoose.Types.ObjectId.isValid(identifier)) {
-            query = { _id: identifier };
-        } else {
-            query = { slug: identifier };
-        }
-
-        const category = await Category.findOne(query);
-        if (!category) {
-            return res.status(404).json({ success: false, message: "Category not found" });
-        }
-
-        const bookCount = await Book.countDocuments({ category: category._id });
-        if (bookCount > 0) {
-            return res.status(400).json({
-                success: false,
-                message: `Cannot delete category with ${bookCount} books. Please reassign or delete the books first.`
-            });
-        }
-
-        await Category.findByIdAndDelete(category._id);
-
-        return res.status(200).json({
-            success: true,
-            message: "Category deleted successfully"
-        });
-    } catch (error) {
-        next(error);
-    }
-};
-
-export {
-    getAllCategoriesWithCount,
-    getCategoryWithBooks,
-    getCategoryStatistics,
-    getPopularCategories,
-    createCategory,
-    updateCategory,
-    deleteCategory
-}
+    await Category.findByIdAndDelete(category._id);
+    res.status(200).json({ success: true, message: "Category deleted successfully" });
+});

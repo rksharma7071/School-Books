@@ -1,12 +1,7 @@
-// backend/routes/book.route.js
 import express from "express";
-
 import {
     getAllBooks,
-    getBookById,
     getBookBySlug,
-    getBooksByCategorySlug,
-    getAdminBookById,
     createBook,
     updateBook,
     deleteBook,
@@ -20,9 +15,6 @@ const router = express.Router();
 
 router.get("/", validate(listBookQuerySchema, "query"), getAllBooks);
 router.get("/:slug", getBookBySlug);
-// router.get("/category/:categorySlug", getBooksByCategorySlug);
-// router.get("/admin/:identifier", authentication, authorize("admin"), getAdminBookById);
-// router.get("/:identifier", getBookById);
 router.post("/", authentication, authorize("admin"), validate(createBookSchema), createBook);
 router.patch("/:identifier", authentication, authorize("admin"), validate(updateBookSchema), updateBook);
 router.delete("/:identifier", authentication, authorize("admin"), deleteBook);

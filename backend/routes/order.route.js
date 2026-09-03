@@ -17,15 +17,13 @@ router.use(authMiddleware);
 
 router.get("/my-orders", getMyOrders);
 
-router
-    .route("/")
+router.route("/")
     .get(authorize("admin"), getAllOrder)
     .post(createOrder);
 
 router.post("/:id/cancel", cancelOrder);
 
-router
-    .route("/:id")
+router.route("/:id")
     .get(getOrderById)
     .patch(updateOrder)
     .delete(authorize("admin"), deleteOrder);
