@@ -1,159 +1,345 @@
 import mongoose from "mongoose";
-import { Category, Book } from "../models/book.model.js";
-import { asyncHandler, ApiError } from "../middlewares/asyncHandler.js";
+import { Category } from "../models/category.model.js";
+import { Product } from "../models/product.model.js";
+import { ApiError, handleError } from "../utils/apiError.js";
+import { generateHandle } from "../utils/generateHandle.js";
 
-const bookCountLookup = {
+
+const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
+const getCategoryQuery = (identifier) =>  isValidId(identifier) ? { _id: identifier } : { handle: identifier };
+
+const productCountLookup = {
     $lookup: {
-        from: "books",
+        from: "products",
         let: { categoryId: "$_id" },
         pipeline: [
-            { $match: { $expr: { $and: [{ $eq: ["$category", "$$categoryId"] }, { $eq: ["$isActive", true] }] } } },
-            { $count: "count" },
+            { 
+                $match: { 
+                    $expr: { 
+                        $and: [
+                            { $eq: ["$category", "$$categoryId"] }, 
+                            { $eq: ["$isActive", true] }
+                        ] 
+                    } 
+                } 
+            },
+            { $count: "count" }
         ],
-        as: "bookCount",
-    },
+        as: "productCount"
+    }
 };
 
-export const getAllCategoriesWithCount = asyncHandler(async (req, res) => {
-    const { sortBy = "name", sortOrder = "asc", limit } = req.query;
-    const sort = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
+const addProductCount = [
+    productCountLookup,
+    { 
+        $addFields: { 
+            productCount: { $ifNull: [{ $arrayElemAt: ["$productCount.count", 0] }, 0] } 
+        } 
+    },
+    { $project: { productCount: 0 } }
+];
 
-    const categories = await Category.aggregate([
-        bookCountLookup,
-        { $addFields: { bookCount: { $ifNull: [{ $arrayElemAt: ["$bookCount.count", 0] }, 0] } } },
-        { $project: { bookCount: 0 } },
-        { $sort: sort },
-        ...(limit ? [{ $limit: parseInt(limit) }] : []),
-    ]);
+export const getAllCategoriesWithCount = async (req, res) => {
+    try {
+        const { sortBy = "name", sortOrder = "asc", limit } = req.query;
+        const sort = { [sortBy]: sortOrder === "desc" ? -1 : 1 };
+        const limitStage = limit ? [{ $limit: parseInt(limit) }] : [];
 
-    const totalBooks = await Book.countDocuments({ isActive: true });
-    res.status(200).json({
-        success: true,
-        data: categories,
-        meta: { totalCategories: categories.length, totalBooks },
-    });
-});
+        const categories = await Category.aggregate([
+            ...addProductCount,
+            { $sort: sort },
+            ...limitStage
+        ]);
 
-export const getCategoryWithBooks = asyncHandler(async (req, res) => {
-    const { identifier } = req.params;
-    const { page = 1, limit = 10, sortBy = "createdAt", sortOrder = "desc" } = req.query;
+        const totalProducts = await Product.countDocuments({ isActive: true });
 
-    if (identifier === "admin" || identifier === "admin/stats") throw new ApiError(404, "Category not found");
+        res.status(200).json({
+            success: true,
+            data: categories,
+            meta: { totalCategories: categories.length, totalProducts }
+        });
+    } catch (error) {
+        handleError(error, req, res);
+    }
+};
 
-    const category = mongoose.Types.ObjectId.isValid(identifier)
-        ? await Category.findById(identifier).lean()
-        : await Category.findOne({ slug: identifier }).lean();
+export const getCategoryWithProducts = async (req, res) => {
+    try {
+        const { identifier } = req.params;
+        const { page = 1, limit = 10, sortBy = "createdAt", sortOrder = "desc" } = req.query;
 
-    if (!category) throw new ApiError(404, "Category not found");
+        if (identifier === "admin" || identifier === "admin/stats") {
+            throw new ApiError(404, "Category not found");
+        }
 
-    const pageNum = parseInt(page);
-    const limitNum = parseInt(limit);
-    const skip = (pageNum - 1) * limitNum;
-    const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
-    const filter = { category: category._id, isActive: true };
+        const category = isValidId(identifier)
+            ? await Category.findById(identifier).lean()
+            : await Category.findOne({ handle: identifier }).lean();
 
-    const [books, totalBooks] = await Promise.all([
-        Book.find(filter).select("name slug price coverImage author").sort(sort).skip(skip).limit(limitNum).lean(),
-        Book.countDocuments(filter),
-    ]);
+        if (!category) throw new ApiError(404, "Category not found");
 
-    res.status(200).json({
-        success: true,
-        data: {
-            category: { id: category._id, name: category.name, slug: category.slug, description: category.description },
-            books,
-            pagination: {
-                page: pageNum,
-                limit: limitNum,
-                total: totalBooks,
-                totalPages: Math.ceil(totalBooks / limitNum),
-                hasNextPage: pageNum * limitNum < totalBooks,
-                hasPreviousPage: pageNum > 1,
+        const pageNum = parseInt(page);
+        const limitNum = parseInt(limit);
+        const filter = { category: category._id, isActive: true };
+        const sort = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+        const [products, totalProducts] = await Promise.all([
+            Product.find(filter)
+                .select("name slug price coverImage author")
+                .sort(sort)
+                .skip((pageNum - 1) * limitNum)
+                .limit(limitNum)
+                .lean(),
+            Product.countDocuments(filter)
+        ]);
+
+        res.status(200).json({
+            success: true,
+            data: {
+                category: {
+                    id: category._id,
+                    name: category.name,
+                    handle: category.handle,
+                    description: category.description,
+                    image: category.image,
+                    type: category.type
+                },
+                products,
+                pagination: {
+                    page: pageNum,
+                    limit: limitNum,
+                    total: totalProducts,
+                    totalPages: Math.ceil(totalProducts / limitNum),
+                    hasNextPage: pageNum * limitNum < totalProducts,
+                    hasPreviousPage: pageNum > 1
+                }
+            }
+        });
+    } catch (error) {
+        handleError(error, req, res);
+    }
+};
+
+export const getCategoryStatistics = async (req, res) => {
+    try {
+        const stats = await Category.aggregate([
+            {
+                $lookup: {
+                    from: "products",
+                    let: { categoryId: "$_id" },
+                    pipeline: [
+                        { 
+                            $match: { 
+                                $expr: { 
+                                    $and: [
+                                        { $eq: ["$category", "$$categoryId"] }, 
+                                        { $eq: ["$isActive", true] }
+                                    ] 
+                                } 
+                            } 
+                        },
+                        {
+                            $group: {
+                                _id: null,
+                                count: { $sum: 1 },
+                                avgPrice: { $avg: "$price" },
+                                minPrice: { $min: "$price" },
+                                maxPrice: { $max: "$price" }
+                            }
+                        }
+                    ],
+                    as: "productStats"
+                }
             },
-        },
-    });
-});
-
-export const getCategoryStatistics = asyncHandler(async (req, res) => {
-    const stats = await Category.aggregate([
-        {
-            $lookup: {
-                from: "books",
-                let: { categoryId: "$_id" },
-                pipeline: [
-                    { $match: { $expr: { $and: [{ $eq: ["$category", "$$categoryId"] }, { $eq: ["$isActive", true] }] } } },
-                    { $group: { _id: null, count: { $sum: 1 }, avgPrice: { $avg: "$price" }, minPrice: { $min: "$price" }, maxPrice: { $max: "$price" } } },
-                ],
-                as: "bookStats",
+            {
+                $addFields: {
+                    productCount: { $ifNull: [{ $arrayElemAt: ["$productStats.count", 0] }, 0] },
+                    avgPrice: { $ifNull: [{ $arrayElemAt: ["$productStats.avgPrice", 0] }, 0] },
+                    minPrice: { $ifNull: [{ $arrayElemAt: ["$productStats.minPrice", 0] }, 0] },
+                    maxPrice: { $ifNull: [{ $arrayElemAt: ["$productStats.maxPrice", 0] }, 0] }
+                }
             },
-        },
-        {
-            $addFields: {
-                bookCount: { $ifNull: [{ $arrayElemAt: ["$bookStats.count", 0] }, 0] },
-                avgPrice: { $ifNull: [{ $arrayElemAt: ["$bookStats.avgPrice", 0] }, 0] },
-                minPrice: { $ifNull: [{ $arrayElemAt: ["$bookStats.minPrice", 0] }, 0] },
-                maxPrice: { $ifNull: [{ $arrayElemAt: ["$bookStats.maxPrice", 0] }, 0] },
+            { 
+                $project: { 
+                    name: 1, handle: 1, description: 1, 
+                    productCount: 1, avgPrice: 1, minPrice: 1, maxPrice: 1, createdAt: 1 
+                } 
             },
-        },
-        { $project: { name: 1, slug: 1, description: 1, bookCount: 1, avgPrice: 1, minPrice: 1, maxPrice: 1, createdAt: 1 } },
-        { $sort: { bookCount: -1 } },
-    ]);
+            { $sort: { productCount: -1 } }
+        ]);
 
-    res.status(200).json({ success: true, data: stats });
-});
+        res.status(200).json({ success: true, data: stats });
+    } catch (error) {
+        handleError(error, req, res);
+    }
+};
 
-export const getPopularCategories = asyncHandler(async (req, res) => {
-    const { limit = 5 } = req.query;
+export const getPopularCategories = async (req, res) => {
+    try {
+        const { limit = 5 } = req.query;
 
-    const categories = await Category.aggregate([
-        bookCountLookup,
-        { $addFields: { bookCount: { $ifNull: [{ $arrayElemAt: ["$bookCount.count", 0] }, 0] } } },
-        { $sort: { bookCount: -1 } },
-        { $limit: parseInt(limit) },
-        { $project: { name: 1, slug: 1, description: 1, bookCount: 1 } },
-    ]);
+        const categories = await Category.aggregate([
+            ...addProductCount,
+            { $sort: { productCount: -1 } },
+            { $limit: parseInt(limit) },
+            { $project: { name: 1, handle: 1, description: 1, image: 1, productCount: 1 } }
+        ]);
 
-    res.status(200).json({ success: true, data: categories });
-});
+        res.status(200).json({ success: true, data: categories });
+    } catch (error) {
+        handleError(error, req, res);
+    }
+};
 
-export const createCategory = asyncHandler(async (req, res) => {
-    const { name, description } = req.body;
-    if (!name) throw new ApiError(400, "Category name is required");
+const validateCategoryType = (type, field = "type") => {
+    if (type && !["manual", "automatic"].includes(type)) {
+        throw new ApiError(400, `${field} must be 'manual' or 'automatic'`);
+    }
+};
 
-    const existingCategory = await Category.findOne({
-        $or: [{ name: name.trim() }, { slug: name.toLowerCase().replace(/\s+/g, "-") }],
-    });
-    if (existingCategory) throw new ApiError(400, "Category with this name or slug already exists");
+const validateConditionMatch = (match) => {
+    if (match && !["all", "any"].includes(match)) {
+        throw new ApiError(400, "conditionMatch must be 'all' or 'any'");
+    }
+};
 
-    const category = await Category.create({ name: name.trim(), description: description?.trim() });
-    res.status(201).json({ success: true, message: "Category created successfully", data: category });
-});
+const generateUniqueHandle = async (baseHandle) => {
+    let handle = baseHandle;
+    let counter = 1;
+    
+    while (await Category.findOne({ handle }).lean()) {
+        handle = `${baseHandle}-${counter}`;
+        counter++;
+    }
+    
+    return handle;
+};
 
-export const updateCategory = asyncHandler(async (req, res) => {
-    const { identifier } = req.params;
-    const { name, description } = req.body;
+export const createCategory = async (req, res) => {
+    try {
+        const { name, description, image, isActive, sortOrder, type, conditionMatch, conditions } = req.body;
+        
+        if (!name) throw new ApiError(400, "Category name is required");
 
-    const query = mongoose.Types.ObjectId.isValid(identifier) ? { _id: identifier } : { slug: identifier };
-    const updateData = {};
-    if (name) updateData.name = name.trim();
-    if (description !== undefined) updateData.description = description?.trim();
+        let handle;
+        if (req.body.handle) {
+            handle = generateHandle(String(req.body.handle));
+        } else {
+            handle = generateHandle(name);
+        }
+        
+        if (!handle) throw new ApiError(400, "Could not derive a valid handle from the category name");
 
-    const category = await Category.findOneAndUpdate(query, { $set: updateData }, { new: true, runValidators: true });
-    if (!category) throw new ApiError(404, "Category not found");
+        handle = await generateUniqueHandle(handle);
 
-    res.status(200).json({ success: true, message: "Category updated successfully", data: category });
-});
+        validateCategoryType(type);
+        validateConditionMatch(conditionMatch);
 
-export const deleteCategory = asyncHandler(async (req, res) => {
-    const { identifier } = req.params;
-    const query = mongoose.Types.ObjectId.isValid(identifier) ? { _id: identifier } : { slug: identifier };
+        const existingCategory = await Category.findOne({
+            $or: [{ name: name.trim() }, { handle }]
+        }).lean();
 
-    const category = await Category.findOne(query);
-    if (!category) throw new ApiError(404, "Category not found");
+        if (existingCategory) {
+            throw new ApiError(400, "Category with this name or handle already exists");
+        }
 
-    const bookCount = await Book.countDocuments({ category: category._id });
-    if (bookCount > 0) throw new ApiError(400, `Cannot delete category with ${bookCount} books. Please reassign or delete the books first.`);
+        const category = await Category.create({
+            name: name.trim(),
+            handle,
+            description: description?.trim(),
+            image,
+            isActive,
+            sortOrder,
+            type,
+            conditionMatch,
+            conditions
+        });
 
-    await Category.findByIdAndDelete(category._id);
-    res.status(200).json({ success: true, message: "Category deleted successfully" });
-});
+        res.status(201).json({ 
+            success: true, 
+            message: "Category created successfully", 
+            data: category 
+        });
+    } catch (error) {
+        handleError(error, req, res);
+    }
+};
+
+export const updateCategory = async (req, res) => {
+    try {
+        const { identifier } = req.params;
+        const { name, description, handle, image, isActive, sortOrder, type, conditionMatch, conditions } = req.body;
+
+        const updateData = {};
+        
+        if (name) updateData.name = name.trim();
+        if (description !== undefined) updateData.description = description?.trim();
+        if (handle) {
+            const newHandle = generateHandle(String(handle));
+
+            const existingCategory = await Category.findOne({ 
+                handle: newHandle,
+                _id: { $ne: isValidId(identifier) ? identifier : (await Category.findOne(getCategoryQuery(identifier)))?._id }
+            }).lean();
+            
+            if (existingCategory) {
+                throw new ApiError(400, "Handle already in use by another category");
+            }
+            updateData.handle = newHandle;
+        }
+        if (image !== undefined) updateData.image = image;
+        if (isActive !== undefined) updateData.isActive = isActive;
+        if (sortOrder !== undefined) updateData.sortOrder = sortOrder;
+        
+        if (type !== undefined) {
+            validateCategoryType(type);
+            updateData.type = type;
+        }
+        
+        if (conditionMatch !== undefined) {
+            validateConditionMatch(conditionMatch);
+            updateData.conditionMatch = conditionMatch;
+        }
+        
+        if (conditions !== undefined) updateData.conditions = conditions;
+
+        const category = await Category.findOneAndUpdate(
+            getCategoryQuery(identifier),
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+
+        if (!category) throw new ApiError(404, "Category not found");
+
+        res.status(200).json({ 
+            success: true, 
+            message: "Category updated successfully", 
+            data: category 
+        });
+    } catch (error) {
+        handleError(error, req, res);
+    }
+};
+
+export const deleteCategory = async (req, res) => {
+    try {
+        const { identifier } = req.params;
+
+        const category = await Category.findOne(getCategoryQuery(identifier));
+        if (!category) throw new ApiError(404, "Category not found");
+
+        const productCount = await Product.countDocuments({ category: category._id });
+        if (productCount > 0) {
+            throw new ApiError(400, `Cannot delete category with ${productCount} products. Please reassign or delete the products first.`);
+        }
+
+        await Category.findByIdAndDelete(category._id);
+        
+        res.status(200).json({ 
+            success: true, 
+            message: "Category deleted successfully" 
+        });
+    } catch (error) {
+        handleError(error, req, res);
+    }
+};

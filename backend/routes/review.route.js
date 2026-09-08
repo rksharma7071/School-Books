@@ -6,7 +6,7 @@ import {
     updateReview,
     getReviewById,
     getReviewSummary,
-    getReviewsByBook,
+    getReviewsByProduct,
     getMyReviews,
     getAllPublishedReviews,
 } from "../controllers/review.controller.js";
@@ -16,7 +16,7 @@ import { authorize } from "../middlewares/authorize.js";
 const router = express.Router();
 
 router.get("/summary", getReviewSummary);
-router.get("/book/:bookId", getReviewsByBook);
+router.get("/product/:productId", getReviewsByProduct);
 router.get("/published", getAllPublishedReviews);
 
 router.route("/")

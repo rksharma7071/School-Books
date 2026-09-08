@@ -11,7 +11,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
     const role = user?.role;
     const navigate = useNavigate();
     const { setToastConfig, setShowToast } = useContext(BookContext);
-
+    
     const deleteBook = async (id) => {
         try {
             if (confirm("Do you want to delete this Book?")) {

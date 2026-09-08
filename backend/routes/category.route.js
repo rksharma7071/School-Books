@@ -1,7 +1,7 @@
 import express from "express";
 import {
     getAllCategoriesWithCount,
-    getCategoryWithBooks,
+    getCategoryWithProducts,
     getCategoryStatistics,
     getPopularCategories,
     createCategory,

@@ -14,7 +14,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-/* ---------------- SORTABLE ITEM ---------------- */
 function SortableImage({ img, index, onRemove }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({
@@ -25,6 +24,7 @@ function SortableImage({ img, index, onRemove }) {
     transform: CSS.Transform.toString(transform),
     transition,
   };
+  console.log("SortableImage");
 
   return (
     <div
@@ -54,14 +54,14 @@ function SortableImage({ img, index, onRemove }) {
   );
 }
 
-/* ---------------- MAIN COMPONENT ---------------- */
 function BookImages({ existingImages, onImagesChange, onMetaChange }) {
   const [images, setImages] = useState([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-
+  console.log("BookImages");
+  
   useEffect(() => {
     const mapped = existingImages.map((img) => ({
       ...img,

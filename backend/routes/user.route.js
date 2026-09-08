@@ -18,7 +18,7 @@ router.use(authMiddleware);
 
 router.route("/")
     .get(authorize("admin"), getAllUsers)
-    .post(authorize("admin"), createNewUser);
+    .post(createNewUser);
 
 router.route("/permission")
     .get(authorize("admin"), getAllPermissions)

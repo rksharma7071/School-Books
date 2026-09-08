@@ -7,29 +7,37 @@ const booleanFromQuery = z.preprocess((value) => {
     return value;
 }, z.boolean().optional());
 
-const createBookSchema = z.object({
-    name: z.string().trim().min(1, "Name is required").max(200),
-    description: z.string().trim().max(5000).optional(),
-    price: z.coerce.number().min(0).default(0),
-    cost: z.coerce.number().min(0).default(0),
-    isbn: z.string().trim().max(50).optional(),
-    author: z.string().trim().min(1, "Author is required").max(200),
-    publisher: z.string().trim().max(200).optional(),
-    category: z.string().optional(),
-    classLevel: z.string().trim().max(100).optional(),
-    subject: z.string().trim().max(100).optional(),
-    language: z.string().trim().max(100).optional(),
-    stockQty: z.coerce.number().int().min(0).default(0),
-    coverImage: z.string().url().optional(),
-    isActive: booleanFromQuery.default(true),
+const createProductSchema = z.object({
+    title: z.string(),
+    description: z.string().optional(),
+
+    options: z.array(
+        z.object({
+            name: z.string(),
+            values: z.array(z.string())
+        })
+    ),
+
+    variants: z.array(
+        z.object({
+            title: z.string().optional(),
+            sku: z.string().optional(),
+            price: z.number().nonnegative(),
+            inventory_quantity: z.number().int().nonnegative(),
+
+            options: z.record(z.string(), z.string())
+        })
+    ),
+
+    isActive: z.boolean().optional()
 });
 
-const updateBookSchema = createBookSchema.partial().extend({
+const updateProductSchema = createProductSchema.partial().extend({
     removeImagePublicIds: z.array(z.string()).optional(),
     imagesOrder: z.string().optional(),
 });
 
-const listBookQuerySchema = z.object({
+const listProductQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(20),
     search: z.string().trim().max(100).optional(),
@@ -45,4 +53,7 @@ const listBookQuerySchema = z.object({
     sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
-export { createBookSchema, updateBookSchema, listBookQuerySchema };
+export { createProductSchema, updateProductSchema, listProductQuerySchema };
+
+
+

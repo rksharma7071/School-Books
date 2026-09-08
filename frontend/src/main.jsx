@@ -165,10 +165,10 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <BookProvider>
-    <StrictMode>
+    {/* <StrictMode> */}
       <RouterProvider router={router} />
       <SpeedInsights />
       <Analytics />
-    </StrictMode>
+    {/* </StrictMode> */}
   </BookProvider>
 )

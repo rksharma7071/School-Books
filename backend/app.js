@@ -10,7 +10,7 @@ import {
     validateProductionConfig,
 } from "./config/security.js";
 
-import bookRouter from "./routes/book.route.js";
+import productRouter from "./routes/product.route.js";
 import userRouter from "./routes/user.route.js";
 import authRouter from "./routes/auth.route.js";
 import reviewRouter from "./routes/review.route.js";
@@ -21,8 +21,8 @@ import orderRouter from "./routes/order.route.js";
 import razorpayRoutes from "./routes/razorpay.routes.js";
 import addressRoutes from "./routes/address.route.js";
 import categoryRouter from "./routes/category.route.js";
+import fileRouter from "./routes/file.route.js";
 
-import { errorHandler } from "./middlewares/errorHandler.js";
 import { handleRazorpayWebhook } from "./controllers/razorpay.controller.js";
 
 validateProductionConfig();
@@ -58,7 +58,7 @@ app.get("/health", (req, res) => {
     });
 });
 
-app.use("/api/book", bookRouter);
+app.use("/api/product", productRouter);
 app.use("/api/user", userRouter);
 app.use("/api/auth", authRouter);
 app.use("/api/review", reviewRouter);
@@ -69,16 +69,17 @@ app.use("/api/order", orderRouter);
 app.use("/api/razorpay", razorpayRoutes);
 app.use("/api/address", addressRoutes);
 app.use("/api/categories", categoryRouter);
+app.use("/api/uploads", fileRouter);
 
 app.get("/", (req, res) => {
     res.status(200).json({
         success: true,
-        message: "School Books API is running",
+        message: "E-commerce API is running",
         version: "1.0.0",
         environment: process.env.NODE_ENV || "development",
         endpoints: {
             health: "/health",
-            books: "/api/book",
+            products: "/api/product",
             users: "/api/user",
             auth: "/api/auth",
             reviews: "/api/review",
@@ -101,7 +102,17 @@ app.use((req, res) => {
     });
 });
 
-app.use(errorHandler);
+app.use((error, req, res, next) => {
+    console.error(`[${req.method}] ${req.originalUrl}`, error);
+
+    if (error.message === "CORS origin not allowed") {
+        return res.status(403).json({ success: false, message: "CORS origin is not allowed" });
+    }
+
+    const statusCode = error.status || error.statusCode || 500;
+    const message = process.env.NODE_ENV === "production" && statusCode === 500 ? "Internal server error" : error.message;
+    res.status(statusCode).json({ success: false, message });
+});
 
 const startServer = async () => {
     try {

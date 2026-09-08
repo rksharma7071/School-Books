@@ -6,10 +6,10 @@ const permissionSchema = new mongoose.Schema({
     updateUser: { type: Boolean, default: false },
     deleteUser: { type: Boolean, default: false },
     readUser: { type: Boolean, default: false },
-    createBook: { type: Boolean, default: false },
-    updateBook: { type: Boolean, default: false },
-    deleteBook: { type: Boolean, default: false },
-    readBook: { type: Boolean, default: false },
+    createProduct: { type: Boolean, default: false },
+    updateProduct: { type: Boolean, default: false },
+    deleteProduct: { type: Boolean, default: false },
+    readProduct: { type: Boolean, default: false },
 });
 
 const userSchema = new mongoose.Schema(

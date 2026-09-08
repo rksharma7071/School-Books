@@ -33,6 +33,9 @@ function Header() {
         navigate("/");
     };
 
+    console.log("Header");
+    
+
     useEffect(() => {
         const term = search.trim();
 
