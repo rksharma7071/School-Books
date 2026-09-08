@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import { Address, } from "../models/user.model.js";
+import { Address, Permission } from "../models/user.model.js";
 import { Cart } from "../models/cart.model.js";
 import { Review } from "../models/review.model.js";
 
@@ -34,6 +34,29 @@ const selfOrAdmin = (paramName = "id") => {
         }
 
         next();
+    };
+};
+
+const authorizePermission = (permissionField) => {
+    return async (req, res, next) => {
+        try {
+            if (!req.user) {
+                return res.status(401).json({ success: false, message: "Authentication required" });
+            }
+
+            if (req.user.role === "admin") {
+                return next();
+            }
+
+            const permission = await Permission.findOne({ userId: req.user.id }).lean();
+            if (!permission || !permission[permissionField]) {
+                return res.status(403).json({ success: false, message: "You do not have permission to perform this action" });
+            }
+
+            next();
+        } catch (error) {
+            return res.status(500).json({ success: false, message: "Error verifying permission" });
+        }
     };
 };
 
@@ -112,4 +135,11 @@ const verifyReviewOwnership = async (req, res, next) => {
     }
 };
 
-export { authorize, selfOrAdmin, verifyAddressOwnership, verifyCartOwnership, verifyReviewOwnership };
+export {
+    authorize,
+    selfOrAdmin,
+    authorizePermission,
+    verifyAddressOwnership,
+    verifyCartOwnership,
+    verifyReviewOwnership,
+};

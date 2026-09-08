@@ -25,7 +25,7 @@ router.post("/:id/cancel", cancelOrder);
 
 router.route("/:id")
     .get(getOrderById)
-    .patch(updateOrder)
+    .patch(authorize("admin"), updateOrder)
     .delete(authorize("admin"), deleteOrder);
 
 export default router;

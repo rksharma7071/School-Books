@@ -24,7 +24,6 @@ const paymentSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
-// orderId and transactionId already get indexes from unique: true above
 paymentSchema.index({ createdAt: -1 });
 paymentSchema.index({ razorpayOrderId: 1 });
 
