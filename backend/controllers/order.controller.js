@@ -7,9 +7,6 @@ import { Cart } from "../models/cart.model.js";
 import { Address, User } from "../models/user.model.js";
 import { ApiError, handleError } from "../utils/apiError.js";
 
-const USER_FIELDS = "first_name last_name email username";
-const PRODUCT_FIELDS = "title image images isActive";
-const SHIPPING_FLAT = 50;
 
 const ORDER_STATUSES = ["in progress", "fulfilled", "unfulfilled", "cancelled"];
 const STATUS_TRANSITIONS = {
@@ -118,8 +115,8 @@ export const getAllOrder = async (req, res) => {
 
         const [data, total] = await Promise.all([
             Order.find(filter)
-                .populate("userId", USER_FIELDS)
-                .populate("items.productId", PRODUCT_FIELDS)
+                .populate("userId", "first_name last_name email username")
+                .populate("items.productId", "title image images isActive")
                 .sort({ createdAt: -1 })
                 .skip((pageNum - 1) * limitNum)
                 .limit(limitNum)
@@ -150,8 +147,8 @@ export const getOrderById = async (req, res) => {
         if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid order ID");
 
         const order = await Order.findById(id)
-            .populate("userId", USER_FIELDS)
-            .populate("items.productId", PRODUCT_FIELDS)
+            .populate("userId", "first_name last_name email username")
+            .populate("items.productId", "title image images isActive")
             .lean();
         if (!order) throw new ApiError(404, "Order not found");
         if (req.user.role !== "admin" && String(order.userId?._id) !== String(req.user.id)) {
@@ -301,7 +298,7 @@ export const createOrder = async (req, res) => {
                     appliedCouponCode = d.discount_code;
                 }
 
-                const shipping = subtotal > 0 ? SHIPPING_FLAT : 0;
+                const shipping = subtotal > 0 ? 50 : 0;
                 const tax = 0;
                 const total = Math.max(0, subtotal + shipping + tax - discount);
 
@@ -419,7 +416,7 @@ export const updateOrder = async (req, res) => {
         }
 
         await order.save();
-        const populated = await Order.findById(order._id).populate("userId", USER_FIELDS).populate("items.productId", PRODUCT_FIELDS).lean();
+        const populated = await Order.findById(order._id).populate("userId", "first_name last_name email username").populate("items.productId", "title image images isActive").lean();
         res.status(200).json({ success: true, message: "Order updated successfully", data: populated });
     } catch (error) {
         handleError(error, req, res);
@@ -473,7 +470,7 @@ export const cancelOrder = async (req, res) => {
             cancelledOrder = updated;
         });
 
-        const populated = await Order.findById(cancelledOrder._id).populate("userId", USER_FIELDS).populate("items.productId", PRODUCT_FIELDS).lean();
+        const populated = await Order.findById(cancelledOrder._id).populate("userId", "first_name last_name email username").populate("items.productId", "title image images isActive").lean();
         res.status(200).json({ success: true, message: "Order cancelled successfully. Inventory has been restored.", data: populated });
     } catch (error) {
         handleError(error, req, res);
@@ -513,7 +510,7 @@ export const getMyOrders = async (req, res) => {
 
         const [data, total] = await Promise.all([
             Order.find(filter)
-                .populate("items.productId", PRODUCT_FIELDS)
+                .populate("items.productId", "title image images isActive")
                 .sort({ createdAt: -1 })
                 .skip((page - 1) * limit)
                 .limit(limit)

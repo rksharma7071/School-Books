@@ -7,18 +7,13 @@ const REQUIRED_FIELDS = ["fullName", "phone", "address", "city", "state", "pinco
 const ALLOWED_UPDATE_FIELDS = ["fullName", "phone", "address", "city", "state", "pincode", "country", "type", "landmark"];
 const ADDRESS_TYPES = ["home", "work", "other"];
 
-const PHONE_RE = /^[+]?[0-9\-\s()]{7,15}$/;
-const INDIA_PINCODE_RE = /^[1-9][0-9]{5}$/;
-
-const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-
 const isBlank = (value) => typeof value !== "string" || value.trim().length === 0;
 
 const normalizeAddressData = (input = {}) => {
     const data = {};
     for (const field of STRING_FIELDS) {
         if (input[field] !== undefined && input[field] !== null) {
-            data[field] = String(input[field]).replace(/\s+/g, " ").trim();
+            data[field] = String(input[field]).trim();
         }
     }
     return data;
@@ -38,7 +33,7 @@ const validateAddressData = (data, { partial = false, effectiveCountry } = {}) =
 
     if (data.phone !== undefined) {
         if (isBlank(data.phone)) throw new ApiError(400, "phone cannot be empty");
-        if (!PHONE_RE.test(data.phone)) throw new ApiError(400, "Invalid phone number format");
+        if (data.phone.length < 7 || data.phone.length > 15) throw new ApiError(400, "Invalid phone number format");
     }
 
     if (data.address !== undefined) {
@@ -60,7 +55,7 @@ const validateAddressData = (data, { partial = false, effectiveCountry } = {}) =
         if (isBlank(data.pincode)) throw new ApiError(400, "pincode cannot be empty");
         if (data.pincode.length > 20) throw new ApiError(400, "pincode is too long");
         const country = String(effectiveCountry ?? data.country ?? "India").toLowerCase();
-        if (country === "india" && !INDIA_PINCODE_RE.test(data.pincode)) {
+        if (country === "india" && data.pincode.length !== 6) {
             throw new ApiError(400, "Invalid pincode. Must be a 6-digit Indian pincode");
         }
     }
@@ -87,15 +82,14 @@ export const getAddresses = async (req, res) => {
             if (!mongoose.Types.ObjectId.isValid(userId)) throw new ApiError(400, "Invalid userId");
             filter.userId = userId;
         }
-        if (city) filter.city = { $regex: escapeRegex(city), $options: "i" };
-        if (state) filter.state = { $regex: escapeRegex(state), $options: "i" };
+        if (city) filter.city = city;
+        if (state) filter.state = state;
         if (pincode) filter.pincode = String(pincode).trim();
         if (isDefault !== undefined) filter.isDefault = isDefault === "true" || isDefault === true;
 
         if (search) {
-            const safe = escapeRegex(search);
             filter.$or = ["fullName", "phone", "address", "city", "state", "pincode", "country"].map((field) => ({
-                [field]: { $regex: safe, $options: "i" },
+                [field]: search,
             }));
         }
 

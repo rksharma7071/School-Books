@@ -5,15 +5,6 @@ import nodemailer from "nodemailer";
 import { User } from "../models/user.model.js";
 import { ApiError, handleError } from "../utils/apiError.js";
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,30}$/;
-
-const OTP_EXPIRY_MS = 5 * 60 * 1000;
-const OTP_RESEND_COOLDOWN_MS = 60 * 1000;
-const OTP_MAX_ATTEMPTS = 5;
-const RESET_TOKEN_EXPIRY_MS = 10 * 60 * 1000;
-const EMAIL_VERIFICATION_EXPIRY_MS = 24 * 60 * 60 * 1000;
-const EMAIL_VERIFICATION_RESEND_COOLDOWN_MS = 60 * 1000;
 
 function signToken(user) {
     if (!process.env.JWT_SECRET) {
@@ -26,22 +17,18 @@ function signToken(user) {
     );
 }
 
-function publicUser(u) {
+function publicUser(user) {
     return {
-        id: u._id,
-        username: u.username,
-        email: u.email,
-        first_name: u.first_name,
-        last_name: u.last_name,
-        role: u.role,
-        status: u.status,
-        emailVerified: u.emailVerified,
-        lastLoginAt: u.lastLoginAt,
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        role: user.role,
+        status: user.status,
+        emailVerified: user.emailVerified,
+        lastLoginAt: user.lastLoginAt,
     };
-}
-
-function generateOTP() {
-    return String(crypto.randomInt(100000, 1000000));
 }
 
 function hashToken(value) {
@@ -83,8 +70,8 @@ export const signUp = async (req, res) => {
         const { username, email, password, first_name, last_name } = req.body;
 
         if (!username || !email || !password) throw new ApiError(400, "Username, email and password are required");
-        if (!USERNAME_RE.test(username)) throw new ApiError(400, "Username must be 3-30 characters (letters, numbers, . _ -)");
-        if (!EMAIL_RE.test(email)) throw new ApiError(400, "Invalid email format");
+        if (username.length < 3 || username.length > 30) throw new ApiError(400, "Username must be 3-30 characters");
+        if (!email.includes("@") || !email.includes(".")) throw new ApiError(400, "Invalid email format");
         if (String(password).length < 8) throw new ApiError(400, "Password must be at least 8 characters");
 
         const normalizedEmail = email.toLowerCase().trim();
@@ -108,7 +95,7 @@ export const signUp = async (req, res) => {
             status: "active",
             emailVerified: false,
             emailVerificationToken: hashToken(rawVerificationToken),
-            emailVerificationTokenExpiry: new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS),
+            emailVerificationTokenExpiry: new Date(Date.now() + 24 * 60 * 60 * 1000),
             emailVerificationSentAt: new Date(),
         });
 
@@ -132,6 +119,20 @@ export const login = async (req, res) => {
 
         if (user.status === "blocked" || user.status === "suspended") {
             throw new ApiError(403, "Your account is not active. Please contact support.");
+        }
+
+        if (!user.emailVerified) {
+            const hasValidToken = 
+                user.emailVerificationToken && 
+                user.emailVerificationTokenExpiry && 
+                Date.now() <= user.emailVerificationTokenExpiry.getTime();
+
+            throw new ApiError(403, "Please verify your email before logging in.", {
+                requiresEmailVerification: true,
+                email: user.email,
+                canResendVerification: !hasValidToken || true,
+                verificationTokenExpired: !hasValidToken
+            });
         }
 
         user.lastLoginAt = new Date();
@@ -203,7 +204,7 @@ export const requestOTP = async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) throw new ApiError(400, "Email is required");
-        if (!EMAIL_RE.test(email)) throw new ApiError(400, "Invalid email format");
+        if (!email.includes("@") || !email.includes(".")) throw new ApiError(400, "Invalid email format");
 
         const genericMessage = "If an account exists for this email, an OTP has been sent.";
         const user = await User.findOne({ email: email.toLowerCase().trim() }).select("+otpLastSentAt");
@@ -212,13 +213,13 @@ export const requestOTP = async (req, res) => {
             return res.status(200).json({ success: true, message: genericMessage });
         }
 
-        if (user.otpLastSentAt && Date.now() - user.otpLastSentAt.getTime() < OTP_RESEND_COOLDOWN_MS) {
+        if (user.otpLastSentAt && Date.now() - user.otpLastSentAt.getTime() < 60 * 1000) {
             throw new ApiError(429, "Please wait before requesting another OTP");
         }
 
-        const otp = generateOTP();
+        const otp = String(crypto.randomInt(100000, 1000000));
         user.otp = hashToken(otp);
-        user.otpExpiry = new Date(Date.now() + OTP_EXPIRY_MS);
+        user.otpExpiry = new Date(Date.now() + 5 * 60 * 1000);
         user.otpAttempts = 0;
         user.otpLastSentAt = new Date();
         user.resetToken = null;
@@ -268,7 +269,7 @@ export const verifyOTP = async (req, res) => {
             throw new ApiError(400, "Invalid or expired OTP");
         }
 
-        if ((user.otpAttempts || 0) >= OTP_MAX_ATTEMPTS) {
+        if ((user.otpAttempts || 0) >= 5) {
             user.otp = null;
             user.otpExpiry = null;
             user.otpAttempts = 0;
@@ -284,7 +285,7 @@ export const verifyOTP = async (req, res) => {
 
         const resetToken = crypto.randomBytes(32).toString("hex");
         user.resetToken = hashToken(resetToken);
-        user.resetTokenExpiry = new Date(Date.now() + RESET_TOKEN_EXPIRY_MS);
+        user.resetTokenExpiry = new Date(Date.now() + 10 * 60 * 1000);
         user.otp = null;
         user.otpExpiry = null;
         user.otpAttempts = 0;
@@ -364,7 +365,7 @@ export const resendVerification = async (req, res) => {
     try {
         const { email } = req.body;
         if (!email) throw new ApiError(400, "Email is required");
-        if (!EMAIL_RE.test(email)) throw new ApiError(400, "Invalid email format");
+        if (!email.includes("@") || !email.includes(".")) throw new ApiError(400, "Invalid email format");
 
         const genericMessage = "If an account exists for this email, a verification link has been sent.";
         const user = await User.findOne({ email: email.toLowerCase().trim() }).select("+emailVerificationSentAt");
@@ -379,14 +380,14 @@ export const resendVerification = async (req, res) => {
 
         if (
             user.emailVerificationSentAt &&
-            Date.now() - user.emailVerificationSentAt.getTime() < EMAIL_VERIFICATION_RESEND_COOLDOWN_MS
+            Date.now() - user.emailVerificationSentAt.getTime() < 60 * 1000
         ) {
             throw new ApiError(429, "Please wait before requesting another verification email");
         }
 
         const rawToken = crypto.randomBytes(32).toString("hex");
         user.emailVerificationToken = hashToken(rawToken);
-        user.emailVerificationTokenExpiry = new Date(Date.now() + EMAIL_VERIFICATION_EXPIRY_MS);
+        user.emailVerificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
         user.emailVerificationSentAt = new Date();
         await user.save();
 

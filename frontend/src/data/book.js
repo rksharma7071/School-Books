@@ -30,17 +30,21 @@ const getBooks = async ({
     if (minPrice !== "") params.set("minPrice", minPrice);
     if (maxPrice !== "") params.set("maxPrice", maxPrice);
 
-    const { data } = await api.get(`/api/book?${params.toString()}`);
+    const { data } = await api.get(`/api/product?${params.toString()}`);
+    // console.log("data: ", data.data);
+    
     return data;
 };
 
 const getBookById = async ({ params }) => {
-    const { data } = await api.get(`/api/book/${params.id}`);
+    const { data } = await api.get(`/api/product/${params.id}`);
     return data?.data || null;
 };
 
 const getBookBySlug = async ({ params }) => {
-    const { data } = await api.get(`/api/book/${params.slug}`);
+    const { data } = await api.get(`/api/product/${params.slug}`);
+    console.log("getBookBySlug: ", data.data);
+    
     return data?.data || null;
 };
 

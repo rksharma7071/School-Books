@@ -6,185 +6,9 @@ import { ApiError, handleError } from "../utils/apiError.js";
 import { generateHandle } from "../utils/generateHandle.js";
 import cloudinary from "../config/cloudinary.js";
 
-const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
-const getCategoryQuery = (identifier) => (isValidId(identifier) ? { _id: identifier } : { handle: identifier });
+const getCategoryQuery = (identifier) => (mongoose.Types.ObjectId.isValid(identifier) ? { _id: identifier } : { handle: identifier });
 
 const SORT_WHITELIST = ["name", "sortOrder", "createdAt", "updatedAt", "productCount"];
-
-const buildStringCondition = (field, operator, value) => {
-    const stringValue = String(value).trim();
-    switch (operator) {
-        case "equals":
-            return { [field]: stringValue };
-        case "not_equals":
-            return { [field]: { $ne: stringValue } };
-        case "contains":
-            return { [field]: { $regex: stringValue, $options: "i" } };
-        case "not_contains":
-            return { [field]: { $not: { $regex: stringValue, $options: "i" } } };
-        case "starts_with":
-            return { [field]: { $regex: `^${stringValue}`, $options: "i" } };
-        case "ends_with":
-            return { [field]: { $regex: `${stringValue}$`, $options: "i" } };
-        case "in":
-            return { [field]: { $in: Array.isArray(value) ? value : [stringValue] } };
-        case "not_in":
-            return { [field]: { $nin: Array.isArray(value) ? value : [stringValue] } };
-        default:
-            throw new ApiError(400, `Invalid operator "${operator}" for string field "${field}"`);
-    }
-};
-
-const buildNumericCondition = (field, operator, value) => {
-    const numericValue = Number(value);
-    if (isNaN(numericValue)) {
-        throw new ApiError(400, `Invalid numeric value for field "${field}"`);
-    }
-
-    switch (operator) {
-        case "equals":
-            return { [field]: numericValue };
-        case "not_equals":
-            return { [field]: { $ne: numericValue } };
-        case "greater_than":
-            return { [field]: { $gt: numericValue } };
-        case "greater_than_or_equal":
-            return { [field]: { $gte: numericValue } };
-        case "less_than":
-            return { [field]: { $lt: numericValue } };
-        case "less_than_or_equal":
-            return { [field]: { $lte: numericValue } };
-        default:
-            throw new ApiError(400, `Invalid operator "${operator}" for numeric field "${field}"`);
-    }
-};
-
-const buildStatusCondition = (operator, value) => {
-    const statusValue = value === "active" ? true : value === "inactive" ? false : value;
-    switch (operator) {
-        case "equals":
-            return { isActive: statusValue };
-        case "not_equals":
-            return { isActive: { $ne: statusValue } };
-        default:
-            throw new ApiError(400, `Invalid operator "${operator}" for status field`);
-    }
-};
-
-const buildCategoriesCondition = (operator, value) => {
-    const categoryIds = Array.isArray(value) ? value : [value];
-    switch (operator) {
-        case "equals":
-        case "in":
-            return { categories: { $in: categoryIds } };
-        case "not_equals":
-        case "not_in":
-            return { categories: { $nin: categoryIds } };
-        default:
-            throw new ApiError(400, `Invalid operator "${operator}" for categories field`);
-    }
-};
-
-const buildConditionQuery = (conditions, conditionMatch = "all") => {
-    if (!conditions || conditions.length === 0) {
-        return null;
-    }
-
-    const queries = conditions
-        .map((condition) => {
-            const { field, operator, value } = condition;
-
-            switch (field) {
-                case "title":
-                case "description":
-                case "isbn":
-                case "publisher":
-                case "author":
-                    return buildStringCondition(field, operator, value);
-                case "price":
-                    return buildNumericCondition("variants.price", operator, value);
-                case "compareAtPrice":
-                    return buildNumericCondition("variants.compareAtPrice", operator, value);
-                case "inventory":
-                    return buildNumericCondition("inventory_quantity", operator, value);
-                case "status":
-                    return buildStatusCondition(operator, value);
-                case "categories":
-                    return buildCategoriesCondition(operator, value);
-                case "brand":
-                case "tags":
-                    return null;
-                default:
-                    return null;
-            }
-        })
-        .filter(Boolean);
-
-    if (queries.length === 0) {
-        return null;
-    }
-
-    return conditionMatch === "any" ? { $or: queries } : { $and: queries };
-};
-
-const validateConditions = (conditions, type) => {
-    if (type === "automatic" && (!conditions || conditions.length === 0)) {
-        throw new ApiError(400, "Automatic categories require at least one condition");
-    }
-
-    if (!conditions || conditions.length === 0) {
-        return [];
-    }
-
-    const validStringFields = ["title", "description", "isbn", "publisher", "author"];
-    const validNumericFields = ["price", "compareAtPrice", "inventory"];
-    const validStatusFields = ["status"];
-    const validCategoriesFields = ["categories"];
-
-    const stringOperators = ["equals", "not_equals", "contains", "not_contains", "starts_with", "ends_with", "in", "not_in"];
-    const numericOperators = ["equals", "not_equals", "greater_than", "greater_than_or_equal", "less_than", "less_than_or_equal"];
-    const statusOperators = ["equals", "not_equals"];
-    const categoriesOperators = ["equals", "not_equals", "in", "not_in"];
-
-    conditions.forEach((condition, index) => {
-        const { field, operator, value } = condition;
-
-        if (!field || !operator || value === undefined) {
-            throw new ApiError(400, `Condition ${index + 1}: field, operator, and value are required`);
-        }
-
-        if (validStringFields.includes(field)) {
-            if (!stringOperators.includes(operator)) {
-                throw new ApiError(400, `Invalid operator "${operator}" for field "${field}"`);
-            }
-            if (typeof value !== "string" && !Array.isArray(value)) {
-                throw new ApiError(400, `Field "${field}" requires a string value`);
-            }
-        } else if (validNumericFields.includes(field)) {
-            if (!numericOperators.includes(operator)) {
-                throw new ApiError(400, `Invalid operator "${operator}" for field "${field}"`);
-            }
-            if (isNaN(Number(value))) {
-                throw new ApiError(400, `Field "${field}" requires a numeric value`);
-            }
-        } else if (validStatusFields.includes(field)) {
-            if (!statusOperators.includes(operator)) {
-                throw new ApiError(400, `Invalid operator "${operator}" for field "${field}"`);
-            }
-            if (!["active", "inactive", true, false].includes(value)) {
-                throw new ApiError(400, `Field "${field}" requires "active" or "inactive"`);
-            }
-        } else if (validCategoriesFields.includes(field)) {
-            if (!categoriesOperators.includes(operator)) {
-                throw new ApiError(400, `Invalid operator "${operator}" for field "${field}"`);
-            }
-        } else {
-            throw new ApiError(400, `Unsupported condition field: "${field}"`);
-        }
-    });
-
-    return conditions;
-};
 
 const validateCategoryName = async (name, excludeId = null) => {
     const query = { name: { $regex: new RegExp(`^${name}$`, "i") } };
@@ -225,10 +49,7 @@ const getProductCount = async (category, includeInactive = false) => {
         return Product.countDocuments(query);
     }
 
-    const conditionQuery = buildConditionQuery(category.conditions, category.conditionMatch);
-    if (!conditionQuery) return 0;
-
-    const query = { ...conditionQuery };
+    const query = {};
     if (!includeInactive) {
         query.isActive = true;
     }
@@ -275,9 +96,9 @@ export const getAllCategoriesWithCount = async (req, res) => {
 
         if (search) {
             filter.$or = [
-                { name: { $regex: search, $options: "i" } },
-                { handle: { $regex: search, $options: "i" } },
-                { description: { $regex: search, $options: "i" } },
+                { name: search },
+                { handle: search },
+                { description: search },
             ];
         }
 
@@ -398,10 +219,8 @@ export const getCategoryWithProducts = async (req, res) => {
         if (category.type === "manual") {
             query.categories = category._id;
         } else {
-            const conditionQuery = buildConditionQuery(category.conditions, category.conditionMatch);
-            if (conditionQuery) {
-                query = { ...conditionQuery };
-            }
+            // Simplified: just get all products for automatic categories
+            query = {};
         }
 
         if (req.user?.role !== "admin") {
@@ -580,8 +399,6 @@ export const createCategory = async (req, res) => {
 
         await validateCategoryName(name.trim());
 
-        const validatedConditions = validateConditions(conditions, type);
-
         let handle = req.body.handle ? generateHandle(String(req.body.handle)) : generateHandle(name);
         if (!handle) {
             throw new ApiError(400, "Could not derive a valid handle from the category name");
@@ -596,7 +413,7 @@ export const createCategory = async (req, res) => {
             imagePublicId: imagePublicId || null,
             type,
             conditionMatch,
-            conditions: validatedConditions,
+            conditions: conditions || [],
             isActive,
             sortOrder: Number(sortOrder) || 0,
         });
@@ -652,10 +469,6 @@ export const updateCategory = async (req, res) => {
         const newType = type || category.type;
         const newConditions = conditions !== undefined ? conditions : category.conditions;
 
-        if (newType === "automatic" && newConditions.length === 0) {
-            throw new ApiError(400, "Automatic categories require at least one condition");
-        }
-
         if (type !== undefined) {
             updateData.type = type;
         }
@@ -668,7 +481,7 @@ export const updateCategory = async (req, res) => {
         }
 
         if (conditions !== undefined) {
-            updateData.conditions = validateConditions(conditions, newType);
+            updateData.conditions = conditions || [];
         }
 
         if (isActive !== undefined) {
@@ -728,10 +541,10 @@ export const addProductToCategory = async (req, res) => {
     try {
         const { categoryId, productId } = req.params;
 
-        if (!isValidId(categoryId)) {
+        if (!mongoose.Types.ObjectId.isValid(categoryId)) {
             throw new ApiError(400, "Invalid category ID");
         }
-        if (!isValidId(productId)) {
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
             throw new ApiError(400, "Invalid product ID");
         }
 
@@ -774,10 +587,10 @@ export const removeProductFromCategory = async (req, res) => {
     try {
         const { categoryId, productId } = req.params;
 
-        if (!isValidId(categoryId)) {
+        if (!mongoose.Types.ObjectId.isValid(categoryId)) {
             throw new ApiError(400, "Invalid category ID");
         }
-        if (!isValidId(productId)) {
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
             throw new ApiError(400, "Invalid product ID");
         }
 

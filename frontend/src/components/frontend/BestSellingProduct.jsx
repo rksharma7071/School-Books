@@ -12,7 +12,7 @@ function BestSellingProduct() {
 
     useEffect(() => {
         if (process.env.NODE_ENV === 'development') {
-            console.log("Best Selling Product - mounted");
+            // console.log("Best Selling Product - mounted");
         }
     }, []);
 
@@ -44,6 +44,9 @@ function BestSellingProduct() {
         () => books.filter((b) => b.isActive).slice(0, 10),
         [books]
     );
+
+    // console.log("Books: ", books);
+    
 
     const productCardProps = useMemo(() => ({
         user,

@@ -6,14 +6,7 @@ import { File } from "../models/file.model.js";
 import { ApiError, handleError } from "../utils/apiError.js";
 import cloudinary from "../config/cloudinary.js";
 
-const LOW_STOCK_THRESHOLD = 5;
-
-const buildHandle = (value) => slugify(String(value), { lower: true, strict: true, trim: true });
-const isObjectId = (value) => mongoose.Types.ObjectId.isValid(value);
-const productQuery = (identifier) => (isObjectId(identifier) ? { _id: identifier } : { handle: identifier });
-
-const normalizeOptionName = (name) => String(name).toLowerCase().trim();
-const normalizeOptionValue = (value) => String(value).trim();
+const productQuery = (identifier) => (mongoose.Types.ObjectId.isValid(identifier) ? { _id: identifier } : { handle: identifier });
 
 const getVariantKey = (options) => {
     if (!options) return "";
@@ -37,7 +30,7 @@ const validateProductOptions = (options) => {
             throw new ApiError(400, "Option name cannot be empty");
         }
 
-        const name = normalizeOptionName(option.name);
+        const name = String(option.name).toLowerCase().trim();
         if (seenNames.has(name)) {
             throw new ApiError(400, `Duplicate option name: ${option.name}`);
         }
@@ -49,7 +42,7 @@ const validateProductOptions = (options) => {
 
         const seenValues = new Set();
         const values = option.values.map((value) => {
-            const normalized = normalizeOptionValue(value);
+            const normalized = String(value).trim();
             if (!normalized) {
                 throw new ApiError(400, `Option "${name}" has an empty value`);
             }
@@ -219,7 +212,7 @@ const getPriceRange = (variants) => {
 
 const getInventoryStatus = (quantity) => {
     if (quantity <= 0) return "out_of_stock";
-    if (quantity <= LOW_STOCK_THRESHOLD) return "low_stock";
+    if (quantity <= 5) return "low_stock";
     return "in_stock";
 };
 
@@ -469,7 +462,7 @@ export const createProduct = async (req, res) => {
 
         data.options = validateProductOptions(data.options);
 
-        const handle = buildHandle(data.handle || data.title);
+        const handle = slugify(String(data.handle || data.title), { lower: true, strict: true, trim: true });
         data.handle = handle;
 
         const existingSkus = new Set();
@@ -558,7 +551,7 @@ export const updateProduct = async (req, res) => {
         }
 
         if (updateData.handle !== undefined) {
-            updateData.handle = buildHandle(updateData.handle);
+            updateData.handle = slugify(String(updateData.handle), { lower: true, strict: true, trim: true });
             if (updateData.handle !== existingProduct.handle) {
                 const exists = await Product.exists({ handle: updateData.handle, _id: { $ne: existingProduct._id } });
                 if (exists) throw new ApiError(400, "A product with this handle already exists");

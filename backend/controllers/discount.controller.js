@@ -19,10 +19,27 @@ const ALLOWED_FIELDS = [
     "active",
 ];
 const SORT_WHITELIST = ["createdAt", "updatedAt", "discount_code", "amount", "used_count", "starts_at", "ends_at"];
+const CODE_ALLOWED_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_-";
 
-const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 const normalizeCode = (code) => String(code).trim().toUpperCase();
-const isBoolean = (v) => typeof v === "boolean";
+
+
+const isValidDate = (v) => !isNaN(new Date(v).getTime());
+
+const isPositiveNumber = (v) => Number.isFinite(Number(v)) && Number(v) > 0;
+
+const isNonNegativeNumber = (v) => Number.isFinite(Number(v)) && Number(v) >= 0;
+
+const isPositiveInteger = (v) => Number.isInteger(Number(v)) && Number(v) >= 1;
+
+const isValidDiscountCode = (code) => {
+    if (typeof code !== "string") return false;
+    if (code.length < 3 || code.length > 50) return false;
+    for (const char of code) {
+        if (!CODE_ALLOWED_CHARS.includes(char)) return false;
+    }
+    return true;
+};
 
 const STATUS_FILTERS = {
     active: (now) => ({
@@ -43,11 +60,8 @@ const validateDiscountPayload = (data, { partial = false, existing = null } = {}
     const effective = { ...(existing?.toObject ? existing.toObject() : existing || {}), ...data };
 
     if (!partial && data.discount_code === undefined) throw new ApiError(400, "discount_code is required");
-    if (data.discount_code !== undefined) {
-        const normalized = normalizeCode(data.discount_code);
-        if (!CODE_RE_TEST(normalized)) {
-            throw new ApiError(400, "discount_code must be 3-50 characters: uppercase letters, numbers, underscores, and hyphens only");
-        }
+    if (data.discount_code !== undefined && !isValidDiscountCode(normalizeCode(data.discount_code))) {
+        throw new ApiError(400, "discount_code must be 3-50 characters: uppercase letters, numbers, underscores, and hyphens only");
     }
 
     if (!partial && data.discount_type === undefined) throw new ApiError(400, "discount_type is required");
@@ -57,56 +71,49 @@ const validateDiscountPayload = (data, { partial = false, existing = null } = {}
 
     if (!partial && data.amount === undefined) throw new ApiError(400, "amount is required");
     if (data.amount !== undefined) {
-        const amt = Number(data.amount);
-        if (!Number.isFinite(amt) || amt <= 0) throw new ApiError(400, "amount must be a positive number");
-        if (effective.discount_type === "percentage" && amt > 100) {
+        if (!isPositiveNumber(data.amount)) throw new ApiError(400, "amount must be a positive number");
+        if (effective.discount_type === "percentage" && Number(data.amount) > 100) {
             throw new ApiError(400, "percentage amount cannot exceed 100");
         }
     }
 
-    if (data.starts_at !== undefined && data.starts_at !== null && isNaN(new Date(data.starts_at).getTime())) {
+    if (data.starts_at !== undefined && data.starts_at !== null && !isValidDate(data.starts_at)) {
         throw new ApiError(400, "starts_at must be a valid date");
     }
-    if (data.ends_at !== undefined && data.ends_at !== null && isNaN(new Date(data.ends_at).getTime())) {
+    if (data.ends_at !== undefined && data.ends_at !== null && !isValidDate(data.ends_at)) {
         throw new ApiError(400, "ends_at must be a valid date");
     }
-    if (effective.ends_at) {
-        const end = new Date(effective.ends_at);
-        const start = effective.starts_at ? new Date(effective.starts_at) : null;
-        if (start && !isNaN(start.getTime()) && !isNaN(end.getTime()) && end <= start) {
+    if (effective.ends_at && effective.starts_at && isValidDate(effective.ends_at) && isValidDate(effective.starts_at)) {
+        if (new Date(effective.ends_at) <= new Date(effective.starts_at)) {
             throw new ApiError(400, "ends_at must be after starts_at");
         }
     }
 
-    if (data.minimum_order_amount !== undefined && data.minimum_order_amount !== null) {
-        const v = Number(data.minimum_order_amount);
-        if (!Number.isFinite(v) || v < 0) throw new ApiError(400, "minimum_order_amount must be a non-negative number");
+    if (data.minimum_order_amount !== undefined && data.minimum_order_amount !== null && !isNonNegativeNumber(data.minimum_order_amount)) {
+        throw new ApiError(400, "minimum_order_amount must be a non-negative number");
     }
 
     if (data.maximum_discount_amount !== undefined && data.maximum_discount_amount !== null) {
-        const v = Number(data.maximum_discount_amount);
-        if (!Number.isFinite(v) || v < 0) throw new ApiError(400, "maximum_discount_amount must be a non-negative number");
+        if (!isNonNegativeNumber(data.maximum_discount_amount)) {
+            throw new ApiError(400, "maximum_discount_amount must be a non-negative number");
+        }
         if (effective.discount_type === "fixed_amount") {
             throw new ApiError(400, "maximum_discount_amount is only applicable to percentage discounts");
         }
     }
 
-    if (data.usage_limit !== undefined && data.usage_limit !== null) {
-        const v = Number(data.usage_limit);
-        if (!Number.isInteger(v) || v < 1) throw new ApiError(400, "usage_limit must be a positive integer, or null for unlimited");
+    if (data.usage_limit !== undefined && data.usage_limit !== null && !isPositiveInteger(data.usage_limit)) {
+        throw new ApiError(400, "usage_limit must be a positive integer, or null for unlimited");
     }
 
-    if (data.usage_limit_per_user !== undefined && data.usage_limit_per_user !== null) {
-        const v = Number(data.usage_limit_per_user);
-        if (!Number.isInteger(v) || v < 1) throw new ApiError(400, "usage_limit_per_user must be a positive integer, or null for unlimited");
+    if (data.usage_limit_per_user !== undefined && data.usage_limit_per_user !== null && !isPositiveInteger(data.usage_limit_per_user)) {
+        throw new ApiError(400, "usage_limit_per_user must be a positive integer, or null for unlimited");
     }
 
-    if (data.active !== undefined && !isBoolean(data.active)) {
+    if (data.active !== undefined && !typeof data.active === "boolean") {
         throw new ApiError(400, "active must be a boolean value");
     }
 };
-
-const CODE_RE_TEST = (v) => /^[A-Z0-9_-]{3,50}$/.test(v);
 
 const formatAdminDiscount = (d) => ({
     id: d._id,
@@ -148,9 +155,8 @@ const resolveSubtotal = async (userId, bodyAmount) => {
     }
 
     if (bodyAmount !== undefined) {
-        const amt = Number(bodyAmount);
-        if (!Number.isFinite(amt) || amt <= 0) throw new ApiError(400, "amount must be a positive number");
-        return { subtotal: amt, source: "client_provided" };
+        if (!isPositiveNumber(bodyAmount)) throw new ApiError(400, "amount must be a positive number");
+        return { subtotal: Number(bodyAmount), source: "client_provided" };
     }
 
     throw new ApiError(400, "Your cart is empty. Add items to your cart before applying a coupon.");
@@ -163,23 +169,28 @@ export const getAllDiscount = async (req, res) => {
         const pageNum = Math.max(1, Number(page) || 1);
         const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
 
-        const filter = {};
+        const conditions = [];
 
-        if (active !== undefined) filter.active = active === "true" || active === true;
+        if (active !== undefined) {
+            conditions.push({ active: active === "true" || active === true });
+        }
 
         if (discount_type !== undefined) {
             if (!DISCOUNT_TYPES.includes(discount_type)) throw new ApiError(400, `Invalid discount_type. Allowed: ${DISCOUNT_TYPES.join(", ")}`);
-            filter.discount_type = discount_type;
+            conditions.push({ discount_type });
         }
 
         if (status !== undefined) {
             if (!STATUS_FILTERS[status]) throw new ApiError(400, `Invalid status filter. Allowed: ${Object.keys(STATUS_FILTERS).join(", ")}`);
-            Object.assign(filter, STATUS_FILTERS[status](new Date()));
+            conditions.push(STATUS_FILTERS[status](new Date()));
         }
 
         if (search) {
-            filter.discount_code = { $regex: escapeRegex(String(search).toUpperCase()), $options: "i" };
+            const term = String(search).toUpperCase();
+            conditions.push({ $expr: { $gte: [{ $indexOfCP: ["$discount_code", term] }, 0] } });
         }
+
+        const filter = conditions.length ? { $and: conditions } : {};
 
         if (!SORT_WHITELIST.includes(sortBy)) throw new ApiError(400, `Invalid sortBy. Allowed: ${SORT_WHITELIST.join(", ")}`);
         const sortOrderValue = sortOrder === "asc" ? 1 : -1;
@@ -232,7 +243,7 @@ export const createDiscount = async (req, res) => {
         }
 
         validateDiscountPayload(data, { partial: false });
-        data.discount_code = normalizeCode(data.discount_code);
+        data.discount_code = String(data.discount_code).trim().toUpperCase();
 
         let discount;
         try {
@@ -280,7 +291,7 @@ export const updateDiscount = async (req, res) => {
         validateDiscountPayload(updates, { partial: true, existing: discount });
 
         if (updates.discount_code !== undefined) {
-            updates.discount_code = normalizeCode(updates.discount_code);
+            updates.discount_code = String(updates.discount_code).trim().toUpperCase();
         }
 
         Object.assign(discount, updates);
@@ -337,7 +348,7 @@ export const applyDiscount = async (req, res) => {
         const { code } = req.body;
         if (!code || typeof code !== "string") throw new ApiError(400, "A discount code is required");
 
-        const normalizedCode = normalizeCode(code);
+        const normalizedCode = String(code).trim().toUpperCase();
 
         const discount = await Discount.findOne({ discount_code: normalizedCode }).lean();
         if (!discount) throw new ApiError(404, "Invalid coupon code");

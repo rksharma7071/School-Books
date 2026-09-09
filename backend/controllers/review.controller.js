@@ -4,15 +4,6 @@ import { Product } from "../models/product.model.js";
 import { Order } from "../models/order.model.js";
 import { ApiError, handleError } from "../utils/apiError.js";
 
-const REQUIRE_VERIFIED_PURCHASE = true;
-
-const RATING_MIN = 1;
-const RATING_MAX = 5;
-const TITLE_MIN = 3;
-const TITLE_MAX = 120;
-const BODY_MIN = 10;
-const BODY_MAX = 3000;
-
 const PRODUCT_REVIEW_SORTS = {
     newest: { createdAt: -1 },
     oldest: { createdAt: 1 },
@@ -21,32 +12,24 @@ const PRODUCT_REVIEW_SORTS = {
     helpful: { helpfulCount: -1, createdAt: -1 },
 };
 
-const ADMIN_SORT_WHITELIST = ["createdAt", "updatedAt", "rating", "helpfulCount", "reportCount"];
-
-const isValidId = (id) => mongoose.Types.ObjectId.isValid(id);
-const escapeRegex = (value) => String(value).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const clampPage = (v) => Math.max(1, Number(v) || 1);
-const clampLimit = (v, max = 100, def = 20) => Math.min(max, Math.max(1, Number(v) || def));
-const roundRating = (v) => Math.round((v || 0) * 10) / 10;
-
 const validateRating = (rating) => {
-    if (!Number.isInteger(rating) || rating < RATING_MIN || rating > RATING_MAX) {
-        throw new ApiError(400, `rating must be an integer between ${RATING_MIN} and ${RATING_MAX}`);
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+        throw new ApiError(400, `rating must be an integer between 1 and 5`);
     }
 };
 
 const validateTitle = (title) => {
     if (typeof title !== "string" || !title.trim()) throw new ApiError(400, "title is required");
     const trimmed = title.trim();
-    if (trimmed.length < TITLE_MIN) throw new ApiError(400, `title must be at least ${TITLE_MIN} characters`);
-    if (trimmed.length > TITLE_MAX) throw new ApiError(400, `title must be at most ${TITLE_MAX} characters`);
+    if (trimmed.length < 3) throw new ApiError(400, `title must be at least 3 characters`);
+    if (trimmed.length > 120) throw new ApiError(400, `title must be at most 120 characters`);
 };
 
 const validateBody = (body) => {
     if (typeof body !== "string" || !body.trim()) throw new ApiError(400, "body is required");
     const trimmed = body.trim();
-    if (trimmed.length < BODY_MIN) throw new ApiError(400, `body must be at least ${BODY_MIN} characters`);
-    if (trimmed.length > BODY_MAX) throw new ApiError(400, `body must be at most ${BODY_MAX} characters`);
+    if (trimmed.length < 10) throw new ApiError(400, `body must be at least 10 characters`);
+    if (trimmed.length > 3000) throw new ApiError(400, `body must be at most 3000 characters`);
 };
 
 const checkVerifiedPurchase = async (userId, productId) => {
@@ -127,8 +110,9 @@ const formatAdminReview = (r) => ({
 
 export const getAllReview = async (req, res) => {
     try {
-        const page = clampPage(req.query.page);
-        const limit = clampLimit(req.query.limit);
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, +req.query.limit || 20));
+
         const { approved, productId, userId, rating, verifiedPurchase, reported, search, sortBy = "createdAt", sortOrder = "desc" } = req.query;
 
         const filter = {};
@@ -136,12 +120,12 @@ export const getAllReview = async (req, res) => {
         if (approved !== undefined) filter.approved = approved === "true" || approved === true;
 
         if (productId !== undefined) {
-            if (!isValidId(productId)) throw new ApiError(400, "Invalid productId");
+            if (!mongoose.Types.ObjectId.isValid(productId)) throw new ApiError(400, "Invalid productId");
             filter.productId = productId;
         }
 
         if (userId !== undefined) {
-            if (!isValidId(userId)) throw new ApiError(400, "Invalid userId");
+            if (!mongoose.Types.ObjectId.isValid(userId)) throw new ApiError(400, "Invalid userId");
             filter.userId = userId;
         }
 
@@ -155,10 +139,10 @@ export const getAllReview = async (req, res) => {
         if (reported !== undefined) filter.reported = reported === "true" || reported === true;
 
         if (search) {
-            const safe = escapeRegex(search);
+            const safe = String(search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             filter.$or = [{ title: { $regex: safe, $options: "i" } }, { body: { $regex: safe, $options: "i" } }];
         }
-
+        const ADMIN_SORT_WHITELIST = ["createdAt", "updatedAt", "rating", "helpfulCount", "reportCount"];
         if (!ADMIN_SORT_WHITELIST.includes(sortBy)) {
             throw new ApiError(400, `Invalid sortBy. Allowed: ${ADMIN_SORT_WHITELIST.join(", ")}`);
         }
@@ -187,7 +171,7 @@ export const getAllReview = async (req, res) => {
                 hasNextPage: page * limit < total,
                 hasPreviousPage: page > 1,
             },
-            approvedAverageRating: approvedAvgAgg[0] ? roundRating(approvedAvgAgg[0].avg) : 0,
+            approvedAverageRating: approvedAvgAgg[0] ? Math.round(approvedAvgAgg[0].avg * 10) / 10 : 0,
         });
     } catch (error) {
         handleError(error, req, res);
@@ -197,7 +181,7 @@ export const getAllReview = async (req, res) => {
 export const getReviewById = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!isValidId(id)) throw new ApiError(400, "Invalid review id");
+        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid review id");
 
         const review = await Review.findById(id).populate("userId", "username first_name last_name").lean();
         if (!review) throw new ApiError(404, "Review not found");
@@ -222,7 +206,7 @@ export const createReview = async (req, res) => {
         const userId = req.user.id;
         const { productId, rating, title, body } = req.body;
 
-        if (!productId || !isValidId(productId)) throw new ApiError(400, "A valid productId is required");
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new ApiError(400, "A valid productId is required");
         validateRating(rating);
         validateTitle(title);
         validateBody(body);
@@ -235,7 +219,7 @@ export const createReview = async (req, res) => {
         if (existingReview) throw new ApiError(409, "You have already reviewed this product");
 
         const verifiedPurchase = await checkVerifiedPurchase(userId, productId);
-        if (REQUIRE_VERIFIED_PURCHASE && !verifiedPurchase) {
+        if (true && !verifiedPurchase) {
             throw new ApiError(403, "You can only review products you have purchased and received");
         }
 
@@ -345,10 +329,10 @@ export const getReviewSummary = async (req, res) => {
             success: true,
             data: data.map((d) => ({
                 productId: String(d._id),
-                avgRating: roundRating(d.avgRating),
+                avgRating: Math.round((d.avgRating || 0) * 10) / 10,
                 count: d.totalReviews,
                 totalReviews: d.totalReviews,
-                averageRating: roundRating(d.avgRating),
+                averageRating: Math.round((d.avgRating || 0) * 10) / 10,
                 distribution: { 1: d.rating1, 2: d.rating2, 3: d.rating3, 4: d.rating4, 5: d.rating5 },
             })),
         });
@@ -363,7 +347,7 @@ export const getReviewsByProduct = async (req, res) => {
         if (!productId) throw new ApiError(400, "Product ID or handle is required");
 
         let productObjectId;
-        if (isValidId(productId)) {
+        if (mongoose.Types.ObjectId.isValid(productId)) {
             productObjectId = new mongoose.Types.ObjectId(productId);
         } else {
             const product = await Product.findOne({ handle: productId }).select("_id").lean();
@@ -371,8 +355,8 @@ export const getReviewsByProduct = async (req, res) => {
             productObjectId = product._id;
         }
 
-        const page = clampPage(req.query.page);
-        const limit = clampLimit(req.query.limit);
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, +req.query.limit || 20));
         const sortKey = req.query.sort || "newest";
         if (!PRODUCT_REVIEW_SORTS[sortKey]) {
             throw new ApiError(400, `Invalid sort. Allowed: ${Object.keys(PRODUCT_REVIEW_SORTS).join(", ")}`);
@@ -400,7 +384,7 @@ export const getReviewsByProduct = async (req, res) => {
         res.status(200).json({
             success: true,
             productId: productObjectId,
-            averageRating: stats ? roundRating(stats.avgRating) : 0,
+            averageRating: stats ? Math.round((stats.avgRating || 0) * 10) / 10 : 0,
             totalReviews: total,
             distribution: stats
                 ? { 1: stats.rating1, 2: stats.rating2, 3: stats.rating3, 4: stats.rating4, 5: stats.rating5 }
@@ -423,8 +407,8 @@ export const getReviewsByProduct = async (req, res) => {
 export const getMyReviews = async (req, res) => {
     try {
         const userId = req.user.id;
-        const page = clampPage(req.query.page);
-        const limit = clampLimit(req.query.limit);
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, +req.query.limit || 20));
         const { approved, verifiedPurchase, rating } = req.query;
 
         const filter = { userId };
@@ -465,8 +449,8 @@ export const getMyReviews = async (req, res) => {
 
 export const getAllPublishedReviews = async (req, res) => {
     try {
-        const page = clampPage(req.query.page);
-        const limit = clampLimit(req.query.limit);
+        const page = Math.max(1, parseInt(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, +req.query.limit || 20));
         const { rating, productId, verifiedPurchase, sort = "newest" } = req.query;
 
         if (!PRODUCT_REVIEW_SORTS[sort]) {
@@ -480,7 +464,7 @@ export const getAllPublishedReviews = async (req, res) => {
             filter.rating = r;
         }
         if (productId !== undefined) {
-            if (!isValidId(productId)) throw new ApiError(400, "Invalid productId");
+            if (!mongoose.Types.ObjectId.isValid(productId)) throw new ApiError(400, "Invalid productId");
             filter.productId = productId;
         }
         if (verifiedPurchase !== undefined) filter.verifiedPurchase = verifiedPurchase === "true" || verifiedPurchase === true;
@@ -516,7 +500,7 @@ export const getAllPublishedReviews = async (req, res) => {
 export const getReviewEligibility = async (req, res) => {
     try {
         const { productId } = req.params;
-        if (!isValidId(productId)) throw new ApiError(400, "Invalid productId");
+        if (!mongoose.Types.ObjectId.isValid(productId)) throw new ApiError(400, "Invalid productId");
 
         const product = await Product.findById(productId).select("isActive").lean();
         if (!product) {
@@ -560,7 +544,7 @@ export const getReviewEligibility = async (req, res) => {
 export const voteReview = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!isValidId(id)) throw new ApiError(400, "Invalid review id");
+        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid review id");
 
         const { vote } = req.body;
         if (!["helpful", "not_helpful"].includes(vote)) throw new ApiError(400, "vote must be 'helpful' or 'not_helpful'");
@@ -602,7 +586,7 @@ export const voteReview = async (req, res) => {
 export const reportReview = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!isValidId(id)) throw new ApiError(400, "Invalid review id");
+        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid review id");
 
         const review = await Review.findById(id).select("+reporters reportCount reported");
         if (!review) throw new ApiError(404, "Review not found");
@@ -650,7 +634,7 @@ export const getAdminReviewStats = async (req, res) => {
                 pendingReviews: pendingCount,
                 verifiedPurchaseReviews: verifiedAgg[0]?.count || 0,
                 reportedReviews: reportedAgg[0]?.count || 0,
-                averageApprovedRating: ratingStats ? roundRating(ratingStats.avgRating) : 0,
+                averageApprovedRating: ratingStats ? Math.round((ratingStats.avgRating || 0) * 10) / 10 : 0,
                 ratingDistribution: ratingStats
                     ? { 1: ratingStats.rating1, 2: ratingStats.rating2, 3: ratingStats.rating3, 4: ratingStats.rating4, 5: ratingStats.rating5 }
                     : { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },

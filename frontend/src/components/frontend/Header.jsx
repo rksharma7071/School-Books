@@ -33,7 +33,7 @@ function Header() {
         navigate("/");
     };
 
-    console.log("Header");
+    // console.log("Header");
     
 
     useEffect(() => {

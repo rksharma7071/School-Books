@@ -11,11 +11,14 @@ import { useSEO } from "../../seo/SEO.jsx";
 
 function BookById() {
     const book = useLoaderData();
-    const { user, setCartItems, setToastConfig, setShowToast } = useContext(BookContext);
+    const { user, setCartItems, setToastConfig, setShowToast, token } = useContext(BookContext);
     const navigate = useNavigate();
     const [showReviewForm, setShowReviewForm] = useState(false);
     const reviewSectionRef = useRef(null);
     const navigation = useNavigation();
+    const [imageError, setImageError] = useState(false);
+    const [selectedOptions, setSelectedOptions] = useState({});
+    const [selectedImage, setSelectedImage] = useState(0);
 
     const scrollToReviews = () => {
         reviewSectionRef.current?.scrollIntoView({
@@ -26,39 +29,63 @@ function BookById() {
 
     const bookId = book?._id;
 
+    // Destructure with fallbacks for variant-based structure
     const {
         _id,
-        name,
-        description,
-        price,
-        author,
-        publisher,
-        classLevel,
-        subject,
-        language,
-        stockQty,
-        coverImage,
-        review = [],
-    } = book;
+        title = book.name || "Untitled",
+        description = "",
+        handle = book.slug || "",
+        options = [],
+        variants = [],
+        images = [],
+        isActive = true,
+        minPrice = 0,
+        maxPrice = 0,
+        totalInventory = 0,
+        inventoryStatus = "out_of_stock",
+        reviews = { summary: { averageRating: 0, totalReviews: 0 }, recent: [] },
+        createdAt,
+        updatedAt,
+    } = book || {};
+
+    // Initialize selected options with first variant
+    const defaultVariant = variants[0] || {};
+    
+    const currentVariant = useMemo(() => {
+        return variants.find(v => 
+            Object.entries(selectedOptions).every(([key, value]) => 
+                v.options?.[key] === value || v.options?.[key.charAt(0).toUpperCase() + key.slice(1)] === value
+            )
+        ) || defaultVariant;
+    }, [selectedOptions, variants, defaultVariant]);
+
+    // Initialize selected options from default variant
+    useEffect(() => {
+        if (defaultVariant.options && Object.keys(selectedOptions).length === 0) {
+            const initialOptions = {};
+            Object.keys(defaultVariant.options).forEach(key => {
+                initialOptions[key.toLowerCase()] = defaultVariant.options[key];
+            });
+            setSelectedOptions(initialOptions);
+        }
+    }, [defaultVariant]);
 
     const [expanded, setExpanded] = useState(false);
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(false);
-    const [avgRating, setAvgRating] = useState(0);
 
     const approvedReviews = useMemo(
-        () => review.filter((r) => r.approved),
-        [review]
+        () => reviews?.recent?.filter((r) => r.approved) || [],
+        [reviews]
     );
 
-    useEffect(() => {
-        if (!approvedReviews.length) {
-            setAvgRating(0);
-            return;
-        }
-        const total = approvedReviews.reduce((sum, r) => sum + Number(r.rating || 0), 0);
-        setAvgRating(total / approvedReviews.length);
-    }, [approvedReviews]);
+    const avgRating = reviews?.summary?.averageRating || 0;
+    const totalReviews = reviews?.summary?.totalReviews || approvedReviews.length;
+
+    const displayPrice = currentVariant.price || minPrice || 0;
+    const stockQty = currentVariant.inventory_quantity ?? totalInventory ?? 0;
+    const allImages = images.length > 0 ? images : (currentVariant.images || []);
+    const displayImage = allImages[selectedImage] || allImages[0] || null;
 
     const increaseQty = () => {
         if (quantity < stockQty) setQuantity((q) => q + 1);
@@ -68,6 +95,18 @@ function BookById() {
         if (quantity > 1) setQuantity((q) => q - 1);
     };
 
+    const handleOptionChange = (optionName, value) => {
+        setSelectedOptions(prev => ({
+            ...prev,
+            [optionName.toLowerCase()]: value
+        }));
+    };
+
+    const getVariantOptionsString = () => {
+        if (!currentVariant.options) return "";
+        return Object.values(currentVariant.options).join(" - ");
+    };
+
     const handleAddToCart = async () => {
         if (!user) {
             navigate("/login");
@@ -75,25 +114,49 @@ function BookById() {
         }
 
         if (loading) return;
+        if (!currentVariant._id) return;
+        
         setLoading(true);
 
+        const cartItem = {
+            bookId: _id,
+            variantId: currentVariant._id,
+            quantity,
+            book: {
+                ...book,
+                selectedVariant: currentVariant,
+                displayPrice: currentVariant.price,
+                variantOptions: getVariantOptionsString()
+            }
+        };
+
         setCartItems((prev) => {
-            const item = prev.find((i) => i.bookId === _id);
+            const item = prev.find((i) => i.variantId === currentVariant._id);
             return item
-                ? prev.map((i) => i.bookId === _id ? { ...i, quantity: i.quantity + quantity } : i)
-                : [...prev, { bookId: _id, quantity }];
+                ? prev.map((i) => 
+                    i.variantId === currentVariant._id 
+                        ? { ...i, quantity: i.quantity + quantity } 
+                        : i
+                )
+                : [...prev, cartItem];
         });
 
         try {
-            await api.post(`/api/cart`, {
+            await axios.post(`${import.meta.env.VITE_API}/api/cart`, {
+                userId: user.id,
                 bookId: _id,
+                variantId: currentVariant._id,
                 quantity,
+            }, {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
             });
 
             setToastConfig({
                 type: "success",
                 title: "Added to cart",
-                message: "The item has been successfully added to your cart.",
+                message: `${title}${getVariantOptionsString() ? ` (${getVariantOptionsString()})` : ''} added to cart.`,
             });
         } catch (error) {
             console.error("Error adding to cart:", error);
@@ -108,72 +171,95 @@ function BookById() {
         }
     };
 
-
     const jsonLdSchema = {
         "@context": "https://schema.org",
         "@type": "Product",
-        "@id": `https://schoolbook.lol/products/${book._id}`,
-        name: book.name,
-        description: book.description.replace(/\r?\n|\r/g, " ").slice(0, 300),
-        sku: book._id,
-        // isbn: book.isbn,
-        image: book.images?.map(img => img.url) || [book.coverImage],
+        "@id": `https://schoolbook.lol/products/${bookId}`,
+        name: title,
+        description: description.replace(/\r?\n|\r/g, " ").slice(0, 300),
+        sku: currentVariant.sku || bookId,
+        image: allImages.length > 0 ? allImages : [null],
         brand: {
             "@type": "Brand",
-            name: book.publisher,
+            name: "SchoolBook",
         },
         offers: {
-            "@type": "Offer",
-            url: `https://schoolbook.lol/products/${book._id}`,
-            price: book.price,
+            "@type": "AggregateOffer",
+            url: `https://schoolbook.lol/products/${handle}`,
             priceCurrency: "INR",
-            availability: book.stockQty > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+            lowPrice: minPrice,
+            highPrice: maxPrice,
+            offerCount: variants.length,
+            availability: stockQty > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
         },
         aggregateRating: {
             "@type": "AggregateRating",
             ratingValue: avgRating.toFixed(1),
-            reviewCount: approvedReviews.length,
+            reviewCount: totalReviews,
             bestRating: "5",
             worstRating: "1",
         },
-        review: approvedReviews.map(r => ({
-            "@type": "Review",
-            author: {
-                "@type": "Person",
-                name: r.user?.first_name && r.user?.last_name ? `${r.user.first_name.trim()} ${r.user.last_name.trim()}` : r.user?.username || "Verified User",
-            },
-            datePublished: r.createdAt.split("T")[0],
-            name: r.title,
-            reviewBody: r.body,
-            reviewRating: {
-                "@type": "Rating",
-                ratingValue: r.rating,
-                bestRating: "5",
-                worstRating: "1",
-            },
-        })),
     };
+
     useSEO({
-        title: `${book.name} | Buy Online`,
-        description: book.description,
-        canonical: `https://schoolbook.lol/products/${book.slug}`,
-        ogTitle: book.name,
+        title: `${title} | Buy Online`,
+        description: description,
+        canonical: `https://schoolbook.lol/products/${handle}`,
+        ogTitle: title,
         jsonLd: jsonLdSchema,
-    })
+    });
+
+    if (navigation.state === "loading") {
+        return <Loading />;
+    }
 
     return (
         <div className="max-w-7xl mx-auto px-4 py-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-white rounded-2xl p-6">
-                <div className="flex justify-center">
-                    <img
-                        src={coverImage}
-                        alt={name}
-                        className="w-full max-w-md rounded-xl aspect-3/4 object-contain"
-                    />
-                </div>
+                {/* Image Gallery */}
                 <div className="flex flex-col gap-4">
-                    <h1 className="text-3xl font-bold text-gray-900">{name}</h1>
-                    <p className="text-gray-600">by {author}</p>
+                    <div className="flex justify-center bg-gray-50 rounded-xl p-4">
+                        {displayImage && !imageError ? (
+                            <img
+                                src={displayImage}
+                                alt={title}
+                                className="w-full max-w-md rounded-xl aspect-3/4 object-contain"
+                                onError={() => setImageError(true)}
+                            />
+                        ) : (
+                            <div className="flex flex-col items-center justify-center w-full max-w-md aspect-3/4 text-gray-400">
+                                <svg className="w-24 h-24 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <span>No image available</span>
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* Image thumbnails */}
+                    {allImages.length > 1 && (
+                        <div className="flex gap-2 overflow-x-auto">
+                            {allImages.map((img, index) => (
+                                <button
+                                    key={index}
+                                    onClick={() => setSelectedImage(index)}
+                                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
+                                        selectedImage === index ? 'border-blue-600' : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                                >
+                                    <img src={img} alt={`${title} - ${index + 1}`} className="w-full h-full object-cover" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex flex-col gap-4">
+                    <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+                    
+                    {/* {description && (
+                        <p className="text-gray-600 line-clamp-2">{description}</p>
+                    )} */}
 
                     <div className="flex items-center gap-3">
                         <button
@@ -184,22 +270,80 @@ function BookById() {
                         </button>
 
                         <span className="text-sm text-gray-500">
-                            ({approvedReviews.length} reviews)
+                            ({totalReviews} reviews)
                         </span>
                     </div>
 
-                    <div className="text-2xl font-semibold text-blue-950">
-                        ₹{price}
+                    {/* Price Display */}
+                    <div className="flex items-baseline gap-3">
+                        <div className="text-2xl font-semibold text-blue-950">
+                            ₹{displayPrice.toFixed(2)}
+                        </div>
+                        {minPrice !== maxPrice && (
+                            <div className="text-sm text-gray-500">
+                                (Range: ₹{minPrice} - ₹{maxPrice})
+                            </div>
+                        )}
                     </div>
 
-                    <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
-                        <p><span className="font-medium">Publisher:</span> {publisher}</p>
-                        <p><span className="font-medium">Class:</span> {classLevel}</p>
-                        <p><span className="font-medium">Subject:</span> {subject}</p>
-                        <p><span className="font-medium">Language:</span> {language}</p>
+                    {/* Variant Options */}
+                    {options.length > 0 && (
+                        <div className="space-y-4 mt-2">
+                            {options.map((option) => (
+                                <div key={option._id}>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
+                                        {option.name}
+                                    </label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {option.values.map((value) => {
+                                            const isSelected = selectedOptions[option.name.toLowerCase()] === value;
+                                            return (
+                                                <button
+                                                    key={value}
+                                                    onClick={() => handleOptionChange(option.name, value)}
+                                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                                        isSelected
+                                                            ? 'bg-blue-900 text-white shadow-md'
+                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                    }`}
+                                                >
+                                                    {value}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Current Selection */}
+                    {getVariantOptionsString() && (
+                        <div className="text-sm text-gray-600">
+                            <span className="font-medium">Selected:</span> {getVariantOptionsString()}
+                        </div>
+                    )}
+
+                    {/* Stock Status */}
+                    <div className="flex items-center gap-2">
+                        {stockQty > 0 ? (
+                            stockQty <= 5 ? (
+                                <span className="text-sm font-semibold text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
+                                    Only {stockQty} left in stock
+                                </span>
+                            ) : (
+                                <span className="text-sm font-semibold text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                                    In Stock
+                                </span>
+                            )
+                        ) : (
+                            <span className="text-sm font-semibold text-red-600 bg-red-50 px-3 py-1 rounded-full">
+                                Out of Stock
+                            </span>
+                        )}
                     </div>
 
-                    <div className="flex items-center gap-4 mt-4">
+                    <div className="flex items-center gap-4 mt-2">
                         <span className="font-medium">Quantity</span>
                         <div className="flex items-center border border-gray-300 rounded-lg overflow-hidden">
                             <button onClick={decreaseQty} className="px-4 py-2 text-lg">−</button>
@@ -220,8 +364,8 @@ function BookById() {
                         {loading ? "Adding..." : stockQty === 0 ? "Out of Stock" : "Add to Cart"}
                     </button>
 
+                    {/* Description Accordion */}
                     <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
-
                         <button
                             onClick={() => setExpanded(!expanded)}
                             className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition"
@@ -231,16 +375,14 @@ function BookById() {
                             </span>
 
                             <span
-                                className={`transition-transform duration-300 ${expanded ? "rotate-180" : ""
-                                    }`}
+                                className={`transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
                             >
                                 <IoIosArrowDown />
                             </span>
                         </button>
 
                         <div
-                            className={`overflow-hidden transition-all duration-300 ${expanded ? "max-h-full" : "max-h-0"
-                                }`}
+                            className={`overflow-hidden transition-all duration-300 ${expanded ? "max-h-full" : "max-h-0"}`}
                         >
                             <div className="px-4 py-3">
                                 <p className="text-gray-700 leading-relaxed text-sm">
@@ -260,11 +402,15 @@ function BookById() {
                         setShowReviewForm(false);
                     }}
                     bookId={bookId}
-                    userId={userId}
+                    userId={user?.id}
                 />
             )}
-            <ReviewByBook review={approvedReviews} reviewSectionRef={reviewSectionRef} showReviewForm={showReviewForm} setShowReviewForm={setShowReviewForm} />
-
+            <ReviewByBook 
+                review={approvedReviews} 
+                reviewSectionRef={reviewSectionRef} 
+                showReviewForm={showReviewForm} 
+                setShowReviewForm={setShowReviewForm} 
+            />
         </div>
     );
 }

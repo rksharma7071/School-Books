@@ -3,11 +3,6 @@ import { Cart } from "../models/cart.model.js";
 import { Product } from "../models/product.model.js";
 import { ApiError, handleError } from "../utils/apiError.js";
 
-const toPlainOptions = (options) => {
-    if (!options) return {};
-    return options instanceof Map ? Object.fromEntries(options) : options;
-};
-
 const findVariant = (product, variantId) => {
     if (!product?.variants || !variantId) return null;
     return product.variants.find((v) => String(v._id) === String(variantId)) || null;
@@ -63,7 +58,7 @@ const buildCartResponse = async (cart) => {
                     ? {
                           id: variant._id,
                           sku: variant.sku,
-                          options: toPlainOptions(variant.options),
+                          options: variant.options,
                           price: variant.price,
                           inventory_quantity: variant.inventory_quantity,
                           isActive: variant.isActive !== false,

@@ -7,10 +7,8 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,30}$/;
 const VALID_ROLES = ["customer", "author", "admin"];
 const VALID_STATUSES = ["active", "blocked", "suspended"];
-const SORT_WHITELIST = ["createdAt", "updatedAt", "username", "email", "role", "status"];
 
-const SAFE_SELECT =
-    "-password -otp -otpExpiry -otpAttempts -otpLastSentAt -resetToken -resetTokenExpiry -emailVerificationToken -emailVerificationTokenExpiry -emailVerificationSentAt -tokenVersion";
+const SAFE_SELECT = "-password -otp -otpExpiry -otpAttempts -otpLastSentAt -resetToken -resetTokenExpiry -emailVerificationToken -emailVerificationTokenExpiry -emailVerificationSentAt -tokenVersion";
 
 const publicUser = (user) => ({
     id: user._id,
@@ -42,8 +40,8 @@ export const getAllUsers = async (req, res) => {
         const pageNum = Math.max(1, Number(page) || 1);
         const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
 
-        if (!SORT_WHITELIST.includes(sortBy)) {
-            throw new ApiError(400, `Invalid sortBy field. Allowed: ${SORT_WHITELIST.join(", ")}`);
+        if (!["createdAt", "updatedAt", "username", "email", "role", "status"].includes(sortBy)) {
+            throw new ApiError(400, `Invalid sortBy field. Allowed: ${["createdAt", "updatedAt", "username", "email", "role", "status"].join(", ")}`);
         }
 
         const filter = {};
@@ -71,12 +69,11 @@ export const getAllUsers = async (req, res) => {
             ];
         }
 
-        const sortOrderValue = sortOrder === "asc" ? 1 : -1;
 
         const [users, total] = await Promise.all([
             User.find(filter)
                 .select(SAFE_SELECT)
-                .sort({ [sortBy]: sortOrderValue })
+                .sort({ [sortBy]: sortOrder === "asc" ? 1 : -1 })
                 .skip((pageNum - 1) * limitNum)
                 .limit(limitNum)
                 .lean(),
@@ -107,9 +104,9 @@ export const getUserStats = async (req, res) => {
             User.countDocuments({}),
         ]);
 
-        const roleCounts = Object.fromEntries(roleStats.map((r) => [r._id, r.count]));
-        const statusCounts = Object.fromEntries(statusStats.map((s) => [s._id, s.count]));
-        const verificationCounts = Object.fromEntries(verificationStats.map((v) => [String(v._id), v.count]));
+        const roleCounts = Object.fromEntries(roleStats.map((role) => [role._id, role.count]));
+        const statusCounts = Object.fromEntries(statusStats.map((status) => [status._id, status.count]));
+        const verificationCounts = Object.fromEntries(verificationStats.map((verification) => [String(verification._id), verification.count]));
 
         res.status(200).json({
             success: true,
@@ -272,16 +269,6 @@ export const deleteUser = async (req, res) => {
     }
 };
 
-const permissionFields = [
-    "createUser",
-    "updateUser",
-    "deleteUser",
-    "readUser",
-    "createProduct",
-    "updateProduct",
-    "deleteProduct",
-    "readProduct",
-];
 const toBool = (v) => v === true || v === "true" || v === 1 || v === "1";
 
 export const updatePermission = async (req, res) => {
@@ -296,9 +283,11 @@ export const updatePermission = async (req, res) => {
         if (!targetUser) throw new ApiError(404, "User not found");
 
         const updateFields = {};
-        permissionFields.forEach((k) => {
-            if (body[k] !== undefined && body[k] !== null) updateFields[k] = toBool(body[k]);
-        });
+        ["createUser", "updateUser", "deleteUser", "readUser", "createProduct", "updateProduct", "deleteProduct", "readProduct",]
+            .forEach((k) => {
+                if (body[k] !== undefined && body[k] !== null) 
+                    updateFields[k] = [true, "true", 1, "1"].includes(body[k]);
+            });
 
         const permission = await Permission.findOneAndUpdate(
             { userId },

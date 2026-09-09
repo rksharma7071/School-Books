@@ -16,7 +16,7 @@ import { authorize } from "../middlewares/authorize.js";
 
 const router = express.Router();
 
-router.get("/all", getAllCategoriesWithCount);
+router.get("/", getAllCategoriesWithCount);
 router.get("/popular", getPopularCategories);
 
 router.get("/admin/stats", authentication, authorize("admin"), getCategoryStatistics);

@@ -4,7 +4,6 @@ import App from './App.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import { BookProvider } from './context/School.jsx'
-// Admin Pages
 import Book from './pages/admin/Book.jsx'
 import AddBook from './pages/admin/AddBook.jsx'
 import Category from './pages/admin/Category.jsx'
@@ -27,7 +26,7 @@ import Payment from './pages/admin/Payment.jsx'
 import PaymentById from './pages/admin/PaymentById.jsx'
 import Order from './pages/admin/Order.jsx'
 import OrderById from './pages/admin/OrderById.jsx'
-// Frontend Pages
+
 import Base from './pages/frontend/Base.jsx'
 import FReview from './pages/frontend/FReview.jsx'
 import FCart from './pages/frontend/Cart.jsx'
@@ -61,6 +60,7 @@ import { Analytics } from "@vercel/analytics/react";
 import getProfile from './data/profile.js'
 import { getAddress, getAddressById } from './data/address.js'
 import axiosInstance from './utils/axiosConfig.js'
+import VerifyEmail from './components/frontend/VerifyEmail.jsx'
 
 window.axios = axiosInstance;
 
@@ -71,6 +71,7 @@ const router = createBrowserRouter([
     element: <Base />,
     children: [
       { path: "", element: <Home /> },
+      { path: "verify-email", element: <VerifyEmail /> },
       { path: "categories/all", element: <Categories /> },
       { path: "categories/:categoryName", element: <CategoryProducts /> },
       { path: "cart", element: <FCart /> },
