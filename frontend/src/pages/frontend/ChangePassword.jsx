@@ -8,6 +8,7 @@ import Button from '../../components/UI/Button';
 function ChangePassword() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast } = useContext(BookContext);
     const [loading, setLoading] = useState(false);
+    console.log("User: ", user);
 
     const [form, setForm] = useState({
         oldPassword: '',
@@ -29,10 +30,7 @@ function ChangePassword() {
         e.preventDefault();
         setLoading(true);
         if (form.newPassword !== form.confirmPassword) {
-            setToastConfig({
-                type: "error",
-                message: "New password and confirm password do not match",
-            });
+            setToastConfig({ type: "error", message: "New password and confirm password do not match" });
             setShowToast(true);
             setLoading(false);
             return;

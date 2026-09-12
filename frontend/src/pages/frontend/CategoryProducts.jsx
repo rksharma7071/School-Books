@@ -62,7 +62,7 @@ function CategoryProducts() {
                 setBooks(categories.books || []);
 
                 // const response = await axios.get(
-                //     `${API}/api/book`,
+                //     `${API}/api/product`,
                 //     {
                 //         params: {
                 //             page: 1,

@@ -22,26 +22,64 @@ function Book() {
                 setLoading(true);
 
                 const res = await axios.get(
-                    `${import.meta.env.VITE_API}/api/book`,
-                    {
-                        params: { all: "true", limit: 500 },
-                        signal: controller.signal,
-                    }
+                    `${import.meta.env.VITE_API}/api/product`
+                    // {
+                    //     params: { all: "true", limit: 500 },
+                    //     signal: controller.signal,
+                    // }
                 );
 
                 const apiBooks = res.data.data || [];
+                // console.log("APIBooks: ", apiBooks);
 
                 setBooks(
-                    apiBooks.map((b) => ({
-                        id: b._id,
-                        title: b.name,
-                        author: b.author,
-                        category: b.subject || "N/A",
-                        price: b.price,
-                        stock: b.stockQty ?? 0,
-                        coverImage: b.coverImage ?? "",
-                        isActive: b.isActive,
-                    }))
+                    apiBooks.map((b) => {
+                        // Extract unique option values from variants for display
+                        const classes = [
+                            ...new Set(
+                                (b.variants || [])
+                                    .map((v) => v.options?.Class)
+                                    .filter(Boolean)
+                            ),
+                        ];
+                        const mediums = [
+                            ...new Set(
+                                (b.variants || [])
+                                    .map((v) => v.options?.Medium)
+                                    .filter(Boolean)
+                            ),
+                        ];
+                        const editions = [
+                            ...new Set(
+                                (b.variants || [])
+                                    .map((v) => v.options?.Edition)
+                                    .filter(Boolean)
+                            ),
+                        ];
+
+                        return {
+                            id: b._id,
+                            title: b.title,
+                            handle: b.handle,
+                            description: b.description,
+                            category:
+                                classes.length > 0
+                                    ? `Class ${classes.join(", ")}`
+                                    : "N/A",
+                            price: b.minPrice ?? 0,
+                            maxPrice: b.maxPrice ?? 0,
+                            stock: b.totalInventory ?? b.inventory_quantity ?? 0,
+                            inventoryStatus: b.inventoryStatus ?? "in_stock",
+                            coverImage: b.images?.[0] ?? "",
+                            isActive: b.isActive,
+                            variantCount: b.variants?.length ?? 0,
+                            classes,
+                            mediums,
+                            editions,
+                            variants: b.variants || [],
+                            options: b.options || [],
+                        };
+                    })
                 );
             } catch (error) {
                 if (axios.isCancel(error)) return;
@@ -68,8 +106,11 @@ function Book() {
         return books.filter(
             (b) =>
                 b.title?.toLowerCase().includes(term) ||
-                b.author?.toLowerCase().includes(term) ||
-                b.category?.toLowerCase().includes(term)
+                b.handle?.toLowerCase().includes(term) ||
+                b.category?.toLowerCase().includes(term) ||
+                b.classes?.some((c) => c.toLowerCase().includes(term)) ||
+                b.mediums?.some((m) => m.toLowerCase().includes(term)) ||
+                b.editions?.some((e) => e.toLowerCase().includes(term))
         );
     }, [books, search]);
 
@@ -87,20 +128,14 @@ function Book() {
         allVisibleIds.every((id) => selectedIds.includes(id));
 
     const toggleSelect = (id) => {
-        setSelectedIds((prev) =>
-            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-        );
+        setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
     };
 
     const toggleSelectAll = () => {
         if (isAllSelected) {
-            setSelectedIds((prev) =>
-                prev.filter((id) => !allVisibleIds.includes(id))
-            );
+            setSelectedIds((prev) => prev.filter((id) => !allVisibleIds.includes(id)));
         } else {
-            setSelectedIds((prev) =>
-                Array.from(new Set([...prev, ...allVisibleIds]))
-            );
+            setSelectedIds((prev) => Array.from(new Set([...prev, ...allVisibleIds])));
         }
     };
 
@@ -110,11 +145,9 @@ function Book() {
     };
 
     const handlePrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
-    const handleNextPage = () =>
-        setCurrentPage((p) => Math.min(totalPages, p + 1));
+    const handleNextPage = () => setCurrentPage((p) => Math.min(totalPages, p + 1));
 
-    const startIndex =
-        filteredBooks.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const startIndex = filteredBooks.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
     const endIndex = Math.min(currentPage * rowsPerPage, filteredBooks.length);
 
     return (
@@ -133,7 +166,7 @@ function Book() {
                             setSearch(e.target.value);
                             setCurrentPage(1);
                         }}
-                        placeholder="Search by title, author, category..."
+                        placeholder="Search by title, class, medium, edition..."
                         className="flex-1 sm:w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <Link
@@ -203,11 +236,10 @@ function Book() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
-                                currentPage === 1
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                            }`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                                }`}
                         >
                             Prev
                         </button>
@@ -224,11 +256,10 @@ function Book() {
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
-                                currentPage >= totalPages
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                            }`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                                }`}
                         >
                             Next
                         </button>

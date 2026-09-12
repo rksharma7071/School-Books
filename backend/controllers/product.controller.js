@@ -6,7 +6,23 @@ import { File } from "../models/file.model.js";
 import { ApiError, handleError } from "../utils/apiError.js";
 import cloudinary from "../config/cloudinary.js";
 
-const productQuery = (identifier) => (mongoose.Types.ObjectId.isValid(identifier) ? { _id: identifier } : { handle: identifier });
+const productQuery = (identifier) =>
+    mongoose.Types.ObjectId.isValid(identifier)
+        ? { _id: identifier }
+        : { handle: identifier };
+
+const parseRequestBody = (body) => {
+    if (body?.payload !== undefined) {
+        try {
+            const parsed = JSON.parse(body.payload);
+            if (parsed && typeof parsed === "object") return parsed;
+        } catch {
+            throw new ApiError(400, "Invalid JSON in payload field");
+        }
+        throw new ApiError(400, "Payload must be a valid JSON object");
+    }
+    return { ...body };
+};
 
 const getVariantKey = (options) => {
     if (!options) return "";
@@ -60,7 +76,10 @@ const validateProductOptions = (options) => {
 };
 
 const validateVariantOptions = (variant, productOptions, variantIndex) => {
-    const variantOptions = variant.options instanceof Map ? Object.fromEntries(variant.options) : variant.options || {};
+    const variantOptions =
+        variant.options instanceof Map
+            ? Object.fromEntries(variant.options)
+            : variant.options || {};
     const variantOptionKeys = Object.keys(variantOptions).map((key) => key.toLowerCase());
     const productOptionNames = productOptions.map((opt) => opt.name.toLowerCase());
 
@@ -79,7 +98,9 @@ const validateVariantOptions = (variant, productOptions, variantIndex) => {
     for (const option of productOptions) {
         const variantValue =
             variantOptions[option.name] ||
-            Object.entries(variantOptions).find(([key]) => key.toLowerCase() === option.name.toLowerCase())?.[1];
+            Object.entries(variantOptions).find(
+                ([key]) => key.toLowerCase() === option.name.toLowerCase()
+            )?.[1];
         if (variantValue === undefined) {
             throw new ApiError(400, `Variant ${variantIndex + 1} is missing value for option "${option.name}"`);
         }
@@ -101,7 +122,12 @@ const validateVariants = (variants, options) => {
     for (let i = 0; i < variants.length; i++) {
         const variant = variants[i];
 
-        if (variant.price === undefined || variant.price === null || isNaN(variant.price) || variant.price < 0) {
+        if (
+            variant.price === undefined ||
+            variant.price === null ||
+            isNaN(variant.price) ||
+            variant.price < 0
+        ) {
             throw new ApiError(400, `Variant ${i + 1} requires a valid, non-negative price`);
         }
 
@@ -118,7 +144,11 @@ const validateVariants = (variants, options) => {
             }
         }
 
-        if (variant.inventory_quantity === undefined || !Number.isInteger(variant.inventory_quantity) || variant.inventory_quantity < 0) {
+        if (
+            variant.inventory_quantity === undefined ||
+            !Number.isInteger(variant.inventory_quantity) ||
+            variant.inventory_quantity < 0
+        ) {
             throw new ApiError(400, `Variant ${i + 1} requires a valid, non-negative integer inventory_quantity`);
         }
 
@@ -127,7 +157,11 @@ const validateVariants = (variants, options) => {
         const comboKey = getVariantKey(variant.options);
         if (seenCombinations.has(comboKey)) {
             const existing = seenCombinations.get(comboKey);
-            const optionsStr = Object.entries(existing.options instanceof Map ? Object.fromEntries(existing.options) : existing.options)
+            const optionsStr = Object.entries(
+                existing.options instanceof Map
+                    ? Object.fromEntries(existing.options)
+                    : existing.options
+            )
                 .map(([key, value]) => `${key}=${value}`)
                 .sort()
                 .join(", ");
@@ -153,7 +187,9 @@ const validateGlobalSkus = async (variants, productId = null) => {
     const skus = variants.filter((v) => v.sku).map((v) => v.sku.trim());
     if (skus.length === 0) return;
 
-    const query = { "variants.sku": { $in: skus.map((sku) => new RegExp(`^${sku}$`, "i")) } };
+    const query = {
+        "variants.sku": { $in: skus.map((sku) => new RegExp(`^${sku}$`, "i")) },
+    };
     if (productId) {
         query._id = { $ne: productId };
     }
@@ -172,14 +208,24 @@ const validateGlobalSkus = async (variants, productId = null) => {
 
     const duplicateSkus = skus.filter((sku) => existingSkus.has(sku.toLowerCase()));
     if (duplicateSkus.length > 0) {
-        throw new ApiError(400, `SKU already exists in another product: ${duplicateSkus.join(", ")}`);
+        throw new ApiError(
+            400,
+            `SKU already exists in another product: ${duplicateSkus.join(", ")}`
+        );
     }
 };
 
 const generateSku = (productHandle, variantOptions, existingSkus) => {
     const base = `${productHandle.substring(0, 3).toUpperCase()}`;
-    const optionPart = Object.entries(variantOptions instanceof Map ? Object.fromEntries(variantOptions) : variantOptions)
-        .map(([key, value]) => `${key.substring(0, 1).toUpperCase()}${String(value).substring(0, 3).toUpperCase()}`)
+    const optionPart = Object.entries(
+        variantOptions instanceof Map
+            ? Object.fromEntries(variantOptions)
+            : variantOptions
+    )
+        .map(
+            ([key, value]) =>
+                `${key.substring(0, 1).toUpperCase()}${String(value).substring(0, 3).toUpperCase()}`
+        )
         .sort()
         .join("-");
 
@@ -224,7 +270,9 @@ const syncProductImages = async (product) => {
     ].filter((file) => file?.url && file?.publicId);
 
     await Promise.all(
-        files.map((file) => File.updateOne({ publicId: file.publicId }, { $set: file }, { upsert: true }))
+        files.map((file) =>
+            File.updateOne({ publicId: file.publicId }, { $set: file }, { upsert: true })
+        )
     );
 };
 
@@ -331,7 +379,11 @@ export const getAllProducts = async (req, res) => {
                                 input: "$variants",
                                 as: "variant",
                                 in: {
-                                    $cond: [{ $ne: ["$$variant.isActive", false] }, "$$variant.inventory_quantity", 0],
+                                    $cond: [
+                                        { $ne: ["$$variant.isActive", false] },
+                                        "$$variant.inventory_quantity",
+                                        0,
+                                    ],
                                 },
                             },
                         },
@@ -385,10 +437,10 @@ export const getAllProducts = async (req, res) => {
 
 export const getProductBySlug = async (req, res) => {
     try {
-        const { handle } = req.params;
-        if (!handle) throw new ApiError(400, "Handle is required");
+        const { identifier } = req.params;
+        const query = productQuery(identifier);
 
-        const product = await Product.findOne({ handle, isActive: true }).lean();
+        const product = await Product.findOne({ ...query, isActive: true }).lean();
         if (!product) throw new ApiError(404, "Product not found");
 
         const [reviews, stats] = await Promise.all([
@@ -399,19 +451,28 @@ export const getProductBySlug = async (req, res) => {
                 .lean(),
             Review.aggregate([
                 { $match: { productId: product._id, approved: true } },
-                { $group: { _id: null, averageRating: { $avg: "$rating" }, totalReviews: { $sum: 1 }, ratings: { $push: "$rating" } } },
+                {
+                    $group: {
+                        _id: null,
+                        averageRating: { $avg: "$rating" },
+                        totalReviews: { $sum: 1 },
+                        ratings: { $push: "$rating" },
+                    },
+                },
             ]),
         ]);
 
         const statsData = stats[0];
         const distribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-        statsData?.ratings.forEach((rating) => {
-            distribution[rating]++;
+        statsData?.ratings?.forEach((rating) => {
+            if (distribution[rating] !== undefined) distribution[rating]++;
         });
 
-        const activeVariants = product.variants.filter((v) => v.isActive !== false);
-        const priceRange = getPriceRange(product.variants);
-        const totalInventory = calculateInventory(product.variants);
+        const activeVariants = (product.variants || []).filter(
+            (v) => v.isActive !== false
+        );
+        const priceRange = getPriceRange(activeVariants);
+        const totalInventory = calculateInventory(activeVariants);
 
         return res.status(200).json({
             success: true,
@@ -424,7 +485,9 @@ export const getProductBySlug = async (req, res) => {
                 inventoryStatus: getInventoryStatus(totalInventory),
                 reviews: {
                     summary: {
-                        averageRating: statsData ? Number(statsData.averageRating.toFixed(1)) : 0,
+                        averageRating: statsData
+                            ? Number(statsData.averageRating.toFixed(1))
+                            : 0,
                         totalReviews: statsData?.totalReviews || 0,
                         distribution,
                     },
@@ -441,8 +504,12 @@ export const getProductBySlug = async (req, res) => {
                                 firstName: review.userId.first_name,
                                 lastName: review.userId.last_name,
                                 fullName:
-                                    [review.userId.first_name, review.userId.last_name].filter(Boolean).join(" ") ||
-                                    review.userId.username,
+                                    [
+                                        review.userId.first_name,
+                                        review.userId.last_name,
+                                    ]
+                                        .filter(Boolean)
+                                        .join(" ") || review.userId.username,
                             }
                             : null,
                     })),
@@ -456,13 +523,17 @@ export const getProductBySlug = async (req, res) => {
 
 export const createProduct = async (req, res) => {
     try {
-        const data = { ...req.body };
+        const data = parseRequestBody(req.body);
 
         if (!data.title) throw new ApiError(400, "Title is required");
 
         data.options = validateProductOptions(data.options);
 
-        const handle = slugify(String(data.handle || data.title), { lower: true, strict: true, trim: true });
+        const handle = slugify(String(data.handle || data.title), {
+            lower: true,
+            strict: true,
+            trim: true,
+        });
         data.handle = handle;
 
         const existingSkus = new Set();
@@ -487,12 +558,25 @@ export const createProduct = async (req, res) => {
         data.inventory_quantity = calculateInventory(data.variants);
 
         const exists = await Product.exists({ handle: data.handle });
-        if (exists) throw new ApiError(400, "A product with this handle already exists");
+        if (exists)
+            throw new ApiError(400, "A product with this handle already exists");
+
+        if (req.files && req.files.length > 0) {
+            data.images = req.files.map((file, index) => ({
+                url: file.path || file.secure_url || file.url,
+                publicId: file.filename || file.public_id,
+                position: index + 1,
+            }));
+        }
 
         const product = await Product.create(data);
         await syncProductImages(product);
 
-        return res.status(201).json({ success: true, message: "Product created successfully", data: product });
+        return res.status(201).json({
+            success: true,
+            message: "Product created successfully",
+            data: product,
+        });
     } catch (error) {
         handleError(error, req, res);
     }
@@ -506,7 +590,8 @@ export const updateProduct = async (req, res) => {
         const existingProduct = await Product.findOne(query);
         if (!existingProduct) throw new ApiError(404, "Product not found");
 
-        const updateData = { ...req.body };
+        const updateData = parseRequestBody(req.body);
+
         delete updateData._id;
         delete updateData.createdAt;
         delete updateData.updatedAt;
@@ -518,7 +603,10 @@ export const updateProduct = async (req, res) => {
         if (updateData.variants !== undefined) {
             const optionsForValidation =
                 updateData.options ||
-                existingProduct.options.map((opt) => ({ ...opt, name: opt.name.toLowerCase() }));
+                existingProduct.options.map((opt) => ({
+                    ...opt,
+                    name: opt.name.toLowerCase(),
+                }));
 
             const existingVariantsMap = new Map();
             existingProduct.variants.forEach((v) => {
@@ -546,24 +634,51 @@ export const updateProduct = async (req, res) => {
                 return variant;
             });
 
-            updateData.variants = validateVariants(updateData.variants, optionsForValidation);
+            updateData.variants = validateVariants(
+                updateData.variants,
+                optionsForValidation
+            );
             updateData.inventory_quantity = calculateInventory(updateData.variants);
         }
 
         if (updateData.handle !== undefined) {
-            updateData.handle = slugify(String(updateData.handle), { lower: true, strict: true, trim: true });
+            updateData.handle = slugify(String(updateData.handle), {
+                lower: true,
+                strict: true,
+                trim: true,
+            });
             if (updateData.handle !== existingProduct.handle) {
-                const exists = await Product.exists({ handle: updateData.handle, _id: { $ne: existingProduct._id } });
-                if (exists) throw new ApiError(400, "A product with this handle already exists");
+                const exists = await Product.exists({
+                    handle: updateData.handle,
+                    _id: { $ne: existingProduct._id },
+                });
+                if (exists)
+                    throw new ApiError(400, "A product with this handle already exists");
             }
         }
 
         const finalVariants = updateData.variants || existingProduct.variants;
         await validateGlobalSkus(finalVariants, existingProduct._id);
 
-        const product = await Product.findOneAndUpdate(query, { $set: updateData }, { new: true, runValidators: true });
+        if (req.files && req.files.length > 0) {
+            const newImages = req.files.map((file, index) => ({
+                url: file.path || file.secure_url || file.url,
+                publicId: file.filename || file.public_id,
+                position: (existingProduct.images?.length || 0) + index + 1,
+            }));
+            updateData.images = [...(existingProduct.images || []), ...newImages];
+        }
 
-        if (updateData.removeImagePublicIds && updateData.removeImagePublicIds.length > 0) {
+        const product = await Product.findOneAndUpdate(
+            query,
+            { $set: updateData },
+            { new: true, runValidators: true }
+        );
+
+        if (
+            updateData.removeImagePublicIds &&
+            updateData.removeImagePublicIds.length > 0
+        ) {
             await processImageRemovals(product, updateData.removeImagePublicIds);
         }
 
@@ -574,7 +689,11 @@ export const updateProduct = async (req, res) => {
         await product.save();
         await syncProductImages(product);
 
-        return res.status(200).json({ success: true, message: "Product updated successfully", data: product });
+        return res.status(200).json({
+            success: true,
+            message: "Product updated successfully",
+            data: product,
+        });
     } catch (error) {
         handleError(error, req, res);
     }
@@ -608,7 +727,9 @@ export const deleteProduct = async (req, res) => {
             { $group: { _id: "$publicId", count: { $sum: 1 } } },
         ]);
 
-        const referencedCount = new Map(referencedImages.map((ref) => [ref._id, ref.count]));
+        const referencedCount = new Map(
+            referencedImages.map((ref) => [ref._id, ref.count])
+        );
 
         await Product.findOneAndDelete({ _id: product._id });
 
@@ -619,7 +740,10 @@ export const deleteProduct = async (req, res) => {
             }
         }
 
-        return res.status(200).json({ success: true, message: "Product deleted successfully" });
+        return res.status(200).json({
+            success: true,
+            message: "Product deleted successfully",
+        });
     } catch (error) {
         handleError(error, req, res);
     }
@@ -648,7 +772,10 @@ export const updateVariant = async (req, res) => {
 
             const comboKey = getVariantKey(updateData.options);
             for (const otherVariant of product.variants) {
-                if (otherVariant._id.toString() !== variantId && getVariantKey(otherVariant.options) === comboKey) {
+                if (
+                    otherVariant._id.toString() !== variantId &&
+                    getVariantKey(otherVariant.options) === comboKey
+                ) {
                     throw new ApiError(400, "Duplicate variant combination");
                 }
             }
@@ -667,7 +794,10 @@ export const updateVariant = async (req, res) => {
             throw new ApiError(400, "Cost must be non-negative");
         }
 
-        if (variant.compareAtPrice !== undefined && (variant.compareAtPrice < 0 || variant.compareAtPrice < variant.price)) {
+        if (
+            variant.compareAtPrice !== undefined &&
+            (variant.compareAtPrice < 0 || variant.compareAtPrice < variant.price)
+        ) {
             throw new ApiError(400, "compareAtPrice must be >= price");
         }
 
@@ -691,7 +821,11 @@ export const updateVariant = async (req, res) => {
         await product.save();
         await syncProductImages(product);
 
-        return res.status(200).json({ success: true, message: "Variant updated successfully", data: variant });
+        return res.status(200).json({
+            success: true,
+            message: "Variant updated successfully",
+            data: variant,
+        });
     } catch (error) {
         handleError(error, req, res);
     }
@@ -711,7 +845,9 @@ export const deleteVariant = async (req, res) => {
         }
 
         if (variant.images && variant.images.length > 0) {
-            const variantImagePublicIds = variant.images.map((img) => img.publicId).filter(Boolean);
+            const variantImagePublicIds = variant.images
+                .map((img) => img.publicId)
+                .filter(Boolean);
             const referencedElsewhere = new Set();
 
             if (product.image?.publicId) referencedElsewhere.add(product.image.publicId);
@@ -738,7 +874,10 @@ export const deleteVariant = async (req, res) => {
         product.inventory_quantity = calculateInventory(product.variants);
         await product.save();
 
-        return res.status(200).json({ success: true, message: "Variant deleted successfully" });
+        return res.status(200).json({
+            success: true,
+            message: "Variant deleted successfully",
+        });
     } catch (error) {
         handleError(error, req, res);
     }
@@ -756,7 +895,9 @@ export const updateVariantInventory = async (req, res) => {
         const session = await mongoose.startSession();
         try {
             await session.withTransaction(async () => {
-                const product = await Product.findOne(productQuery(productIdentifier)).session(session);
+                const product = await Product.findOne(
+                    productQuery(productIdentifier)
+                ).session(session);
                 if (!product) throw new ApiError(404, "Product not found");
 
                 const variant = product.variants.id(variantId);
@@ -775,7 +916,9 @@ export const updateVariantInventory = async (req, res) => {
             await session.endSession();
         }
 
-        const updatedProduct = await Product.findOne(productQuery(productIdentifier));
+        const updatedProduct = await Product.findOne(
+            productQuery(productIdentifier)
+        );
         const updatedVariant = updatedProduct.variants.id(variantId);
 
         return res.status(200).json({

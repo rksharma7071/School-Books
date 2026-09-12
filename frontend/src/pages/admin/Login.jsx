@@ -22,13 +22,14 @@ function Login() {
             setError("");
 
             const res = await axios.post(`${import.meta.env.VITE_API}/api/auth/login`, form);
-
+            console.log("Login Response: ",res);
+            
             const { token, user } = res.data;
 
             setUser(user);
 
             localStorage.setItem("token", token);
-            localStorage.setItem("user", JSON.stringify(user));
+            localStorage.setItem("userId", user.id);
             setToastConfig({
                 type: "success",
                 message: "Welcome back! You have logged in successfully.",
@@ -42,13 +43,12 @@ function Login() {
 
 
         } catch (error) {
-            // setError(error.response?.data?.message || "Invalid email or password");
+            setError(error.response?.data?.message || "Invalid email or password");
             setToastConfig({
                 type: "error",
                 message: error.response?.data?.message || "Update failed",
             });
-            setShowToast(true);
-
+            setShowToast(true);            
         } finally {
             setLoading(false);
         }

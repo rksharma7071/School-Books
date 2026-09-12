@@ -20,7 +20,7 @@ function Categories() {
     //         try {
     //             setLoading(true);
     //             setError("");
-    //             const response = await axios.get(`${API}/api/book/category`);
+    //             const response = await axios.get(`${API}/api/categories`);
     //             setCategories(response.data?.data || []);
     //         } catch (err) {
     //             console.error("Failed to fetch categories:", err);
@@ -39,9 +39,10 @@ function Categories() {
 
     const fetchCategories = async () => {
         try {
-            const response = await fetch(`${API}/api/categories/all?sortBy=bookCount&sortOrder=desc`);
+            const response = await fetch(`${API}/api/categories`);
             const data = await response.json();
-
+            // console.log("Categories: ",data);
+            
             if (data.success) {
                 setCategories(data.data);
             }

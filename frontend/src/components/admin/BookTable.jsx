@@ -11,13 +11,13 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
     const role = user?.role;
     const navigate = useNavigate();
     const { setToastConfig, setShowToast } = useContext(BookContext);
-    
+
     const deleteBook = async (id) => {
         try {
             if (confirm("Do you want to delete this Book?")) {
                 const token = localStorage.getItem("token");
 
-                const res = await axios.delete(`${import.meta.env.VITE_API}/api/book/${id}`, {
+                const res = await axios.delete(`${import.meta.env.VITE_API}/api/product/${id}`, {
                     headers: { Authorization: `Bearer ${token}` },
                 });
                 // alert("Book has been deleted successfully!");
@@ -80,7 +80,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
                                 <td className="px-4 py-3">
                                     <div className="w-14 h-14 rounded-lg overflow-hidden border border-gray-200">
                                         <img
-                                            src={book.coverImage}
+                                            src={book.coverImage || "/no-image.png"}
                                             alt={book.title}
                                             className="w-full h-full object-cover"
                                             loading="lazy"

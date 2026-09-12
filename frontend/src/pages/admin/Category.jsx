@@ -19,7 +19,7 @@ function Category() {
                 setLoading(true);
 
                 const res = await axios.get(
-                    `${import.meta.env.VITE_API}/api/book/category`,
+                    `${import.meta.env.VITE_API}/api/categories`,
                     { signal: controller.signal }
                 );
 

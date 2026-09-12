@@ -14,7 +14,7 @@ const getReview1 = async () => {
     try {
         const [usersRes, booksRes, reviewRes] = await Promise.all([
             api.get(`/api/user`),
-            api.get(`/api/book`),
+            api.get(`/api/product`),
             api.get(`/api/review`),
         ]);
 

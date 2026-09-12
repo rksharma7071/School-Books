@@ -50,7 +50,7 @@ function Header() {
 
         const timer = setTimeout(() => {
             axios
-                .get(`${import.meta.env.VITE_API}/api/book`, {
+                .get(`${import.meta.env.VITE_API}/api/product`, {
                     params: { q: term, limit: 6 },
                     signal: controller.signal,
                 })

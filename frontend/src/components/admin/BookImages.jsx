@@ -125,12 +125,8 @@ function BookImages({ existingImages, onImagesChange, onMetaChange }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <label className="text-sm font-semibold text-gray-700">
-          Book Images
-        </label>
-        <span className="text-xs text-gray-400">
-          Drag & drop to reorder
-        </span>
+        <label className="text-sm font-semibold text-gray-700">Book Images</label>
+        <span className="text-xs text-gray-400">Drag & drop to reorder</span>
       </div>
 
       <label className="flex flex-col items-center justify-center border-2 border-dashed border-gray-300 rounded-xl p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition">

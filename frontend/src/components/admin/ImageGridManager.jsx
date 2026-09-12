@@ -82,7 +82,7 @@ function ImageGridManager({ onImagesChange }) {
             <img
               src={previews[index]}
               alt={file.name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain"
             />
 
             <button

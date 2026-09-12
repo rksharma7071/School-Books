@@ -1,31 +1,64 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useMemo, useState } from "react";
 import axios from "axios";
 import ImageGridManager from "../../components/admin/ImageGridManager.jsx";
 import { useNavigate } from "react-router-dom";
 import { BookContext } from "../../context/School.jsx";
 
+const slugify = (str) =>
+    String(str || "")
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, "")
+        .replace(/\s+/g, "-")
+        .replace(/-+/g, "-");
+
+const cartesian = (options) => {
+    if (!options.length) return [];
+    return options.reduce(
+        (acc, option) => {
+            const next = [];
+            for (const combo of acc) {
+                for (const value of option.values) {
+                    next.push({ ...combo, [option.name]: value });
+                }
+            }
+            return next;
+        },
+        [{}]
+    );
+};
+
+const emptyVariant = (options) => ({
+    sku: "",
+    price: "",
+    cost: "",
+    compareAtPrice: "",
+    inventory_quantity: "",
+    isActive: true,
+    options,
+});
+
 function AddBook() {
-    const [form, setForm] = useState({
-        name: "",
-        author: "",
-        subject: "",
-        category: "",
-        classLevel: "",
-        isbn: "",
-        language: "",
-        price: "",
-        cost: "",
-        publisher: "",
-        stockQty: "",
-        coverImage: "",
-        description: "",
-        isActive: true,
-    });
-    const [images, setImages] = useState([]);
     const navigate = useNavigate();
     const { setToastConfig, setShowToast } = useContext(BookContext);
 
+    const [form, setForm] = useState({
+        title: "",
+        handle: "",
+        description: "",
+        isbn: "",
+        isActive: true,
+    });
 
+    const [options, setOptions] = useState([
+        { name: "class", values: [""] },
+        { name: "medium", values: [""] },
+    ]);
+
+    const [variants, setVariants] = useState([]);
+    const [images, setImages] = useState([]);
+
+    // ----- base field handlers -----
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
         setForm((prev) => ({
@@ -34,61 +67,148 @@ function AddBook() {
         }));
     };
 
+    const updateOptionName = (index, name) => {
+        setOptions((prev) =>
+            prev.map((opt, i) => (i === index ? { ...opt, name } : opt))
+        );
+    };
+
+    const updateOptionValue = (optIndex, valIndex, value) => {
+        setOptions((prev) =>
+            prev.map((opt, i) => {
+                if (i !== optIndex) return opt;
+                const values = [...opt.values];
+                values[valIndex] = value;
+                return { ...opt, values };
+            })
+        );
+    };
+
+    const addOptionValue = (optIndex) => {
+        setOptions((prev) =>
+            prev.map((opt, i) =>
+                i === optIndex ? { ...opt, values: [...opt.values, ""] } : opt
+            )
+        );
+    };
+
+    const removeOptionValue = (optIndex, valIndex) => {
+        setOptions((prev) =>
+            prev.map((opt, i) => {
+                if (i !== optIndex) return opt;
+                return {
+                    ...opt,
+                    values: opt.values.filter((_, vi) => vi !== valIndex),
+                };
+            })
+        );
+    };
+
+    const addOption = () => {
+        setOptions((prev) => [...prev, { name: "", values: [""] }]);
+    };
+
+    const removeOption = (index) => {
+        setOptions((prev) => prev.filter((_, i) => i !== index));
+    };
+
+    const generatedCombos = useMemo(() => {
+        const cleaned = options
+            .map((opt) => ({
+                name: opt.name.trim().toLowerCase(),
+                values: opt.values.map((value) => value.trim()).filter(Boolean),
+            }))
+            .filter((opt) => opt.name && opt.values.length > 0);
+
+        if (cleaned.length === 0) return [];
+        return cartesian(cleaned);
+    }, [options]);
+
+    const syncVariants = () => {
+        setVariants((prev) => {
+            const byKey = new Map(
+                prev.map((variant) => [JSON.stringify(variant.options), variant])
+            );
+            return generatedCombos.map((combo) => {
+                const key = JSON.stringify(combo);
+                return byKey.get(key) || emptyVariant(combo);
+            });
+        });
+    };
+
+    React.useEffect(() => {
+        syncVariants();
+    }, [generatedCombos]);
+
+    const updateVariantField = (index, field, value) => {
+        setVariants((prev) =>
+            prev.map((v, i) => (i === index ? { ...v, [field]: value } : v))
+        );
+    };
+
+    // ----- submit -----
     const handleSubmit = async (e) => {
         e.preventDefault();
 
         try {
-            const formData = new FormData();
+            const cleanedOptions = options
+                .map((opt) => ({
+                    name: opt.name.trim().toLowerCase(),
+                    values: opt.values.map((v) => v.trim()).filter(Boolean),
+                }))
+                .filter((opt) => opt.name && opt.values.length > 0);
 
-            Object.entries(form).forEach(([key, value]) => {
-                if (value !== undefined && value !== null && value !== "") {
-                    formData.append(key, value);
-                }
-            });
-
-            images.forEach((file) => {
-                formData.append("images", file);
-            });
-
-            for (const [k, v] of formData.entries()) {
-                if (k !== "images") console.log(k, "=>", v);
+            if (cleanedOptions.length === 0) {
+                throw new Error("At least one option is required");
             }
 
-            const res = await axios.post(`${import.meta.env.VITE_API}/api/book`, formData, {
+            if (variants.length === 0) {
+                throw new Error("At least one variant is required");
+            }
+
+            const payload = {
+                title: form.title.trim(),
+                handle: form.handle.trim() || slugify(form.title),
+                description: form.description.trim(),
+                isbn: form.isbn.trim(),
+                isActive: form.isActive,
+                options: cleanedOptions,
+                variants: variants.map((variant) => ({
+                    ...(variant.sku ? { sku: variant.sku.trim() } : {}),
+                    options: variant.options,
+                    price: Number(variant.price),
+                    cost: Number(variant.cost) || 0,
+                    ...(variant.compareAtPrice !== "" && variant.compareAtPrice !== undefined
+                        ? { compareAtPrice: Number(variant.compareAtPrice) }
+                        : {}),
+                    inventory_quantity: Number(variant.inventory_quantity) || 0,
+                    isActive: variant.isActive !== false,
+                })),
+            };
+
+            const formData = new FormData();
+            formData.append("payload", JSON.stringify(payload));
+            images.forEach((file) => formData.append("images", file));
+
+            const token = localStorage.getItem("token");
+
+            await axios.post(`${import.meta.env.VITE_API}/api/product`, formData, {
                 headers: {
                     "Content-Type": "multipart/form-data",
+                    Authorization: `Bearer ${token}`
                 },
             });
-            setToastConfig({
-                type: "success",
-                message: "Book created successfully.",
-            });
+            setToastConfig({ type: "success", message: "Book created successfully." });
             setShowToast(true);
-            navigate(`/${import.meta.env.VITE_ADMIN}/books`)
-
-            setForm({
-                name: "",
-                author: "",
-                subject: "",
-                category: "",
-                classLevel: "",
-                isbn: "",
-                language: "",
-                price: "",
-                cost: "",
-                publisher: "",
-                stockQty: "",
-                coverImage: "",
-                description: "",
-                isActive: true,
-            });
-            setImages([]);
+            navigate(`/${import.meta.env.VITE_ADMIN}/books`);
         } catch (error) {
             console.error("❌ Error creating book:", error);
-            // alert(error.response?.data?.message || "Failed to create book. Check console for details.");
             setToastConfig({
                 type: "error",
-                message: error.response?.data?.message || "Failed to create book. Check console for details.",
+                message:
+                    error.response?.data?.message ||
+                    error.message ||
+                    "Failed to create book.",
             });
             setShowToast(true);
         }
@@ -98,12 +218,8 @@ function AddBook() {
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        Add Book
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                        Fill in the details of the book below.
-                    </p>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Add Book</h2>
+                    <p className="text-sm text-gray-500">Fill in the details and define options + variants below.</p>
                 </div>
             </div>
 
@@ -111,71 +227,39 @@ function AddBook() {
                 <div className="overflow-x-auto">
                     <form
                         onSubmit={handleSubmit}
-                        className="max-w-5xl mx-auto bg-white p-6 space-y-6"
+                        className="max-w-6xl mx-auto bg-white p-6 space-y-6"
                     >
+                        {/* ---- basic info ---- */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">
-                                    Book Name <span className="text-red-500">*</span>
+                                    Title <span className="text-red-500">*</span>
                                 </label>
                                 <input
-                                    name="name"
-                                    value={form.name}
+                                    name="title"
+                                    value={form.title}
                                     onChange={handleChange}
                                     type="text"
-                                    placeholder="Mathematics Class 10"
+                                    placeholder="Mathematics Class 6"
                                     required
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Author <span className="text-red-500">*</span>
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700">Handle (slug)</label>
                                 <input
-                                    name="author"
-                                    value={form.author}
+                                    name="handle"
+                                    value={form.handle}
                                     onChange={handleChange}
                                     type="text"
-                                    placeholder="R.D. Sharma"
-                                    required
+                                    placeholder="auto-generated from title"
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Subject
-                                </label>
-                                <input
-                                    name="subject"
-                                    value={form.subject}
-                                    onChange={handleChange}
-                                    type="text"
-                                    placeholder="Mathematics"
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Class Level
-                                </label>
-                                <input
-                                    name="classLevel"
-                                    value={form.classLevel}
-                                    onChange={handleChange}
-                                    type="number"
-                                    placeholder="10"
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    ISBN
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700">ISBN</label>
                                 <input
                                     name="isbn"
                                     value={form.isbn}
@@ -186,110 +270,7 @@ function AddBook() {
                                 />
                             </div>
 
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Language
-                                </label>
-                                <input
-                                    name="language"
-                                    value={form.language}
-                                    onChange={handleChange}
-                                    type="text"
-                                    placeholder="English / Hindi"
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Category
-                                </label>
-                                <input
-                                    name="category"
-                                    value={form.category}
-                                    onChange={handleChange}
-                                    type="text"
-                                    placeholder="Category ID or Name"
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Price (₹)
-                                </label>
-                                <input
-                                    name="price"
-                                    value={form.price}
-                                    onChange={handleChange}
-                                    type="number"
-                                    placeholder="Selling price"
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Cost Price (₹)
-                                </label>
-                                <input
-                                    name="cost"
-                                    value={form.cost}
-                                    onChange={handleChange}
-                                    type="number"
-                                    placeholder="Cost price"
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Publisher
-                                </label>
-                                <input
-                                    name="publisher"
-                                    value={form.publisher}
-                                    onChange={handleChange}
-                                    type="text"
-                                    placeholder="Dhanpat Rai Publications"
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Stock Quantity
-                                </label>
-                                <input
-                                    name="stockQty"
-                                    value={form.stockQty}
-                                    onChange={handleChange}
-                                    type="number"
-                                    placeholder="120"
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            {/* Image grid */}
-                            <div className="md:col-span-2">
-                                <ImageGridManager onImagesChange={setImages} />
-                            </div>
-
-                            <div className="md:col-span-2">
-                                <label className="block text-sm font-medium text-gray-700">
-                                    Description
-                                </label>
-                                <textarea
-                                    name="description"
-                                    value={form.description}
-                                    onChange={handleChange}
-                                    rows="4"
-                                    placeholder="Write a brief description about the book..."
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                ></textarea>
-                            </div>
-
-                            <div className="flex items-center gap-2 md:col-span-2">
+                            <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
                                     name="isActive"
@@ -299,6 +280,195 @@ function AddBook() {
                                 />
                                 <label className="text-sm text-gray-700">Is Active</label>
                             </div>
+
+                            <div className="md:col-span-2">
+                                <label className="block text-sm font-medium text-gray-700">Description</label>
+                                <textarea
+                                    name="description"
+                                    value={form.description}
+                                    onChange={handleChange}
+                                    rows="3"
+                                    placeholder="Brief description..."
+                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                />
+                            </div>
+
+                            <div className="md:col-span-2">
+                                <ImageGridManager onImagesChange={setImages} />
+                            </div>
+                        </div>
+
+                        {/* ---- options ---- */}
+                        <div className="border-t pt-4 border-gray-200">
+                            <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-sm font-semibold text-gray-800">
+                                    Options <span className="text-red-500">*</span>
+                                </h3>
+                                <button
+                                    type="button"
+                                    onClick={addOption}
+                                    className="text-sm text-blue-600 hover:underline"
+                                >
+                                    + Add option
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                {options.map((opt, oi) => (
+                                    <div
+                                        key={oi}
+                                        className="border border-gray-200 rounded-lg p-3 space-y-2"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <input
+                                                value={opt.name}
+                                                onChange={(e) =>
+                                                    updateOptionName(oi, e.target.value)
+                                                }
+                                                placeholder="Option name (e.g. class)"
+                                                className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                            />
+                                            {options.length > 1 && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeOption(oi)}
+                                                    className="text-red-500 text-xs hover:underline"
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        <div className="flex flex-wrap gap-2">
+                                            {opt.values.map((val, vi) => (
+                                                <div
+                                                    key={vi}
+                                                    className="flex items-center gap-1"
+                                                >
+                                                    <input
+                                                        value={val}
+                                                        onChange={(e) =>
+                                                            updateOptionValue(
+                                                                oi,
+                                                                vi,
+                                                                e.target.value
+                                                            )
+                                                        }
+                                                        placeholder="value"
+                                                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-28 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                    />
+                                                    {opt.values.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                removeOptionValue(oi, vi)
+                                                            }
+                                                            className="text-red-400 text-xs"
+                                                        >
+                                                            ×
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ))}
+                                            <button
+                                                type="button"
+                                                onClick={() => addOptionValue(oi)}
+                                                className="text-xs text-blue-600 hover:underline"
+                                            >
+                                                + value
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* ---- variants ---- */}
+                        <div className="border-t pt-4 border-gray-200">
+                            <h3 className="text-sm font-semibold text-gray-800 mb-3">Variants ({variants.length})</h3>
+
+                            {variants.length === 0 ? (
+                                <p className="text-sm text-gray-500">Add at least one option with values to generate variants.</p>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="min-w-full text-sm">
+                                        <thead>
+                                            <tr className="text-left text-gray-500 border-b border-gray-300">
+                                                <th className="py-2 pr-3">Options</th>
+                                                <th className="py-2 pr-3">SKU</th>
+                                                <th className="py-2 pr-3">Price *</th>
+                                                <th className="py-2 pr-3">Cost</th>
+                                                <th className="py-2 pr-3">Compare At</th>
+                                                <th className="py-2 pr-3">Stock *</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {variants.map((variant, vi) => (
+                                                <tr key={vi} className="border-b border-gray-200">
+                                                    <td className="py-2 pr-3 text-gray-700">
+                                                        {Object.entries(variant.options)
+                                                            .map(([k, val]) => `${k}=${val}`)
+                                                            .join(", ")}
+                                                    </td>
+                                                    <td className="py-2 pr-3">
+                                                        <input
+                                                            value={variant.sku}
+                                                            onChange={(e) => updateVariantField(vi, "sku", e.target.value)}
+                                                            placeholder="auto"
+                                                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-32"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 pr-3">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={variant.price}
+                                                            onChange={(e) => updateVariantField(vi, "price", e.target.value)}
+                                                            required
+                                                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-24"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 pr-3">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={variant.cost}
+                                                            onChange={(e) =>
+                                                                updateVariantField(vi, "cost", e.target.value)
+                                                            }
+                                                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-24"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 pr-3">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            value={variant.compareAtPrice}
+                                                            onChange={(e) =>
+                                                                updateVariantField(vi, "compareAtPrice", e.target.value)
+                                                            }
+                                                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-24"
+                                                        />
+                                                    </td>
+                                                    <td className="py-2 pr-3">
+                                                        <input
+                                                            type="number"
+                                                            min="0"
+                                                            step="1"
+                                                            value={variant.inventory_quantity}
+                                                            onChange={(e) =>
+                                                                updateVariantField(vi, "inventory_quantity", e.target.value)
+                                                            }
+                                                            required
+                                                            className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-24"
+                                                        />
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
 
                         <button

@@ -32,24 +32,26 @@ const getBooks = async ({
 
     const { data } = await api.get(`/api/product?${params.toString()}`);
     // console.log("data: ", data.data);
-    
+
     return data;
 };
 
 const getBookById = async ({ params }) => {
     const { data } = await api.get(`/api/product/${params.id}`);
+    console.log("Get Book By Id", data.data);
+
     return data?.data || null;
 };
 
-const getBookBySlug = async ({ params }) => {
-    const { data } = await api.get(`/api/product/${params.slug}`);
-    console.log("getBookBySlug: ", data.data);
-    
+const getBookByHandle = async ({ params }) => {
+    const { data } = await api.get(`/api/product/${params.handle}`);
+    console.log("Get Book By Handle: ", data.data);
+
     return data?.data || null;
 };
 
 export {
     getBooks,
     getBookById,
-    getBookBySlug
+    getBookByHandle
 }

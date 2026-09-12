@@ -47,7 +47,7 @@ import ResetPassword from './pages/frontend/ResetPassword.jsx'
 import Categories from "./pages/frontend/Category.jsx";
 import CategoryProducts from './pages/frontend/CategoryProducts.jsx'
 import { editUser } from './data/user.js'
-import { getBookById, getBookBySlug } from './data/book.js'
+import { getBookById, getBookByHandle } from './data/book.js'
 import { getCart, getCartById } from './data/cart.js'
 import { getReview1 } from './data/review.js'
 import { getDiscount, getDiscountById } from './data/discount.js'
@@ -55,12 +55,13 @@ import { getPayment, getPaymentById } from './data/payment.js'
 import { getOrder, getOrderById } from './data/order.js'
 import { StrictMode } from 'react'
 import NotFound from './components/frontend/NotFound.jsx'
-import { SpeedInsights } from "@vercel/speed-insights/react"
-import { Analytics } from "@vercel/analytics/react";
+// import { SpeedInsights } from "@vercel/speed-insights/react"
+// import { Analytics } from "@vercel/analytics/react";
 import getProfile from './data/profile.js'
 import { getAddress, getAddressById } from './data/address.js'
 import axiosInstance from './utils/axiosConfig.js'
 import VerifyEmail from './components/frontend/VerifyEmail.jsx'
+import ProtectedLogin from './routes/ProtectedLogin.jsx'
 
 window.axios = axiosInstance;
 
@@ -75,7 +76,7 @@ const router = createBrowserRouter([
       { path: "categories/all", element: <Categories /> },
       { path: "categories/:categoryName", element: <CategoryProducts /> },
       { path: "cart", element: <FCart /> },
-      { path: "products/:slug", element: <BookById />, loader: getBookBySlug },
+      { path: "products/:slug", element: <BookById />, loader: getBookByHandle },
       { path: "contact", element: <Contact /> },
       { path: "reviews", element: <FReview /> },
       { path: "checkout", element: <Checkout /> },
@@ -117,17 +118,24 @@ const router = createBrowserRouter([
           },
         ],
       },
-      {
-        path: "profile/address", element: <Profile />, loader: getProfile,
-      },
-
+      // {
+      //   path: "profile/address", element: <Profile />, loader: getProfile,
+      // },
     ]
   },
-  { path: "/login", element: <Login />, errorElement: <NotFound />, },
   {
-    path: "/register",
-    element: <Register />,
+    element: <ProtectedLogin />,
     errorElement: <NotFound />,
+    children: [
+      {
+        path: "/login",
+        element: <Login />,
+      },
+      {
+        path: "/register",
+        element: <Register />,
+      },
+    ],
   },
   {
     element: <ProtectedRoute />,
@@ -167,9 +175,9 @@ const router = createBrowserRouter([
 createRoot(document.getElementById('root')).render(
   <BookProvider>
     {/* <StrictMode> */}
-      <RouterProvider router={router} />
-      <SpeedInsights />
-      <Analytics />
+    <RouterProvider router={router} />
+    {/* <SpeedInsights /> */}
+    {/* <Analytics /> */}
     {/* </StrictMode> */}
   </BookProvider>
 )

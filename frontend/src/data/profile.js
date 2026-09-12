@@ -1,20 +1,19 @@
-// frontend/src/data/profile.js
-import axios from "axios";
-import api from "../utils/api.js"; // ✅ Import centralized API
+import api from "../utils/api.js";
 
 const API = import.meta.env.VITE_API;
 
 const getProfile = async () => {
-    const user = JSON.parse(localStorage.getItem("user"));
+    const userId = localStorage.getItem("userId");
+    console.log("user", userId);
 
-    if (!user?.id) {
+    if (!userId) {
         throw new Error("User not authenticated");
     }
 
     try {
         const [userRes, addressRes, orderRes] = await Promise.all([
-            api.get(`/api/user/${user.id}`),
-            api.get(`/api/address/user/${user.id}`),
+            api.get(`/api/user/${userId}`),
+            api.get(`/api/address/user/${userId}`),
             api.get(`/api/order/my-orders`),
         ]);
 
