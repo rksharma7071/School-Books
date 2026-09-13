@@ -32,7 +32,6 @@ function AddDiscount() {
                 message: "Discount created successfully.",
             });
             setShowToast(true);
-            // alert("Discount created successfully!");
 
             setForm({
                 discount_code: "",
@@ -45,7 +44,6 @@ function AddDiscount() {
             });
         } catch (error) {
             console.error("Error creating discount:", error);
-            // setError("Failed to create discount");
             setToastConfig({
                 type: "error",
                 message: error.response?.data?.message || "Failed to create discount. Check console for details.",
@@ -76,7 +74,6 @@ function AddDiscount() {
                         )}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Discount Code */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Discount Code <span className="text-red-500">*</span></label>
                                 <input
@@ -88,7 +85,6 @@ function AddDiscount() {
                                 />
                             </div>
 
-                            {/* Discount Type */}
                             <div>
                                 <label className="text-sm font-medium">Discount Type <span className="text-red-500">*</span></label>
                                 <select
@@ -102,7 +98,6 @@ function AddDiscount() {
                                 </select>
                             </div>
 
-                            {/* Amount */}
                             <div>
                                 <label className="text-sm font-medium">Amount <span className="text-red-500">*</span></label>
                                 <input
@@ -115,7 +110,6 @@ function AddDiscount() {
                                 />
                             </div>
 
-                            {/* Start Date */}
                             <div>
                                 <label className="text-sm font-medium">Start Date <span className="text-red-500">*</span></label>
                                 <input
@@ -128,7 +122,6 @@ function AddDiscount() {
                                 />
                             </div>
 
-                            {/* End Date */}
                             <div>
                                 <label className="text-sm font-medium">End Date <span className="text-red-500">*</span></label>
                                 <input

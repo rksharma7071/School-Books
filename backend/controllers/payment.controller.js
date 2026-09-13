@@ -7,7 +7,7 @@ const ORDER_POPULATE = {
     path: "orderId",
     select: "orderNumber status subtotal shipping tax discount total items userId createdAt",
     populate: [
-        { path: "userId", select: "email role first_name last_name username" },
+        { path: "userId", select: "email role name" },
         { path: "items.productId", select: "name price coverImage" },
     ],
 };

@@ -21,7 +21,6 @@ function PaymentById() {
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Payment Details</h1>
@@ -37,7 +36,6 @@ function PaymentById() {
         </button>
       </div>
 
-      {/* Status + Amount */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <span
           className={`inline-flex items-center px-4 py-1.5 rounded-full border text-sm font-semibold w-fit ${statusStyles[payment.status]}`}
@@ -53,9 +51,7 @@ function PaymentById() {
         </div>
       </div>
 
-      {/* Main Info Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Payment Info */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
           <h3 className="font-semibold text-gray-800">Payment Information</h3>
           <InfoRow label="Provider" value={providerLabel[payment.provider]} />
@@ -63,7 +59,6 @@ function PaymentById() {
           <InfoRow label="Created At" value={new Date(payment.createdAt).toLocaleString()} />
         </div>
 
-        {/* Order Info */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
           <h3 className="font-semibold text-gray-800">Order Information</h3>
           <InfoRow label="Order Number" value={`#${payment.order.orderNumber}`} />
@@ -73,7 +68,6 @@ function PaymentById() {
           <InfoRow label="Total" value={`₹${payment.order.total}`} />
         </div>
 
-        {/* User Info */}
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
           <h3 className="font-semibold text-gray-800">Customer Information</h3>
           <InfoRow label="Email" value={payment.user.email} />
@@ -82,7 +76,6 @@ function PaymentById() {
         </div>
       </div>
 
-      {/* Ordered Items */}
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Order Items</h3>
 

@@ -28,19 +28,12 @@ function Cart() {
 
     const filteredCarts = useMemo(() => {
         const term = search.trim().toLowerCase();
+
         if (!term) return carts;
 
         return carts.filter((cart) => {
-            const user = cart.user
-                ? `${cart.user.first_name || ""} ${cart.user.last_name || ""} ${
-                      cart.user.username || ""
-                  } ${cart.user.email || ""}`.toLowerCase()
-                : "";
-
-            const hasBook = (cart.items || []).some((i) =>
-                i.book?.name?.toLowerCase().includes(term)
-            );
-
+            const user = `${cart.user?.name || ""} ${cart.user?.email || ""}`.toLowerCase();
+            const hasBook = (cart.items || []).some((item) => item.book?.name?.toLowerCase().includes(term));
             return user.includes(term) || hasBook;
         });
     }, [carts, search]);
@@ -78,7 +71,7 @@ function Cart() {
                     </p>
                 </div>
 
-                <div className="flex gap-2 w-full sm:w-auto bg-white">
+                <div className="flex gap-2 w-full sm:w-auto">
                     <input
                         type="search"
                         value={search}
@@ -87,7 +80,7 @@ function Cart() {
                             setCurrentPage(1);
                         }}
                         placeholder="Search by customer or book..."
-                        className="flex-1 sm:w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 sm:w-72 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <button
                         onClick={refresh}
@@ -126,11 +119,10 @@ function Cart() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
-                                currentPage === 1
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                            }`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                                }`}
                         >
                             Prev
                         </button>
@@ -147,11 +139,10 @@ function Cart() {
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
-                                currentPage >= totalPages
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                            }`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                                }`}
                         >
                             Next
                         </button>

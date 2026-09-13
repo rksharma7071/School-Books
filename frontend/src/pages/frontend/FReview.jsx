@@ -1,4 +1,3 @@
-// frontend/src/pages/frontend/FReview.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { FiStar, FiUser, FiBookOpen, FiSearch } from "react-icons/fi";
@@ -38,27 +37,22 @@ const FReview = () => {
         }
     };
 
-    // Filter and sort reviews
     const filteredReviews = useMemo(() => {
         let result = [...reviews];
         
-        // Filter by search term
         if (search.trim()) {
             const term = search.toLowerCase();
-            result = result.filter(r => 
-                r.title?.toLowerCase().includes(term) ||
-                r.body?.toLowerCase().includes(term) ||
-                r.book?.name?.toLowerCase().includes(term) ||
-                r.user?.username?.toLowerCase().includes(term)
+            result = result.filter(res => 
+                res.title?.toLowerCase().includes(term) ||
+                res.body?.toLowerCase().includes(term) ||
+                res.book?.name?.toLowerCase().includes(term)
             );
         }
         
-        // Filter by rating
         if (ratingFilter > 0) {
             result = result.filter(r => Math.round(r.rating) === ratingFilter);
         }
         
-        // Sort
         switch (sortBy) {
             case "newest":
                 result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
@@ -79,7 +73,6 @@ const FReview = () => {
         return result;
     }, [reviews, search, ratingFilter, sortBy]);
 
-    // Calculate statistics
     const stats = useMemo(() => {
         if (!reviews.length) return { total: 0, avgRating: 0, distribution: {} };
         
@@ -114,22 +107,16 @@ const FReview = () => {
     return (
         <div className="min-h-screen bg-gray-50 py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
-                {/* Header */}
                 <div className="mb-8">
                     <h1 className="text-3xl font-bold text-gray-900">Customer Reviews</h1>
-                    <p className="text-gray-600 mt-2">
-                        Read what our readers have to say about their favorite books
-                    </p>
+                    <p className="text-gray-600 mt-2">Read what our readers have to say about their favorite books</p>
                 </div>
 
-                {/* Stats Section */}
                 {!loading && reviews.length > 0 && (
                     <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                             <div className="text-center">
-                                <p className="text-3xl font-bold text-gray-900">
-                                    {stats.total}
-                                </p>
+                                <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
                                 <p className="text-sm text-gray-600">Total Reviews</p>
                             </div>
                             <div className="text-center">
@@ -165,7 +152,6 @@ const FReview = () => {
                     </div>
                 )}
 
-                {/* Filters */}
                 <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 mb-6">
                     <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1 relative">
@@ -207,10 +193,8 @@ const FReview = () => {
                     </div>
                 </div>
 
-                {/* Loading State */}
                 {loading && <Loading text="Loading reviews..." />}
 
-                {/* Error State */}
                 {!loading && error && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
                         <p className="text-red-600">{error}</p>
@@ -223,7 +207,6 @@ const FReview = () => {
                     </div>
                 )}
 
-                {/* No Reviews State */}
                 {!loading && !error && filteredReviews.length === 0 && (
                     <div className="bg-white border border-gray-200 rounded-xl p-12 text-center">
                         <FiBookOpen className="mx-auto text-6xl text-gray-300" />
@@ -236,7 +219,6 @@ const FReview = () => {
                     </div>
                 )}
 
-                {/* Reviews Grid */}
                 {!loading && !error && filteredReviews.length > 0 && (
                     <div className="space-y-6">
                         <p className="text-sm text-gray-600">
@@ -256,7 +238,7 @@ const FReview = () => {
                                             </div>
                                             <div>
                                                 <p className="font-semibold text-gray-900">
-                                                    {review.user?.first_name} {review.user?.last_name}
+                                                    {review.user?.name}
                                                 </p>
                                                 <p className="text-xs text-gray-500">
                                                     {formatDate(review.createdAt)}

@@ -1,8 +1,6 @@
 import React from 'react'
 
-const FeaturesBanner = () => {
-    console.log("Features Banner");
-    
+const FeaturesBanner = () => {    
     return (
         <section className="py-12 bg-blue-950 border-y border-blue-900/60">
             <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-6 text-center">

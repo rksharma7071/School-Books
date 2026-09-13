@@ -15,12 +15,12 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
     const deleteBook = async (id) => {
         try {
             if (confirm("Do you want to delete this Book?")) {
-                const token = localStorage.getItem("token");
 
                 const res = await axios.delete(`${import.meta.env.VITE_API}/api/product/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` },
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
                 });
-                // alert("Book has been deleted successfully!");
                 setToastConfig({
                     type: "success",
                     message: "Book has been deleted successfully.",
@@ -28,8 +28,6 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
                 setShowToast(true);
             }
         } catch (error) {
-            // console.error("Delete error:", error.response?.data || error.message);
-            // alert(error.response?.data?.message || "Delete failed");
             setToastConfig({
                 type: "error",
                 message: error.response?.data?.message || "Failed to update book. Please try again.",
@@ -103,8 +101,8 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
                                 </td>
                                 {role != "student" &&
                                     <td className="px-4 py-3 text-right">
-                                        <button className="text-lg text-blue-600 hover:underline mr-3" onClick={() => editBook(book.id)}><RiEdit2Fill /></button>
-                                        <button className="text-lg text-red-600 hover:underline" onClick={() => deleteBook(book.id)}><MdDelete /></button>
+                                        <button className="text-lg text-blue-600 mr-3 hover:underline hover:cursor-pointer " onClick={() => editBook(book.id)}><RiEdit2Fill /></button>
+                                        <button className="text-lg text-red-600 hover:underline hover:cursor-pointer" onClick={() => deleteBook(book.id)}><MdDelete /></button>
                                     </td>
                                 }
                             </tr>

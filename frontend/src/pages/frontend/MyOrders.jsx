@@ -1,4 +1,3 @@
-// frontend/src/pages/frontend/MyOrders.jsx
 import React from 'react'
 import { Link, useLoaderData } from 'react-router-dom'
 
@@ -14,7 +13,6 @@ function MyOrders() {
 
     const capitalizeWords = (text = '') => text.replace(/\b\w/g, char => char.toUpperCase())
     
-    // ✅ order is now an array from the new endpoint
     const orders = order || [];
     
     return (

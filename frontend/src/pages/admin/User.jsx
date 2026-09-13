@@ -16,19 +16,17 @@ function User() {
 
         const fetchUsers = async () => {
             try {
-                const token = localStorage.getItem("token");
-
                 const res = await axios.get(
                     `${import.meta.env.VITE_API}/api/user`,
                     {
-                        headers: { Authorization: `Bearer ${token}` },
+                        headers: {
+                            Authorization: `Bearer ${localStorage.getItem("token")}`
+                        },
                         signal: controller.signal,
                     }
                 );
 
                 const apiUsers = res.data?.users || res.data?.data || [];
-
-                // setUsers(apiUsers.filter((u) => u.role !== "admin"));
                 setUsers(apiUsers);
             } catch (error) {
                 if (axios.isCancel(error)) return;
@@ -44,18 +42,13 @@ function User() {
         const term = (search || "").trim().toLowerCase();
         if (!term) return users;
         return users.filter(
-            (u) =>
-                u.username?.toLowerCase().includes(term) ||
-                u.email?.toLowerCase().includes(term) ||
-                u.first_name?.toLowerCase().includes(term) ||
-                u.last_name?.toLowerCase().includes(term)
+            (user) =>
+                user.email?.toLowerCase().includes(term) ||
+                user.name?.toLowerCase().includes(term)
         );
     }, [users, search]);
 
-    const totalPages = Math.max(
-        1,
-        Math.ceil(filteredUsers.length / rowsPerPage)
-    );
+    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / rowsPerPage));
 
     const paginatedUsers = useMemo(() => {
         const safePage = Math.min(currentPage, totalPages);
@@ -111,7 +104,7 @@ function User() {
                     </p>
                 </div>
 
-                <div className="flex gap-2 w-full sm:w-auto bg-white">
+                <div className="flex gap-2 w-full sm:w-auto">
                     <input
                         type="search"
                         value={search}
@@ -119,8 +112,8 @@ function User() {
                             setSearch(e.target.value);
                             setCurrentPage(1);
                         }}
-                        placeholder="Search by username, email, name..."
-                        className="flex-1 sm:w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search by email, name..."
+                        className="flex-1 sm:w-72 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <Link
                         to={`/${import.meta.env.VITE_ADMIN}/add-user`}

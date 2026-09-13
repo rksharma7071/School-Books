@@ -7,7 +7,7 @@ function Header() {
     const [open, setOpen] = useState(false);
     const menuRef = useRef(null);
     const { user, adminLogout } = useContext(BookContext);
-    const navigate = useNavigate();
+    const navigate = useNavigate();    
 
     const logout = () => {
         adminLogout();
@@ -40,16 +40,16 @@ function Header() {
                             onClick={() => setOpen((prev) => !prev)}
                             className="flex items-center gap-2 cursor-pointer"
                         >
-                            <span className="hidden md:inline text-sm text-blue-100 font-medium">{user && user.first_name}</span>
-                            <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">
-                                {user && user.first_name[0].toUpperCase()}
-                            </div>
+                            <span className="hidden md:inline text-sm text-blue-100 font-medium">{user && user.name}</span>
+                            {/* <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">
+                                {user && user.name.toUpperCase()}
+                            </div> */}
                         </button>
 
                         {open && (
                             <div className="absolute right-0 mt-3 w-56 bg-white shadow-lg border border-gray-200 rounded-xl z-50 animate-fadeIn overflow-hidden">
                                 <div className="px-4 py-3 bg-slate-50 border-b border-gray-100">
-                                    <p className="text-sm font-semibold text-gray-900">{user && user.username.toUpperCase()}</p>
+                                    <p className="text-sm font-semibold text-gray-900">{user && user.name.toUpperCase()}</p>
                                     <p className="text-xs text-gray-500 truncate">{user && user.email}</p>
                                 </div>
 

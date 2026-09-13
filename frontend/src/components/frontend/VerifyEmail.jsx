@@ -92,7 +92,6 @@ function VerifyEmail() {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <div className="text-center">
-            {/* Icon based on status */}
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full mb-6">
               {loading ? (
                 <svg
@@ -136,18 +135,14 @@ function VerifyEmail() {
                 </svg>
               )}
             </div>
-
-            {/* Title */}
             <h2 className="text-2xl font-bold text-gray-900 mb-2">
               {loading ? "Verifying Email" : status === "success" ? "Email Verified!" : "Verification Failed"}
             </h2>
 
-            {/* Message */}
             <p className="text-sm text-gray-600 mb-6">
               {message || (loading ? "Please wait while we verify your email address..." : "")}
             </p>
 
-            {/* Resend feedback (only shown in error state) */}
             {!loading && status === "error" && resendMessage && (
               <div
                 className={`mb-4 text-sm rounded-md px-3 py-2 ${resendStatus === "success"
@@ -159,7 +154,6 @@ function VerifyEmail() {
               </div>
             )}
 
-            {/* Action Buttons */}
             {!loading && (
               <div className="space-y-3">
                 {status === "success" && (

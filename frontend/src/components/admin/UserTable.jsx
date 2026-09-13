@@ -21,10 +21,10 @@ function UserTable({
         if (!window.confirm("Do you want to delete this User?")) return;
 
         try {
-            const token = localStorage.getItem("token");
-
             await axios.delete(`${import.meta.env.VITE_API}/api/user/${id}`, {
-                headers: { Authorization: `Bearer ${token}` },
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                }
             });
 
             setToastConfig({
@@ -43,9 +43,9 @@ function UserTable({
     };
 
     const editUser = (id) => {
-        navigate(`/${import.meta.env.VITE_ADMIN}/edit-user/${id}`);
+        navigate(`/${import.meta.env.VITE_ADMIN}/user/edit/${id}`);
     };
-    
+
     return (
         <table className="min-w-full text-sm">
             <thead>
@@ -58,9 +58,7 @@ function UserTable({
                             className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
                         />
                     </th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Username</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">First Name</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Last Name</th>
+                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Name</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Email</th>
                     <th className="px-4 py-3 text-left font-semibold text-gray-700">Role</th>
                     <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
@@ -92,9 +90,7 @@ function UserTable({
                                         className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
                                     />
                                 </td>
-                                <td className="px-4 py-3 text-gray-900 font-medium">{user.username}</td>
-                                <td className="px-4 py-3 text-gray-700">{user.first_name}</td>
-                                <td className="px-4 py-3 text-gray-700">{user.last_name}</td>
+                                <td className="px-4 py-3 text-gray-700">{user.name}</td>
                                 <td className="px-4 py-3 text-gray-700">{user.email}</td>
                                 <td className="px-4 py-3 text-gray-700">{roleLabel}</td>
                                 <td className="px-4 py-3 text-right">

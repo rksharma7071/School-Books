@@ -14,11 +14,13 @@ const authMiddleware = async (req, res, next) => {
             return res.status(401).json({ success: false, message: "Authentication token is missing" });
         }
 
+
         let decoded;
         try {
             decoded = jwt.verify(token, process.env.JWT_SECRET);
+
         } catch {
-            return res.status(401).json({ success: false, message: "Invalid or expired token" });
+            return res.status(401).json({ success: false, message: "Invalid or expired token-1" });
         }
 
         if (!decoded?.id) {
@@ -51,7 +53,7 @@ const authMiddleware = async (req, res, next) => {
 
         next();
     } catch (error) {
-        return res.status(401).json({ success: false, message: "Invalid or expired token" });
+        return res.status(401).json({ success: false, message: "Invalid or expired token-2" });
     }
 };
 

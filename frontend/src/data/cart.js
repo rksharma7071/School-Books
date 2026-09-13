@@ -19,12 +19,10 @@ const getMyCart = async () => {
 
 const getMyCartDirect = async () => {
     try {
-        const token = localStorage.getItem("token");
-
         const { data } = await axios.get(`${API}/api/cart/me`, {
             headers: {
-                Authorization: `Bearer ${token}`,
-            },
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
         });
 
         return data;
@@ -40,12 +38,10 @@ const getCart = getMyCart;
 
 const getCartByUserId = async (userId) => {
     try {
-        const token = localStorage.getItem("token");
-
         const { data } = await axios.get(`${API}/api/cart/${userId}`, {
             headers: {
-                Authorization: `Bearer ${token}`,
-            },
+                Authorization: `Bearer ${localStorage.getItem("token")}`
+            }
         });
 
         return data;
@@ -63,12 +59,10 @@ const getCartById = async ({ params }) => {
 };
 
 const clearMyCart = async () => {
-    const token = localStorage.getItem("token");
-
     const { data } = await axios.delete(`${API}/api/cart/clear`, {
         headers: {
-            Authorization: `Bearer ${token}`,
-        },
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
     });
 
     return data;
@@ -79,8 +73,8 @@ const clearUserCart = async (userId) => {
 
     const { data } = await axios.delete(`${API}/api/cart/clear/${userId}`, {
         headers: {
-            Authorization: `Bearer ${token}`,
-        },
+            Authorization: `Bearer ${localStorage.getItem("token")}`
+        }
     });
 
     return data;

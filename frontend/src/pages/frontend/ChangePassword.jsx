@@ -8,7 +8,7 @@ import Button from '../../components/UI/Button';
 function ChangePassword() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast } = useContext(BookContext);
     const [loading, setLoading] = useState(false);
-    console.log("User: ", user);
+    // console.log("User: ", user);
 
     const [form, setForm] = useState({
         oldPassword: '',

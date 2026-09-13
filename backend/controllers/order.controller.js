@@ -37,12 +37,19 @@ const toAddressSnapshot = (a) => ({
 });
 
 const recomputeProductInventory = async (productId, session) => {
-    const product = await Product.findById(productId).select("variants").session(session);
+    const product = await Product.findById(productId)
+        .select("variants")
+        .session(session);
+
     if (!product) return;
+
     const totalInventory = product.variants
         .filter((v) => v.isActive !== false)
         .reduce((sum, v) => sum + (Number(v.inventory_quantity) || 0), 0);
-    await Product.updateOne({ _id: productId }, { $set: { inventory_quantity: totalInventory } }, { session });
+    await Product.updateOne(
+        { _id: productId },
+        { $set: { inventory_quantity: totalInventory } },
+        { session });
 };
 
 export const getAllOrder = async (req, res) => {
@@ -55,18 +62,21 @@ export const getAllOrder = async (req, res) => {
         const filter = {};
 
         if (status !== undefined) {
-            if (!ORDER_STATUSES.includes(status)) throw new ApiError(400, `Invalid status. Allowed: ${ORDER_STATUSES.join(", ")}`);
+            if (!ORDER_STATUSES.includes(status))
+                throw new ApiError(400, `Invalid status. Allowed: ${ORDER_STATUSES.join(", ")}`);
             filter.status = status;
         }
 
         if (userId !== undefined) {
-            if (!mongoose.Types.ObjectId.isValid(userId)) throw new ApiError(400, "Invalid userId");
+            if (!mongoose.Types.ObjectId.isValid(userId))
+                throw new ApiError(400, "Invalid userId");
             filter.userId = userId;
         }
 
         if (orderNumber !== undefined) {
             const num = Number(orderNumber);
-            if (!Number.isInteger(num)) throw new ApiError(400, "orderNumber must be a number");
+            if (!Number.isInteger(num))
+                throw new ApiError(400, "orderNumber must be a number");
             filter.orderNumber = num;
         }
 
@@ -74,12 +84,14 @@ export const getAllOrder = async (req, res) => {
             filter.createdAt = {};
             if (from) {
                 const fromDate = new Date(from);
-                if (isNaN(fromDate.getTime())) throw new ApiError(400, "Invalid 'from' date");
+                if (isNaN(fromDate.getTime()))
+                    throw new ApiError(400, "Invalid 'from' date");
                 filter.createdAt.$gte = fromDate;
             }
             if (to) {
                 const toDate = new Date(to);
-                if (isNaN(toDate.getTime())) throw new ApiError(400, "Invalid 'to' date");
+                if (isNaN(toDate.getTime()))
+                    throw new ApiError(400, "Invalid 'to' date");
                 filter.createdAt.$lte = toDate;
             }
         }
@@ -87,20 +99,20 @@ export const getAllOrder = async (req, res) => {
         if (search) {
             const orConditions = [];
             const numericSearch = Number(search);
-            if (Number.isInteger(numericSearch)) orConditions.push({ orderNumber: numericSearch });
+            if (Number.isInteger(numericSearch))
+                orConditions.push({ orderNumber: numericSearch });
 
             const matchingUsers = await User.find({
                 $or: [
-                    { username: { $regex: search, $options: "i" } },
                     { email: { $regex: search, $options: "i" } },
-                    { first_name: { $regex: search, $options: "i" } },
-                    { last_name: { $regex: search, $options: "i" } },
+                    { name: { $regex: search, $options: "i" } }
                 ],
             })
                 .select("_id")
                 .lean();
 
-            if (matchingUsers.length) orConditions.push({ userId: { $in: matchingUsers.map((u) => u._id) } });
+            if (matchingUsers.length)
+                orConditions.push({ userId: { $in: matchingUsers.map((u) => u._id) } });
 
             if (orConditions.length) {
                 filter.$or = orConditions;
@@ -115,7 +127,7 @@ export const getAllOrder = async (req, res) => {
 
         const [data, total] = await Promise.all([
             Order.find(filter)
-                .populate("userId", "first_name last_name email username")
+                .populate("userId", "name email")
                 .populate("items.productId", "title image images isActive")
                 .sort({ createdAt: -1 })
                 .skip((pageNum - 1) * limitNum)
@@ -144,13 +156,15 @@ export const getAllOrder = async (req, res) => {
 export const getOrderById = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid order ID");
+        if (!mongoose.Types.ObjectId.isValid(id))
+            throw new ApiError(400, "Invalid order ID");
 
         const order = await Order.findById(id)
-            .populate("userId", "first_name last_name email username")
+            .populate("userId", "name email")
             .populate("items.productId", "title image images isActive")
             .lean();
-        if (!order) throw new ApiError(404, "Order not found");
+        if (!order)
+            throw new ApiError(404, "Order not found");
         if (req.user.role !== "admin" && String(order.userId?._id) !== String(req.user.id)) {
             throw new ApiError(403, "Access denied");
         }
@@ -189,7 +203,8 @@ export const createOrder = async (req, res) => {
         try {
             await session.withTransaction(async () => {
                 const cart = await Cart.findOne({ userId }).session(session);
-                if (!cart || cart.items.length === 0) throw new ApiError(400, "Cart is empty");
+                if (!cart || cart.items.length === 0)
+                    throw new ApiError(400, "Cart is empty");
 
                 const mergedMap = new Map();
                 for (const item of cart.items) {
@@ -211,17 +226,22 @@ export const createOrder = async (req, res) => {
 
                 for (const item of cartItems) {
                     const product = productMap.get(String(item.productId));
-                    if (!product) throw new ApiError(404, `Product not found: ${item.productId}`);
-                    if (product.isActive === false) throw new ApiError(400, `Product is not available: ${product.title}`);
+                    if (!product)
+                        throw new ApiError(404, `Product not found: ${item.productId}`);
+                    if (product.isActive === false)
+                        throw new ApiError(400, `Product is not available: ${product.title}`);
 
                     const hasVariants = Array.isArray(product.variants) && product.variants.length > 0;
                     let variant = null;
 
                     if (hasVariants) {
-                        if (!item.variantId) throw new ApiError(400, `A variant must be selected for: ${product.title}`);
+                        if (!item.variantId)
+                            throw new ApiError(400, `A variant must be selected for: ${product.title}`);
                         variant = product.variants.id(item.variantId);
-                        if (!variant) throw new ApiError(404, `Variant not found for: ${product.title}`);
-                        if (variant.isActive === false) throw new ApiError(400, `Selected variant is not available for: ${product.title}`);
+                        if (!variant)
+                            throw new ApiError(404, `Variant not found for: ${product.title}`);
+                        if (variant.isActive === false)
+                            throw new ApiError(400, `Selected variant is not available for: ${product.title}`);
                         if (variant.inventory_quantity < item.quantity) {
                             throw new ApiError(409, `Insufficient inventory for ${product.title}`);
                         }
@@ -262,7 +282,8 @@ export const createOrder = async (req, res) => {
                     const normalizedCode = String(coupon).trim().toUpperCase();
 
                     const existingDiscount = await Discount.findOne({ discount_code: normalizedCode }).session(session);
-                    if (!existingDiscount) throw new ApiError(400, "Invalid or expired coupon");
+                    if (!existingDiscount)
+                        throw new ApiError(400, "Invalid or expired coupon");
 
                     if (existingDiscount.minimum_order_amount && subtotal < existingDiscount.minimum_order_amount) {
                         throw new ApiError(400, `A minimum order amount of ${existingDiscount.minimum_order_amount} is required to use this coupon`);
@@ -292,7 +313,8 @@ export const createOrder = async (req, res) => {
                         { $inc: { used_count: 1 } },
                         { new: true, session }
                     );
-                    if (!d) throw new ApiError(400, "Invalid or expired coupon");
+                    if (!d)
+                        throw new ApiError(400, "Invalid or expired coupon");
 
                     discount = calculateDiscountAmount(d, subtotal);
                     appliedCouponCode = d.discount_code;
@@ -303,10 +325,12 @@ export const createOrder = async (req, res) => {
                 const total = Math.max(0, subtotal + shipping + tax - discount);
 
                 const shippingAddress = await Address.findOne({ _id: shippingAddressId, userId }).session(session).lean();
-                if (!shippingAddress) throw new ApiError(400, "Selected shipping address not found or does not belong to you");
+                if (!shippingAddress)
+                    throw new ApiError(400, "Selected shipping address not found or does not belong to you");
 
                 const billingAddress = await Address.findOne({ _id: effectiveBillingId, userId }).session(session).lean();
-                if (!billingAddress) throw new ApiError(400, "Selected billing address not found or does not belong to you");
+                if (!billingAddress)
+                    throw new ApiError(400, "Selected billing address not found or does not belong to you");
 
                 const counter = await Counter.findOneAndUpdate(
                     { name: "order" },
@@ -359,17 +383,22 @@ export const createOrder = async (req, res) => {
 export const updateOrder = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid order ID");
-        if (req.user.role !== "admin") throw new ApiError(403, "Only admins can update order status or shipment details");
+        if (!mongoose.Types.ObjectId.isValid(id))
+            throw new ApiError(400, "Invalid order ID");
+        if (req.user.role !== "admin")
+            throw new ApiError(403, "Only admins can update order status or shipment details");
 
         const order = await Order.findById(id);
-        if (!order) throw new ApiError(404, "Order not found");
+        if (!order)
+            throw new ApiError(404, "Order not found");
 
         const { status, shipment } = req.body;
 
         if (status !== undefined) {
-            if (!ORDER_STATUSES.includes(status)) throw new ApiError(400, `Invalid status. Allowed: ${ORDER_STATUSES.join(", ")}`);
-            if (status === "cancelled") throw new ApiError(400, "Use the cancel endpoint to cancel an order");
+            if (!ORDER_STATUSES.includes(status))
+                throw new ApiError(400, `Invalid status. Allowed: ${ORDER_STATUSES.join(", ")}`);
+            if (status === "cancelled")
+                throw new ApiError(400, "Use the cancel endpoint to cancel an order");
 
             const allowedNext = STATUS_TRANSITIONS[order.status] || [];
             if (order.status !== status && !allowedNext.includes(status)) {
@@ -416,7 +445,9 @@ export const updateOrder = async (req, res) => {
         }
 
         await order.save();
-        const populated = await Order.findById(order._id).populate("userId", "first_name last_name email username").populate("items.productId", "title image images isActive").lean();
+        const populated = await Order.findById(order._id)
+            .populate("userId", "name email")
+            .populate("items.productId", "title image images isActive").lean();
         res.status(200).json({ success: true, message: "Order updated successfully", data: populated });
     } catch (error) {
         handleError(error, req, res);
@@ -428,15 +459,19 @@ export const cancelOrder = async (req, res) => {
     try {
         const { id } = req.params;
         const { reason } = req.body;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid order ID");
+        if (!mongoose.Types.ObjectId.isValid(id))
+            throw new ApiError(400, "Invalid order ID");
 
         const existing = await Order.findById(id).lean();
-        if (!existing) throw new ApiError(404, "Order not found");
+        if (!existing)
+            throw new ApiError(404, "Order not found");
         if (req.user.role !== "admin" && String(existing.userId) !== String(req.user.id)) {
             throw new ApiError(403, "You are not authorized to cancel this order");
         }
-        if (existing.status === "fulfilled") throw new ApiError(400, "Fulfilled orders cannot be cancelled");
-        if (existing.status === "cancelled") throw new ApiError(400, "Order is already cancelled");
+        if (existing.status === "fulfilled")
+            throw new ApiError(400, "Fulfilled orders cannot be cancelled");
+        if (existing.status === "cancelled")
+            throw new ApiError(400, "Order is already cancelled");
 
         let cancelledOrder;
 
@@ -447,7 +482,8 @@ export const cancelOrder = async (req, res) => {
                 { session }
             );
 
-            if (!updated) throw new ApiError(400, "Order is no longer eligible for cancellation");
+            if (!updated)
+                throw new ApiError(400, "Order is no longer eligible for cancellation");
 
             for (const item of updated.items) {
                 if (!item.variantId) continue;
@@ -470,7 +506,9 @@ export const cancelOrder = async (req, res) => {
             cancelledOrder = updated;
         });
 
-        const populated = await Order.findById(cancelledOrder._id).populate("userId", "first_name last_name email username").populate("items.productId", "title image images isActive").lean();
+        const populated = await Order.findById(cancelledOrder._id)
+            .populate("userId", "name email")
+            .populate("items.productId", "title image images isActive").lean();
         res.status(200).json({ success: true, message: "Order cancelled successfully. Inventory has been restored.", data: populated });
     } catch (error) {
         handleError(error, req, res);
@@ -482,11 +520,14 @@ export const cancelOrder = async (req, res) => {
 export const deleteOrder = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid order ID");
+        if (!mongoose.Types.ObjectId.isValid(id))
+            throw new ApiError(400, "Invalid order ID");
 
         const order = await Order.findById(id);
-        if (!order) throw new ApiError(404, "Order not found");
-        if (order.status !== "cancelled") throw new ApiError(400, "Only cancelled orders can be deleted");
+        if (!order)
+            throw new ApiError(404, "Order not found");
+        if (order.status !== "cancelled")
+            throw new ApiError(400, "Only cancelled orders can be deleted");
 
         await Order.findByIdAndDelete(id);
         res.json({ success: true, message: "Order deleted successfully" });
@@ -504,7 +545,8 @@ export const getMyOrders = async (req, res) => {
 
         const filter = { userId };
         if (status !== undefined) {
-            if (!ORDER_STATUSES.includes(status)) throw new ApiError(400, `Invalid status. Allowed: ${ORDER_STATUSES.join(", ")}`);
+            if (!ORDER_STATUSES.includes(status))
+                throw new ApiError(400, `Invalid status. Allowed: ${ORDER_STATUSES.join(", ")}`);
             filter.status = status;
         }
 

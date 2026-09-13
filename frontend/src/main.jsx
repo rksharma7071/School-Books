@@ -47,7 +47,7 @@ import ResetPassword from './pages/frontend/ResetPassword.jsx'
 import Categories from "./pages/frontend/Category.jsx";
 import CategoryProducts from './pages/frontend/CategoryProducts.jsx'
 import { editUser } from './data/user.js'
-import { getBookById, getBookByHandle } from './data/book.js'
+import { getBookById, getBookByHandle, editBookLoader } from './data/book.js'
 import { getCart, getCartById } from './data/cart.js'
 import { getReview1 } from './data/review.js'
 import { getDiscount, getDiscountById } from './data/discount.js'
@@ -62,6 +62,9 @@ import { getAddress, getAddressById } from './data/address.js'
 import axiosInstance from './utils/axiosConfig.js'
 import VerifyEmail from './components/frontend/VerifyEmail.jsx'
 import ProtectedLogin from './routes/ProtectedLogin.jsx'
+import EditCategory from './pages/admin/EditCategory.jsx'
+import { editCategoryLoader, getCategoryById } from './data/category.js'
+import AddCategory from './pages/admin/AddCategory.jsx'
 
 window.axios = axiosInstance;
 
@@ -76,7 +79,7 @@ const router = createBrowserRouter([
       { path: "categories/all", element: <Categories /> },
       { path: "categories/:categoryName", element: <CategoryProducts /> },
       { path: "cart", element: <FCart /> },
-      { path: "products/:slug", element: <BookById />, loader: getBookByHandle },
+      { path: "products/:handle", element: <BookById />, loader: getBookByHandle },
       { path: "contact", element: <Contact /> },
       { path: "reviews", element: <FReview /> },
       { path: "checkout", element: <Checkout /> },
@@ -125,7 +128,7 @@ const router = createBrowserRouter([
   },
   {
     element: <ProtectedLogin />,
-    errorElement: <NotFound />,
+    // errorElement: <NotFound />,
     children: [
       {
         path: "/login",
@@ -139,21 +142,23 @@ const router = createBrowserRouter([
   },
   {
     element: <ProtectedRoute />,
-    errorElement: <NotFound />,
+    // errorElement: <NotFound />,
     children: [
       {
         path: `/${import.meta.env.VITE_ADMIN}`,
         element: <App />,
-        errorElement: <NotFound />,
+        // errorElement: <NotFound />,
         children: [
           { index: true, element: <Dashboard /> },
           { path: "books", element: <Book /> },
-          { path: "add-book", element: <AddBook /> },
-          { path: "edit-book/:id", element: <EditBook />, loader: getBookById },
+          { path: "book/add", element: <AddBook /> },
+          { path: "edit-book/:id", element: <EditBook />, loader: editBookLoader },
           { path: "categories", element: <Category /> },
+          { path: "categories/add", element: <AddCategory /> },
+          { path: "category/edit/:id", element: <EditCategory />, loader: editCategoryLoader },
           { path: "users", element: <User /> },
           { path: "add-user", element: <AddUser /> },
-          { path: "edit-user/:id", element: <EditUser />, loader: editUser },
+          { path: "user/edit/:id", element: <EditUser />, loader: editUser },
           { path: "general", element: <General /> },
           { path: "roles", element: <Role /> },
           { path: "review", element: <Review />, loader: getReview1 },

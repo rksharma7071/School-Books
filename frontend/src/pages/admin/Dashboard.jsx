@@ -10,7 +10,8 @@ function Dashboard() {
         const controller = new AbortController();
 
         axios
-            .get(`${import.meta.env.VITE_API}/api/stats`, {
+            // .get(`${import.meta.env.VITE_API}/api/stats`, {
+            .get(`${import.meta.env.VITE_API}/health`, {
                 signal: controller.signal,
             })
             .then(({ data }) => setCounts(data))

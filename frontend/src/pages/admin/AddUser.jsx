@@ -5,9 +5,7 @@ import { BookContext } from "../../context/School.jsx";
 
 function AddUser() {
     const [form, setForm] = useState({
-        username: "",
-        first_name: "",
-        last_name: "",
+        name: "",
         email: "",
         password: "",
         role: "customer",
@@ -26,30 +24,22 @@ function AddUser() {
     });
 
     const [error, setError] = useState("");
-    const [usernameTouched, setUsernameTouched] = useState(false);
 
     useEffect(() => {
-        if (form.first_name && form.last_name && !usernameTouched) {
-            const base = `${form.first_name}.${form.last_name}`
+        if (form.name) {
+            const base = `${form.name}`
                 .toLowerCase()
                 .replace(/\s/g, "");
 
             const random = Math.floor(100 + Math.random() * 900);
-            setForm((prev) => ({ ...prev, username: `${base}${random}` }));
+            setForm((prev) => ({ ...prev }));
         }
-    }, [form.first_name, form.last_name, usernameTouched]);
+    }, [form.name]);
 
     const handleChange = (e) => {
         const { name, value, type, checked } = e.target;
 
-        if (name === "username") {
-            setUsernameTouched(true);
-        }
-
-        setForm((prev) => ({
-            ...prev,
-            [name]: type === "checkbox" ? checked : value,
-        }));
+        setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     };
 
     const handleSubmit = async (e) => {
@@ -65,16 +55,10 @@ function AddUser() {
             }
             const res1 = await axios.post(`${import.meta.env.VITE_API}/api/user/permission`, payload);
 
-            // alert("User created successfully!");
-            setToastConfig({
-                type: "success",
-                message: "User created successfully.",
-            });
+            setToastConfig({ type: "success", message: "User created successfully." });
             setShowToast(true);
             setForm({
-                username: "",
-                first_name: "",
-                last_name: "",
+                name: "",
                 email: "",
                 password: "",
                 role: "",
@@ -89,10 +73,8 @@ function AddUser() {
                 deleteBook: false,
                 readBook: false,
             })
-            setUsernameTouched(false);
         } catch (error) {
             console.error("Error creating user:", error);
-            // setError(error.response?.data?.message || "Failed to create user");
             setToastConfig({
                 type: "error",
                 message: error.response?.data?.message || "Failed to create discount. Check console for details.",
@@ -124,37 +106,15 @@ function AddUser() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                             <div>
-                                <label className="block text-sm font-medium text-gray-700">First Name <span className="text-red-500">*</span></label>
+                                <label className="block text-sm font-medium text-gray-700">Name <span className="text-red-500">*</span></label>
                                 <input
-                                    name="first_name"
-                                    value={form.first_name}
+                                    name="name"
+                                    value={form.name}
                                     onChange={handleChange}
                                     required
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 />
                             </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Last Name</label>
-                                <input
-                                    name="last_name"
-                                    value={form.last_name}
-                                    onChange={handleChange}
-                                    required
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
-                            <div>
-                                <label className="block text-sm font-medium text-gray-700">Username <span className="text-red-500">*</span></label>
-                                <input
-                                    name="username"
-                                    value={form.username}
-                                    onChange={handleChange}
-                                    className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                />
-                            </div>
-
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">Email <span className="text-red-500">*</span></label>
                                 <input

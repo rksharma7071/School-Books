@@ -29,7 +29,7 @@ function CartTable({ paginatedCarts }) {
                         <div className="flex items-center justify-between px-5 py-4">
                             <div>
                                 <h3 className="text-sm font-semibold text-gray-900">
-                                    {cart.user?.username}
+                                    {cart.user?.name}
                                 </h3>
                                 <p className="text-xs text-gray-500">
                                     {cart.user?.email}

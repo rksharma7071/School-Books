@@ -6,10 +6,13 @@ import { File } from "../models/file.model.js";
 import { ApiError, handleError } from "../utils/apiError.js";
 import cloudinary from "../config/cloudinary.js";
 
-const productQuery = (identifier) =>
-    mongoose.Types.ObjectId.isValid(identifier)
-        ? { _id: identifier }
-        : { handle: identifier };
+const productQuery = (identifier) => {
+    if (mongoose.Types.ObjectId.isValid(identifier)) {
+        return { _id: identifier };
+    }
+
+    return { handle: identifier };
+};
 
 const parseRequestBody = (body) => {
     if (body?.payload !== undefined) {
@@ -445,7 +448,7 @@ export const getProductBySlug = async (req, res) => {
 
         const [reviews, stats] = await Promise.all([
             Review.find({ productId: product._id, approved: true })
-                .populate("userId", "first_name last_name username")
+                .populate("userId", "name")
                 .sort({ createdAt: -1 })
                 .limit(10)
                 .lean(),
@@ -500,16 +503,7 @@ export const getProductBySlug = async (req, res) => {
                         user: review.userId
                             ? {
                                 id: review.userId._id,
-                                username: review.userId.username,
-                                firstName: review.userId.first_name,
-                                lastName: review.userId.last_name,
-                                fullName:
-                                    [
-                                        review.userId.first_name,
-                                        review.userId.last_name,
-                                    ]
-                                        .filter(Boolean)
-                                        .join(" ") || review.userId.username,
+                                nameame: review.userId.name,
                             }
                             : null,
                     })),
@@ -930,6 +924,20 @@ export const updateVariantInventory = async (req, res) => {
                 inventoryStatus: getInventoryStatus(updatedProduct.inventory_quantity),
             },
         });
+    } catch (error) {
+        handleError(error, req, res);
+    }
+};
+
+export const getProductForAdmin = async (req, res) => {
+    try {
+        const { identifier } = req.params;
+        const query = productQuery(identifier);
+
+        const product = await Product.findOne(query).lean();
+        if (!product) throw new ApiError(404, "Product not found");
+
+        return res.status(200).json({ success: true, data: product });
     } catch (error) {
         handleError(error, req, res);
     }

@@ -12,11 +12,22 @@ import {
     resendVerification,
 } from "../controllers/auth.controller.js";
 import authMiddleware from "../middlewares/authentication.js";
-import { authLimiter } from "../config/security.js";
+import { authAttemptLimiter } from "../config/security.js";
 
 const router = express.Router();
 
-router.use(authLimiter);
+router.use(
+    [
+        "/signup",
+        "/login",
+        "/request-otp",
+        "/verify-otp",
+        "/reset-password",
+        "/verify-email",
+        "/resend-verification",
+    ],
+    authAttemptLimiter
+);
 
 router.post("/signup", signUp);
 router.post("/login", login);

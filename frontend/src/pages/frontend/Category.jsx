@@ -15,24 +15,6 @@ function Categories() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // useEffect(() => {
-    //     const fetchCategories = async () => {
-    //         try {
-    //             setLoading(true);
-    //             setError("");
-    //             const response = await axios.get(`${API}/api/categories`);
-    //             setCategories(response.data?.data || []);
-    //         } catch (err) {
-    //             console.error("Failed to fetch categories:", err);
-    //             setError(err.response?.data?.message || "Unable to load categories.");
-    //         } finally {
-    //             setLoading(false);
-    //         }
-    //     };
-
-    //     fetchCategories();
-    // }, []);
-
     useEffect(() => {
         fetchCategories();
     }, []);
@@ -41,7 +23,6 @@ function Categories() {
         try {
             const response = await fetch(`${API}/api/categories`);
             const data = await response.json();
-            // console.log("Categories: ",data);
             
             if (data.success) {
                 setCategories(data.data);
@@ -52,8 +33,6 @@ function Categories() {
             setLoading(false);
         }
     };
-
-    // console.log("Categories", categories);
 
     const filteredCategories = useMemo(() => {
         const term = search.trim().toLowerCase();
@@ -67,7 +46,6 @@ function Categories() {
 
     return (
         <main className="min-h-screen bg-slate-50">
-            {/* Hero */}
             <section className="bg-blue-950 text-white">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 py-14">
                     <div className="max-w-3xl">
@@ -79,7 +57,6 @@ function Categories() {
             </section>
 
             <section className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
-                {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-5">
                     <div>
                         <h2 className="text-2xl font-bold text-gray-900">All Categories</h2>
@@ -99,7 +76,6 @@ function Categories() {
                     </div>
                 </div>
 
-                {/* Loading */}
                 {loading && (
                     <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                         {Array.from({ length: 8 }).map((_, index) => (
@@ -108,12 +84,10 @@ function Categories() {
                     </div>
                 )}
 
-                {/* Error */}
                 {!loading && error && (
                     <div className="mt-10 rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-600">{error}</div>
                 )}
 
-                {/* Categories */}
                 {!loading && !error && (
                     <>
                         {filteredCategories.length === 0 ? (
@@ -127,8 +101,8 @@ function Categories() {
                             <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
                                 {filteredCategories.map((category) => (
                                     <Link
-                                        key={category._id}
-                                        to={`/categories/${encodeURIComponent(category.slug)}`}
+                                        key={category.id}
+                                        to={`/categories/${category.handle}`}
                                         state={{
                                             categoryId: category.slug,
                                             categoryName: category.name,

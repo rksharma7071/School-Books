@@ -1,21 +1,32 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { User, Permission } from "../models/user.model.js";
-import { ApiError, handleError } from "../utils/apiError.js";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const USERNAME_RE = /^[a-zA-Z0-9_.-]{3,30}$/;
-const VALID_ROLES = ["customer", "author", "admin"];
-const VALID_STATUSES = ["active", "blocked", "suspended"];
 
-const SAFE_SELECT = "-password -otp -otpExpiry -otpAttempts -otpLastSentAt -resetToken -resetTokenExpiry -emailVerificationToken -emailVerificationTokenExpiry -emailVerificationSentAt -tokenVersion";
+const ROLES = ["customer", "admin"];
+const STATUSES = ["active", "blocked", "suspended"];
+
+const SAFE_SELECT =
+    "-password -otp -otpExpiry -otpAttempts -otpLastSentAt " +
+    "-resetToken -resetTokenExpiry -emailVerificationToken " +
+    "-emailVerificationTokenExpiry -emailVerificationSentAt -tokenVersion";
+
+const PERMISSIONS = [
+    "createUser",
+    "updateUser",
+    "deleteUser",
+    "readUser",
+    "createProduct",
+    "updateProduct",
+    "deleteProduct",
+    "readProduct",
+];
 
 const publicUser = (user) => ({
     id: user._id,
-    username: user.username,
     email: user.email,
-    first_name: user.first_name,
-    last_name: user.last_name,
+    name: user.name,
     role: user.role,
     status: user.status,
     emailVerified: user.emailVerified,
@@ -40,35 +51,42 @@ export const getAllUsers = async (req, res) => {
         const pageNum = Math.max(1, Number(page) || 1);
         const limitNum = Math.min(100, Math.max(1, Number(limit) || 20));
 
-        if (!["createdAt", "updatedAt", "username", "email", "role", "status"].includes(sortBy)) {
-            throw new ApiError(400, `Invalid sortBy field. Allowed: ${["createdAt", "updatedAt", "username", "email", "role", "status"].join(", ")}`);
+        const allowedSort = [
+            "createdAt",
+            "updatedAt",
+            "email",
+            "role",
+            "status",
+        ];
+
+        if (!allowedSort.includes(sortBy)) {
+            return res.status(400).json({ success: false, message: "Invalid sortBy field" });
+        }
+
+        if (role && !ROLES.includes(role)) {
+            return res.status(400).json({ success: false, message: "Invalid role" })
+        }
+
+        if (status && !STATUSES.includes(status)) {
+            return res.status(400).json({ success: false, message: "Invalid status" })
         }
 
         const filter = {};
 
-        if (role !== undefined) {
-            if (!VALID_ROLES.includes(role)) throw new ApiError(400, `Invalid role. Allowed: ${VALID_ROLES.join(", ")}`);
-            filter.role = role;
-        }
-
-        if (status !== undefined) {
-            if (!VALID_STATUSES.includes(status)) throw new ApiError(400, `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}`);
-            filter.status = status;
-        }
+        if (role) filter.role = role;
+        if (status) filter.status = status;
 
         if (emailVerified !== undefined) {
-            filter.emailVerified = emailVerified === "true" || emailVerified === true;
+            filter.emailVerified = emailVerified === "true";
         }
 
         if (search) {
-            filter.$or = [
-                { username: { $regex: search, $options: "i" } },
-                { email: { $regex: search, $options: "i" } },
-                { first_name: { $regex: search, $options: "i" } },
-                { last_name: { $regex: search, $options: "i" } },
-            ];
+            filter.$or = ["email", "name"].map(
+                (field) => ({
+                    [field]: { $regex: search, $options: "i" },
+                })
+            );
         }
-
 
         const [users, total] = await Promise.all([
             User.find(filter)
@@ -77,10 +95,11 @@ export const getAllUsers = async (req, res) => {
                 .skip((pageNum - 1) * limitNum)
                 .limit(limitNum)
                 .lean(),
+
             User.countDocuments(filter),
         ]);
 
-        res.status(200).json({
+        res.json({
             success: true,
             users,
             pagination: {
@@ -91,145 +110,241 @@ export const getAllUsers = async (req, res) => {
             },
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };
 
 export const getUserStats = async (req, res) => {
     try {
-        const [roleStats, statusStats, verificationStats, totalUsers] = await Promise.all([
-            User.aggregate([{ $group: { _id: "$role", count: { $sum: 1 } } }]),
-            User.aggregate([{ $group: { _id: "$status", count: { $sum: 1 } } }]),
-            User.aggregate([{ $group: { _id: "$emailVerified", count: { $sum: 1 } } }]),
-            User.countDocuments({}),
+        const [roles, statuses, verification, totalUsers] = await Promise.all([
+            User.aggregate([
+                { $group: { _id: "$role", count: { $sum: 1 } } },
+            ]),
+            User.aggregate([
+                { $group: { _id: "$status", count: { $sum: 1 } } },
+            ]),
+            User.aggregate([
+                { $group: { _id: "$emailVerified", count: { $sum: 1 } } },
+            ]),
+            User.countDocuments(),
         ]);
 
-        const roleCounts = Object.fromEntries(roleStats.map((role) => [role._id, role.count]));
-        const statusCounts = Object.fromEntries(statusStats.map((status) => [status._id, status.count]));
-        const verificationCounts = Object.fromEntries(verificationStats.map((verification) => [String(verification._id), verification.count]));
+        const count = (data) =>
+            Object.fromEntries(data.map((item) => [item._id, item.count]));
 
-        res.status(200).json({
+        const role = count(roles);
+        const status = count(statuses);
+        const verified = count(verification);
+
+        res.json({
             success: true,
             stats: {
                 totalUsers,
-                customers: roleCounts.customer || 0,
-                authors: roleCounts.author || 0,
-                admins: roleCounts.admin || 0,
-                activeUsers: statusCounts.active || 0,
-                blockedUsers: statusCounts.blocked || 0,
-                suspendedUsers: statusCounts.suspended || 0,
-                verifiedUsers: verificationCounts.true || 0,
-                unverifiedUsers: verificationCounts.false || 0,
+
+                customers: role.customer || 0,
+                authors: role.author || 0,
+                admins: role.admin || 0,
+
+                activeUsers: status.active || 0,
+                blockedUsers: status.blocked || 0,
+                suspendedUsers: status.suspended || 0,
+
+                verifiedUsers: verified.true || 0,
+                unverifiedUsers: verified.false || 0,
             },
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };
 
 export const createNewUser = async (req, res) => {
     try {
-        const { username, email, password, first_name, last_name, role, status } = req.body;
+        const {
+            email,
+            password,
+            name,
+            role = "customer",
+            status = "active",
+        } = req.body;
 
-        if (!username || !email || !password) throw new ApiError(400, "Username, email and password are required");
-        if (!USERNAME_RE.test(username)) throw new ApiError(400, "Username must be 3-30 characters (letters, numbers, . _ -)");
-        if (!EMAIL_RE.test(email)) throw new ApiError(400, "Invalid email format");
-        if (String(password).length < 8) throw new ApiError(400, "Password must be at least 8 characters");
+        if (!email || !password) {
+            return res.status(400).json({ success: false, message: "email and password are required" })
+        }
 
         const normalizedEmail = email.toLowerCase().trim();
 
-        const existing = await User.findOne({ $or: [{ email: normalizedEmail }, { username }] }).lean();
-        if (existing) throw new ApiError(409, "Email or username already in use");
-
-        if (role !== undefined && !VALID_ROLES.includes(role)) {
-            throw new ApiError(400, `Invalid role. Allowed: ${VALID_ROLES.join(", ")}`);
-        }
-        if (status !== undefined && !VALID_STATUSES.includes(status)) {
-            throw new ApiError(400, `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}`);
+        if (!EMAIL_RE.test(normalizedEmail)) {
+            return res.status(400).json({ success: false, message: "Invalid email format" })
         }
 
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const created = await User.create({
-            username,
-            email: normalizedEmail,
-            password: hashedPassword,
-            first_name,
-            last_name,
-            role: role || "customer",
-            status: status || "active",
+        if (password.length < 8) {
+            return res.status(400).json({ success: false, message: "Password must be at least 8 characters" })
+        }
+
+        if (!ROLES.includes(role)) {
+            return res.status(400).json({ success: false, message: "Invalid role" })
+        }
+
+        if (!STATUSES.includes(status)) {
+            return res.status(400).json({ success: false, message: "Invalid status" })
+        }
+
+        const exists = await User.findOne({
+            $or: [
+                { email: normalizedEmail }
+            ],
         });
 
-        res.status(201).json({ success: true, message: "User created successfully", user: publicUser(created) });
+        if (exists) {
+            return res.status(400).json({ success: false, message: "Email is already registered." })
+        }
+
+        const user = await User.create({
+            email: normalizedEmail,
+            password: await bcrypt.hash(password, 10),
+            name,
+            role,
+            status,
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "User created successfully",
+            user: publicUser(user),
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };
+
 
 export const getUserById = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid user id");
 
-        const user = await User.findById(id).select(SAFE_SELECT).lean();
-        if (!user) throw new ApiError(404, "User not found");
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid user id" })
+        }
 
-        res.status(200).json({ success: true, user });
+        const user = await User.findById(id)
+            .select(SAFE_SELECT)
+            .lean();
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" })
+        }
+
+        res.json({
+            success: true,
+            user,
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };
+
 
 export const updateUser = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid user id");
 
-        const { username, email, first_name, last_name, role, status } = req.body;
-        const isAdmin = req.user?.role === "admin";
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid user id" })
+        }
 
         const user = await User.findById(id);
-        if (!user) throw new ApiError(404, "User not found");
 
-        if (username !== undefined) {
-            if (!USERNAME_RE.test(username)) throw new ApiError(400, "Username must be 3-30 characters (letters, numbers, . _ -)");
-            const existing = await User.findOne({ username, _id: { $ne: id } }).lean();
-            if (existing) throw new ApiError(409, "Username already in use");
-            user.username = username;
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" })
         }
+
+        const { email, name, role, status } = req.body;
+
+        const isAdmin = req.user?.role === "admin";
+        console.log(req.user?.role);
+
+        const isSelf = String(user._id) === String(req.user.id);
 
         if (email !== undefined) {
             const normalizedEmail = String(email).toLowerCase().trim();
-            if (!EMAIL_RE.test(normalizedEmail)) throw new ApiError(400, "Invalid email format");
-            const existing = await User.findOne({ email: normalizedEmail, _id: { $ne: id } }).lean();
-            if (existing) throw new ApiError(409, "Email already in use");
+
+            if (!EMAIL_RE.test(normalizedEmail)) {
+                return res.status(400).json({ success: false, message: "Invalid email format" })
+            }
+
+            const exists = await User.findOne({
+                email: normalizedEmail,
+                _id: { $ne: id },
+            });
+
+            if (exists) {
+                return res.status(409).json({ success: false, message: "Email is already registered." })
+            }
+
             if (normalizedEmail !== user.email) {
                 user.emailVerified = false;
                 user.emailVerifiedAt = null;
             }
+
             user.email = normalizedEmail;
         }
 
-        if (first_name !== undefined) user.first_name = first_name;
-        if (last_name !== undefined) user.last_name = last_name;
+        if (name !== undefined) {
+            user.name = name;
+        }
 
         if (role !== undefined) {
-            if (!isAdmin) throw new ApiError(403, "Only admins can change roles");
-            if (!VALID_ROLES.includes(role)) throw new ApiError(400, `Invalid role. Allowed: ${VALID_ROLES.join(", ")}`);
-
-            if (String(user._id) === String(req.user.id) && user.role === "admin" && role !== "admin") {
-                const adminCount = await User.countDocuments({ role: "admin" });
-                if (adminCount <= 1) throw new ApiError(400, "Cannot remove the last admin's role");
+            if (!isAdmin) {
+                return res.status(403).json({ success: false, message: "Only admins can change roles" })
             }
+
+            if (!ROLES.includes(role)) {
+                return res.status(400).json({ success: false, message: "Invalid role" })
+            }
+
+            if (isSelf && user.role === "admin" && role !== "admin") {
+                const adminCount = await User.countDocuments({ role: "admin" });
+
+                if (adminCount <= 1) {
+                    return res.status(400).json({ success: false, message: "Cannot remove the last admin's role" })
+                }
+            }
+
             user.role = role;
         }
 
         if (status !== undefined) {
-            if (!isAdmin) throw new ApiError(403, "Only admins can change account status");
-            if (!VALID_STATUSES.includes(status)) throw new ApiError(400, `Invalid status. Allowed: ${VALID_STATUSES.join(", ")}`);
-            if (String(user._id) === String(req.user.id) && status !== "active") {
-                throw new ApiError(400, "You cannot change your own account status");
+            if (!isAdmin) {
+                return res.status(403).json({ success: false, message: "Only admins can change account status" })
             }
+
+            if (!STATUSES.includes(status)) {
+                return res.status(400).json({ success: false, message: "Invalid status" })
+            }
+
+            if (isSelf && status !== "active") {
+                return res.status(400).json({ success: false, message: "You cannot change your own account status" })
+            }
+
             user.status = status;
+
             if (status !== "active") {
                 user.tokenVersion = (user.tokenVersion || 0) + 1;
             }
@@ -237,88 +352,161 @@ export const updateUser = async (req, res) => {
 
         await user.save();
 
-        res.json({ status: "success", user: publicUser(user) });
+        res.json({
+            success: true,
+            user: publicUser(user),
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };
+
 
 export const deleteUser = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid user id");
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid user id" })
+        }
 
         if (String(id) === String(req.user.id)) {
-            throw new ApiError(400, "You cannot delete your own account");
+            return res.status(400).json({ success: false, message: "You cannot delete your own account" })
         }
 
         const user = await User.findById(id);
-        if (!user) throw new ApiError(404, "User not found");
 
-        if (user.role === "admin") {
-            const adminCount = await User.countDocuments({ role: "admin" });
-            if (adminCount <= 1) throw new ApiError(400, "Cannot delete the last remaining admin");
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" })
         }
 
-        await User.findByIdAndDelete(id);
-        await Permission.deleteOne({ userId: id });
+        if (user.role === "admin") {
+            const adminCount = await User.countDocuments({
+                role: "admin",
+            });
 
-        res.json({ status: "success", message: "User deleted successfully" });
+            if (adminCount <= 1) {
+                return res.status(400).json({ success: false, message: "Cannot delete the last remaining admin" })
+            }
+        }
+
+        await Promise.all([
+            User.findByIdAndDelete(id),
+            Permission.deleteOne({ userId: id }),
+        ]);
+
+        res.json({
+            success: true,
+            message: "User deleted successfully",
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };
 
-const toBool = (v) => v === true || v === "true" || v === 1 || v === "1";
 
 export const updatePermission = async (req, res) => {
     try {
-        const body = req.body;
-        const userId = body.userId || req.params.id;
+        const userId = req.body.userId || req.params.id;
 
-        if (!userId) throw new ApiError(400, "userId is required");
-        if (!mongoose.Types.ObjectId.isValid(userId)) throw new ApiError(400, "Invalid userId format");
+        if (!userId) {
+            return res.status(400).json({ success: false, message: "userId is required" })
+        }
 
-        const targetUser = await User.findById(userId).lean();
-        if (!targetUser) throw new ApiError(404, "User not found");
+        if (!mongoose.Types.ObjectId.isValid(userId)) {
+            return res.status(400).json({ success: false, message: "Invalid userId format" })
+        }
 
-        const updateFields = {};
-        ["createUser", "updateUser", "deleteUser", "readUser", "createProduct", "updateProduct", "deleteProduct", "readProduct",]
-            .forEach((k) => {
-                if (body[k] !== undefined && body[k] !== null) 
-                    updateFields[k] = [true, "true", 1, "1"].includes(body[k]);
-            });
+        const user = await User.findById(userId).lean();
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" })
+        }
+
+        const updates = {};
+
+        PERMISSIONS.forEach((key) => {
+            if (req.body[key] !== undefined) {
+                updates[key] = [true, "true", 1, "1"].includes(req.body[key]);
+            }
+        });
 
         const permission = await Permission.findOneAndUpdate(
             { userId },
-            { $set: updateFields, $setOnInsert: { userId } },
-            { new: true, upsert: true, setDefaultsOnInsert: true }
+            {
+                $set: updates,
+                $setOnInsert: { userId },
+            },
+            {
+                new: true,
+                upsert: true,
+            }
         ).lean();
 
-        res.status(200).json({ message: "Permission saved successfully", permission });
+        res.json({
+            success: true,
+            message: "Permission saved successfully",
+            permission,
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };
+
 
 export const getAllPermissions = async (req, res) => {
     try {
-        const permission = await Permission.find({}).lean();
-        res.json({ success: true, permissions: permission });
+        const permissions = await Permission.find().lean();
+
+        res.json({
+            success: true,
+            permissions,
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };
 
+
 export const getPermissionById = async (req, res) => {
     try {
-        const userId = req.params.id;
-        if (!mongoose.Types.ObjectId.isValid(userId)) throw new ApiError(400, "Invalid User ID format");
+        const { id } = req.params;
 
-        const permission = await Permission.findOne({ userId }).lean();
-        if (!permission) throw new ApiError(404, "Permission not found for this user");
-        res.status(200).json({ success: true, permission });
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid user ID" })
+        }
+
+        const permission = await Permission.findOne({ userId: id }).lean();
+
+        if (!permission) {
+            return res.status(404).json({ success: false, message: "Permission not found for this user" })
+        }
+
+        res.json({
+            success: true,
+            permission,
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error(error);
+        res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
     }
 };

@@ -93,26 +93,18 @@ function Header() {
                 </nav>
 
                 <div className="flex items-center gap-4">
-
-                    {/* CART */}
                     <Link to="/cart" className="relative text-blue-100 hover:text-white">
                         <LuShoppingCart className="text-xl" />
                         {cartCount > 0 && (
-                            <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] rounded-full px-1.5">
-                                {cartCount}
-                            </span>
+                            <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] rounded-full px-1.5">{cartCount}</span>
                         )}
                     </Link>
-
-                    {/* SEARCH */}
                     <button
                         onClick={() => setSearchOpen(true)}
                         className="text-blue-100 hover:text-white"
                     >
                         <MdSearch className="text-xl" />
                     </button>
-
-                    {/* AUTH */}
                     {!user ? (
                         <Link to="/login" className="text-blue-100 hover:text-white">
                             <AiOutlineUser className="text-xl" />
@@ -124,17 +116,17 @@ function Header() {
                                 className="flex items-center gap-2"
                             >
                                 <span className="hidden md:inline text-sm text-blue-100">
-                                    {user.first_name}
+                                    {user.name}
                                 </span>
                                 <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center text-white font-semibold">
-                                    {user.first_name?.[0]}
+                                    {user.name?.[0]}
                                 </div>
                             </button>
 
                             {open && (
                                 <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-xl border z-50">
                                     <div className="px-5 py-4 bg-slate-100 border-b">
-                                        <p className="font-semibold text-sm">{user.username}</p>
+                                        <p className="font-semibold text-sm">{user.name}</p>
                                         <p className="text-xs text-gray-500">{user.email}</p>
                                     </div>
 
@@ -154,8 +146,6 @@ function Header() {
                             )}
                         </div>
                     )}
-
-                    {/* MOBILE HAMBURGER */}
                     <button
                         onClick={() => setMobileOpen(true)}
                         className="lg:hidden text-blue-100 text-xl"

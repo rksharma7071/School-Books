@@ -12,7 +12,6 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
         if (window.confirm("Do you want to update this Review?")) {
             try {
                 await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: true });
-                // alert("Review has been updated successfully!");
                 setRender(true);
                 setToastConfig({
                     type: "success",
@@ -35,7 +34,6 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
             try {
                 await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: false });
                 setRender(true);
-                // alert("Review has been updated successfully!");
                 setToastConfig({
                     type: "success",
                     message: "Review has been updated successfully!",
@@ -101,21 +99,18 @@ function ReviewTable({ render, setRender, isAllSelected, toggleSelectAll, toggle
                             <tr key={user._id} className="border-t border-gray-100 hover:bg-gray-50">
                                 <td className="px-4 py-3"><input type="checkbox" checked={isSelected} onChange={() => toggleSelect(user._id)} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" /></td>
                                 <td className="px-4 py-3 text-gray-900 font-medium">
-                                    {user?.user?.username || "Loading..."}
+                                    {user?.user?.name || "Loading..."}
                                     <Review rating={user.rating} />
                                 </td>
                                 <td className="px-4 py-3 text-gray-700">
                                     {user?.book?.name || "Loading..."}
                                 </td>
                                 <td className="px-4 py-3 text-gray-700">{user.title}</td>
-                                {/* <td className="px-4 py-3 text-gray-700">{user.body}</td> */}
                                 <td className="px-4 py-3 text-gray-700">
-                                    {/* Mobile (≤ md): show 10 words */}
                                     <span className="block md:hidden">
                                         {truncateWords(user.body, 10)}
                                     </span>
 
-                                    {/* Desktop (md+): show full text */}
                                     <span className="hidden md:block">
                                         {user.body}
                                     </span>

@@ -1,7 +1,7 @@
 import axios from "axios";
 import api from "../utils/api.js";
 
-const getBooks = async ({
+const getCategorys = async ({
     page = 1,
     limit = 12,
     search = "",
@@ -32,44 +32,30 @@ const getBooks = async ({
     if (maxPrice !== "") params.set("maxPrice", maxPrice);
 
     const { data } = await api.get(`/api/product?${params.toString()}`);
-
     return data;
 };
 
-const getBookById = async ({ params }) => {
-    try {
-        const { data } = await api.get(`/api/product/${params.id}`);
-        console.log("Get Book By Id", data.data);
-        return data?.data || null;
-    } catch (error) {
-        console.error("Error fetching book by ID:", error);
-        return null;
-    }
+const getCategoryById = async ({ params }) => {
+    const { data } = await api.get(`/api/categories/${params.id}`);
+    console.log("Get Category By Id", data.data);
+
+    return data?.data || null;
 };
 
-const getBookByHandle = async ({ params }) => {
-    try {
-        const { data } = await api.get(`/api/product/${params.handle}`);
-        console.log("Get Book By Handle: ", data.data);
-        return data?.data || null;
-    } catch (error) {
-        console.error("Error fetching book by handle:", error);
-        return null;
-    }
+const getCategoryByHandle = async ({ params }) => {
+    const { data } = await api.get(`/api/product/${params.handle}`);
+    console.log("Get Category By Handle: ", data.data);
+
+    return data?.data || null;
 };
 
-const editBookLoader = async ({ params }) => {
+const editCategoryLoader = async ({ params }) => {
     const token = localStorage.getItem("token");
     const res = await axios.get(
-        `${import.meta.env.VITE_API}/api/product/admin/${params.identifier}`,
+        `${import.meta.env.VITE_API}/api/categories/admin/${params.id}`,
         { headers: { Authorization: `Bearer ${token}` } }
     );
     return res.data.data;
 };
 
-export {
-    getBooks,
-    getBookById,
-    getBookByHandle,
-    editBookLoader
-}
+export { getCategorys, getCategoryById, getCategoryByHandle, editCategoryLoader }

@@ -47,7 +47,7 @@ const buildRatingDistributionStages = () => [
 
 const formatPublicUser = (u) => {
     if (!u || typeof u !== "object") return null;
-    return { id: u._id, username: u.username, firstName: u.first_name, lastName: u.last_name };
+    return { id: u._id, name: name };
 };
 
 const formatPublicProduct = (p) => {
@@ -90,7 +90,7 @@ const formatAdminReview = (r) => ({
     product: r.productId?.title ? formatPublicProduct(r.productId) : undefined,
     userId: r.userId?._id ? r.userId._id : r.userId,
     user: r.userId && typeof r.userId === "object"
-        ? { id: r.userId._id, username: r.userId.username, firstName: r.userId.first_name, lastName: r.userId.last_name, email: r.userId.email }
+        ? { id: r.userId._id, name: r.userId.name, email: r.userId.email }
         : undefined,
     rating: r.rating,
     title: r.title,
@@ -150,7 +150,7 @@ export const getAllReview = async (req, res) => {
 
         const [reviews, total, approvedAvgAgg] = await Promise.all([
             Review.find(filter)
-                .populate("userId", "username first_name last_name email")
+                .populate("userId", "name email")
                 .populate("productId", "title handle")
                 .sort({ [sortBy]: sortOrderValue })
                 .skip((page - 1) * limit)
@@ -183,7 +183,7 @@ export const getReviewById = async (req, res) => {
         const { id } = req.params;
         if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid review id");
 
-        const review = await Review.findById(id).populate("userId", "username first_name last_name").lean();
+        const review = await Review.findById(id).populate("userId", "name").lean();
         if (!review) throw new ApiError(404, "Review not found");
 
         const reviewOwnerId = review.userId?._id || review.userId;
@@ -367,7 +367,7 @@ export const getReviewsByProduct = async (req, res) => {
 
         const [reviews, total, statsAgg] = await Promise.all([
             Review.find(filter)
-                .populate("userId", "username first_name last_name")
+                .populate("userId", "name")
                 .sort(PRODUCT_REVIEW_SORTS[sortKey])
                 .skip((page - 1) * limit)
                 .limit(limit)
@@ -471,7 +471,7 @@ export const getAllPublishedReviews = async (req, res) => {
 
         const [reviews, total] = await Promise.all([
             Review.find(filter)
-                .populate("userId", "username first_name last_name")
+                .populate("userId", "name")
                 .populate("productId", "title handle image")
                 .sort(PRODUCT_REVIEW_SORTS[sort])
                 .skip((page - 1) * limit)

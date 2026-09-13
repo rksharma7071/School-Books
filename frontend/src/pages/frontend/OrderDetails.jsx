@@ -44,7 +44,6 @@ function OrderDetails() {
 
     return (
         <div className="space-y-6">
-            {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
                     <h2 className="text-2xl font-semibold">
@@ -76,7 +75,6 @@ function OrderDetails() {
                 </div>
             </div>
 
-            {/* Address & Payment */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <InfoCard title="Shipping Address">
@@ -91,7 +89,6 @@ function OrderDetails() {
                 </div>
             </div>
 
-            {/* Items */}
             <div>
                 <h3 className="text-lg font-semibold mb-4">Items</h3>
 
@@ -125,7 +122,6 @@ function OrderDetails() {
                 </div>
             </div>
 
-            {/* Summary */}
             <div className="max-w-md ml-auto border border-gray-300 rounded-lg p-4 space-y-2">
                 <SummaryRow label="Subtotal" value={order.subtotal} />
                 <SummaryRow label="Shipping" value={order.shipping} />

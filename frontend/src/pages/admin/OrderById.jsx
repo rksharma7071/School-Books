@@ -93,17 +93,13 @@ function OrderById() {
                 </button>
             </div>
 
-            {/* Cancelled Banner */}
             {isCancelled && (
                 <div className="border border-red-300 bg-red-50 text-red-700 rounded-lg p-4">
                     <h3 className="font-semibold">Order Cancelled</h3>
-                    <p className="text-sm">
-                        This order has been cancelled. No further updates are allowed.
-                    </p>
+                    <p className="text-sm">This order has been cancelled. No further updates are allowed.</p>
                 </div>
             )}
 
-            {/* Status */}
             <span
                 className={`inline-block px-4 py-1 rounded-full text-sm font-medium ${statusStyles[order.status]}`}
             >
@@ -170,7 +166,6 @@ function OrderById() {
                 </div>
             </div>
 
-            {/* Items */}
             <div className="border border-gray-300 rounded-xl bg-white overflow-hidden">
                 <h3 className="font-semibold p-4 border-b">Order Items</h3>
                 <table className="w-full text-sm">

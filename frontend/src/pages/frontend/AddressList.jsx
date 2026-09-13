@@ -12,7 +12,6 @@ function AddressList() {
         if (window.confirm("Do you want to delete this Address?")) {
             try {
                 await axios.delete(`${import.meta.env.VITE_API}/api/address/${id}`);
-                // setRender(true);
                 useRevalidator()
                 navigate(0)
                 setToastConfig({

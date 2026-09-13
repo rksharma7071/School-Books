@@ -81,7 +81,7 @@ function Discount() {
           {/* <p className="text-sm text-gray-500">Manage all school books and inventory.</p> */}
         </div>
 
-        <div className="flex gap-2 w-full sm:w-auto bg-white">
+        <div className="flex gap-2 w-full sm:w-auto">
           <input
             type="search"
             value={search}
@@ -90,7 +90,7 @@ function Discount() {
               setCurrentPage(1);
             }}
             placeholder="Search by title, author, category..."
-            className="flex-1 sm:w-72 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 sm:w-72 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
           <Link to={`/${import.meta.env.VITE_ADMIN}/add-discount`} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">Add Discount</Link>
         </div>
@@ -109,12 +109,10 @@ function Discount() {
           </div>
         )}
 
-        {/* Table */}
         <div className="overflow-x-auto">
           <DiscountTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedDiscount={paginatedDiscount} selectedIds={selectedIds} toggleSelect={toggleSelect} />
         </div>
 
-        {/* Pagination footer */}
         <div className="border-t border-gray-100 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
           <div className="flex items-center gap-2">
             <span>Rows per page:</span>

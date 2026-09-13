@@ -42,7 +42,6 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
       try {
         await axios.patch(`${import.meta.env.VITE_API}/api/review/${id}`, { approved: false });
         setRender(true);
-        // alert("Review has been updated successfully!");
         setToastConfig({
           type: "success",
           message: "Review has been updated successfully!",
@@ -64,7 +63,6 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
       try {
         await axios.delete(`${import.meta.env.VITE_API}/api/discount/${id}`);
         setRender(true);
-        // alert("Discount has been deleted successfully!");
         setToastConfig({
           type: "success",
           message: "Discount has been deleted successfully!",

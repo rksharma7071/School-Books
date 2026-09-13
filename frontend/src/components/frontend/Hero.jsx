@@ -2,8 +2,6 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 
 const Hero = () => {
-    console.log("Hero");
-    
     return (
         <section className="relative bg-gradient-to-r from-blue-950 via-blue-900 to-blue-950 text-white overflow-hidden">
             <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgdmlld0JveD0iMCAwIDYwIDYwIj48cGF0aCBkPSJNMzAgMTVMMTUgMzBsMTUgMTUgMTUtMTV6IiBmaWxsPSIjZmZmIi8+PC9zdmc+')] bg-repeat"></div>

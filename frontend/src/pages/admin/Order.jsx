@@ -40,9 +40,7 @@ function Order() {
             if (!term) return true;
 
             const customer = order.user
-                ? `${order.user.first_name || ""} ${order.user.last_name || ""} ${
-                      order.user.email || ""
-                  }`.toLowerCase()
+                ? `${order.user.name || ""} ${order.user.email || ""}`.toLowerCase()
                 : "";
 
             return (
@@ -198,11 +196,10 @@ function Order() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
-                                currentPage === 1
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1
                                     ? "opacity-50 cursor-not-allowed"
                                     : ""
-                            }`}
+                                }`}
                         >
                             Prev
                         </button>
@@ -219,11 +216,10 @@ function Order() {
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${
-                                currentPage >= totalPages
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
                                     ? "opacity-50 cursor-not-allowed"
                                     : ""
-                            }`}
+                                }`}
                         >
                             Next
                         </button>

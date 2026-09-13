@@ -11,7 +11,6 @@ const formatDateTimeLocal = (date) => {
 function DiscountById() {
     const loader = useLoaderData();
     const navigate = useNavigate();
-    // const [error, setError] = useState("");
     const { setToastConfig, setShowToast } = useContext(BookContext);
     const [form, setForm] = useState({
         discount_code: loader.discount_code || "",
@@ -88,7 +87,6 @@ function DiscountById() {
                         )} */}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Discount Code */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">
                                     Discount Code *
@@ -101,7 +99,6 @@ function DiscountById() {
                                 />
                             </div>
 
-                            {/* Discount Type */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">
                                     Discount Type *
@@ -117,7 +114,6 @@ function DiscountById() {
                                 </select>
                             </div>
 
-                            {/* Amount */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">
                                     Amount *
@@ -131,7 +127,6 @@ function DiscountById() {
                                 />
                             </div>
 
-                            {/* Start Date */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">
                                     Start Date *
@@ -145,7 +140,6 @@ function DiscountById() {
                                 />
                             </div>
 
-                            {/* End Date */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">
                                     End Date *
@@ -159,7 +153,6 @@ function DiscountById() {
                                 />
                             </div>
 
-                            {/* Usage Limit */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">
                                     Usage Limit
@@ -173,7 +166,6 @@ function DiscountById() {
                                 />
                             </div>
 
-                            {/* Status */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700">
                                     Status *

@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { BookContext } from "../../context/School.jsx";
 import InputField from "../../components/UI/InputField.jsx";
 import Button from "../../components/UI/Button.jsx";
-import { createRazorpayOrder, verifyRazorpayPayment } from "../../data/razorpay.js"; // ✅ Import helpers
+import { createRazorpayOrder, verifyRazorpayPayment } from "../../data/razorpay.js";
 
 function Checkout() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast, address } = useContext(BookContext);
@@ -42,12 +42,13 @@ function Checkout() {
 
     const cancelOrder = async (orderId) => {
         try {
-            const token = localStorage.getItem("token");
             await axios.post(
                 `${import.meta.env.VITE_API}/api/order/${orderId}/cancel`,
                 { reason: "Payment failed or cancelled" },
                 {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                    }
                 }
             );
             console.log("Order cancelled successfully");
@@ -124,8 +125,6 @@ function Checkout() {
 
         try {
             const token = localStorage.getItem("token");
-
-            // Create order
             const orderRes = await axios.post(
                 `${import.meta.env.VITE_API}/api/order`,
                 {
@@ -142,13 +141,14 @@ function Checkout() {
                     billing_address: `${shipping.name}%20${shipping.phone}%20${shipping.address}%20${shipping.city}%20${shipping.state}%20${shipping.pincode}`,
                 },
                 {
-                    headers: { Authorization: `Bearer ${token}` }
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                    }
                 }
             );
 
             const order = orderRes.data;
 
-            // ✅ FIXED: Use the razorpay helper with Authorization header
             const razorpayRes = await createRazorpayOrder(order._id);
 
             openRazorpay(razorpayRes.razorpayOrder, order._id);
@@ -175,7 +175,6 @@ function Checkout() {
 
             handler: async function (response) {
                 try {
-                    // ✅ FIXED: Use the razorpay helper with Authorization header
                     await verifyRazorpayPayment({
                         razorpay_order_id: response.razorpay_order_id,
                         razorpay_payment_id: response.razorpay_payment_id,
@@ -192,7 +191,6 @@ function Checkout() {
                     navigate("/profile/orders");
                 } catch (error) {
                     console.error("Payment verification failed:", error);
-                    // ✅ FIXED: Cancel order using PATCH (not DELETE)
                     await cancelOrder(orderId);
                     setToastConfig({
                         type: "error",
@@ -203,7 +201,6 @@ function Checkout() {
             },
             modal: {
                 ondismiss: async () => {
-                    // ✅ FIXED: Cancel order using PATCH (not DELETE)
                     await cancelOrder(orderId);
                     setToastConfig({
                         type: "error",

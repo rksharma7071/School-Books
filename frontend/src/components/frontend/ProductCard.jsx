@@ -11,9 +11,8 @@ function ProductCard({ book, rating = 0 }) {
     const [imageError, setImageError] = useState(false);
     const [selectedOptions, setSelectedOptions] = useState({});
 
-    // Initialize with first variant's options or defaults
     const defaultVariant = book.variants?.[0] || {};
-    const currentVariant = book.variants?.find(v => 
+    const currentVariant = book.variants?.find(v =>
         Object.entries(selectedOptions).every(([key, value]) => v.options[key] === value)
     ) || defaultVariant;
 
@@ -58,8 +57,8 @@ function ProductCard({ book, rating = 0 }) {
                 quantity: 1,
             }, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
-                },
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                }
             });
             setToastConfig({
                 type: "success",
@@ -88,7 +87,6 @@ function ProductCard({ book, rating = 0 }) {
 
     return (
         <div className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 flex flex-col hover:-translate-y-1">
-            {/* Image Container */}
             <Link
                 to={`/products/${book.handle}`}
                 className="relative aspect-[4/5] bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center overflow-hidden"
@@ -113,21 +111,6 @@ function ProductCard({ book, rating = 0 }) {
                     />
                 )}
 
-                {/* Top Badges */}
-                {/* <div className="absolute top-3 left-3 flex flex-col gap-1.5">
-                    {book.isActive && (
-                        <span className="text-[10px] font-bold bg-gradient-to-r from-green-500 to-emerald-500 text-white px-2.5 py-1.5 rounded-full shadow-md">
-                            Available
-                        </span>
-                    )}
-                    {book.minPrice !== book.maxPrice && (
-                        <span className="text-[10px] font-bold bg-blue-500 text-white px-2.5 py-1.5 rounded-full shadow-md">
-                            Multiple Options
-                        </span>
-                    )}
-                </div> */}
-
-                {/* Wishlist Button */}
                 <button
                     onClick={toggleWishlist}
                     className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 backdrop-blur-sm text-gray-600 hover:text-red-500 hover:scale-110 transition-all duration-200 shadow-md"
@@ -141,8 +124,6 @@ function ProductCard({ book, rating = 0 }) {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                     </svg>
                 </button>
-
-                {/* Quick Add Button on Hover */}
                 <div className="absolute inset-x-3 bottom-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                     <button
                         onClick={handleAddToCart}
@@ -169,9 +150,7 @@ function ProductCard({ book, rating = 0 }) {
                 </div>
             </Link>
 
-            {/* Content */}
             <div className="p-4 flex flex-col flex-1">
-                {/* Title */}
                 <Link
                     to={`/products/${book.handle}`}
                     className="text-sm font-semibold text-gray-900 line-clamp-2 leading-snug hover:text-blue-600 transition-colors duration-200"
@@ -179,11 +158,8 @@ function ProductCard({ book, rating = 0 }) {
                     {book.title}
                 </Link>
 
-                {/* Description */}
                 {book.description && (
-                    <p className="mt-1.5 text-xs text-gray-500 line-clamp-2">
-                        {book.description}
-                    </p>
+                    <p className="mt-1.5 text-xs text-gray-500 line-clamp-2">{book.description}</p>
                 )}
 
                 {/* Options Selectors */}
@@ -218,7 +194,6 @@ function ProductCard({ book, rating = 0 }) {
                     </div>
                 )} */}
 
-                {/* Rating */}
                 <div className="mt-2 flex items-center gap-1.5">
                     <div className="flex items-center">
                         {[...Array(5)].map((_, i) => (
@@ -235,7 +210,6 @@ function ProductCard({ book, rating = 0 }) {
                     <span className="text-xs font-medium text-gray-600">{rating.toFixed(1)}</span>
                 </div>
 
-                {/* Price and Stock */}
                 <div className="mt-auto pt-3">
                     <div className="flex items-center justify-between">
                         <div className="flex items-baseline gap-2">
@@ -249,7 +223,6 @@ function ProductCard({ book, rating = 0 }) {
                             )} */}
                         </div>
 
-                        {/* Stock Status */}
                         {stockQty > 0 ? (
                             stockQty <= 5 ? (
                                 <span className="text-[10px] font-semibold text-orange-600 bg-orange-50 px-2 py-1 rounded-full">
@@ -267,14 +240,12 @@ function ProductCard({ book, rating = 0 }) {
                         )}
                     </div>
 
-                    {/* Variant Count */}
                     {/* {book.variants && book.variants.length > 1 && (
                         <div className="mt-2 text-[11px] text-gray-500">
                             {book.variants.length} variants available
                         </div>
                     )} */}
 
-                    {/* Mobile Add to Cart */}
                     <button
                         onClick={handleAddToCart}
                         disabled={loading || stockQty === 0}

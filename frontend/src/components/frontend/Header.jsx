@@ -21,6 +21,7 @@ function Header() {
     const [searching, setSearching] = useState(false);
 
     const { user, adminLogout, cartItems } = useContext(BookContext);
+    console.log("results: ", results);
 
     const menuRef = useRef(null);
     const navigate = useNavigate();
@@ -32,9 +33,6 @@ function Header() {
         adminLogout();
         navigate("/");
     };
-
-    // console.log("Header");
-    
 
     useEffect(() => {
         const term = search.trim();
@@ -128,9 +126,6 @@ function Header() {
                 <nav className="hidden lg:flex items-center gap-6 text-sm font-medium text-blue-100">
                     <Link to="/" className="hover:text-white">Home</Link>
                     <Link to="/categories/all" className="hover:text-white">Categories</Link>
-                    {/* <Link to="/best-sellers" className="hover:text-white">Best Sellers</Link> */}
-                    {/* <Link to="/new-arrivals" className="hover:text-white">New Arrivals</Link> */}
-                    {/* <Link to="/offers" className="hover:text-white">Offers</Link> */}
                     <Link to="/reviews" className="hover:text-white">Reviews</Link>
                     <Link to="/contact" className="hover:text-white">Contact Us</Link>
                 </nav>
@@ -167,22 +162,18 @@ function Header() {
                                 className="flex items-center gap-2"
                             >
                                 <span className="hidden md:inline text-sm text-blue-100 font-medium">
-                                    {user?.first_name}
+                                    {user?.name}
                                 </span>
                                 <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">
-                                    {user?.first_name?.[0]?.toUpperCase()}
+                                    {user?.name?.[0]?.toUpperCase()}
                                 </div>
                             </button>
 
                             {open && (
                                 <div className="absolute right-0 mt-3 w-64 rounded-2xl bg-white shadow-xl border border-gray-100 z-50 overflow-hidden">
                                     <div className="px-5 py-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-gray-300">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">
-                                            {user?.username?.toUpperCase()}
-                                        </p>
-                                        <p className="text-xs text-gray-500 truncate mt-0.5">
-                                            {user?.email}
-                                        </p>
+                                        <p className="text-sm font-semibold text-gray-900 truncate">{user?.name?.toUpperCase()}</p>
+                                        <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
                                     </div>
 
                                     <div className="py-2">
@@ -282,17 +273,10 @@ function Header() {
                                 </Link>
                             ) : (
                                 <>
-                                    <Link to="/profile" onClick={() => setMobileOpen(false)} className="text-blue-100 hover:text-white">
-                                        My Profile
-                                    </Link>
-                                    <Link to="/profile/orders" onClick={() => setMobileOpen(false)} className="text-blue-100 hover:text-white">
-                                        My Orders
-                                    </Link>
+                                    <Link to="/profile" onClick={() => setMobileOpen(false)} className="text-blue-100 hover:text-white">My Profile</Link>
+                                    <Link to="/profile/orders" onClick={() => setMobileOpen(false)} className="text-blue-100 hover:text-white">My Orders</Link>
                                     <button
-                                        onClick={() => {
-                                            logout();
-                                            setMobileOpen(false);
-                                        }}
+                                        onClick={() => { logout(); setMobileOpen(false); }}
                                         className="text-left text-red-400 hover:text-red-300"
                                     >
                                         Logout
@@ -379,7 +363,7 @@ function Header() {
 
                                         <div className="mt-3 space-y-1">
                                             <p className="line-clamp-2 text-sm font-semibold text-gray-900">
-                                                {b.name}
+                                                {b.title}
                                             </p>
                                             <p className="text-xs text-gray-500">{b.author}</p>
                                         </div>

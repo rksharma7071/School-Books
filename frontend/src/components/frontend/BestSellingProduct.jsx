@@ -11,12 +11,6 @@ function BestSellingProduct() {
     const fetched = useRef(false);
 
     useEffect(() => {
-        if (process.env.NODE_ENV === 'development') {
-            // console.log("Best Selling Product - mounted");
-        }
-    }, []);
-
-    useEffect(() => {
         if (fetched.current) return;
         fetched.current = true;
 
@@ -40,13 +34,7 @@ function BestSellingProduct() {
         loadBooks();
     }, []);
 
-    const visibleBooks = useMemo(
-        () => books.filter((b) => b.isActive).slice(0, 10),
-        [books]
-    );
-
-    // console.log("Books: ", books);
-    
+    const visibleBooks = useMemo(() => books.filter((b) => b.isActive).slice(0, 10), [books]);
 
     const productCardProps = useMemo(() => ({
         user,

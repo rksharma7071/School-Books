@@ -14,11 +14,9 @@ const permissionSchema = new mongoose.Schema({
 
 const userSchema = new mongoose.Schema(
     {
-        username: { type: String, required: true, unique: true, trim: true },
         email: { type: String, required: true, unique: true, lowercase: true, trim: true },
         password: { type: String, required: true, select: false },
-        first_name: { type: String, trim: true },
-        last_name: { type: String, trim: true },
+        name: { type: String, trim: true, require: true },
         role: { type: String, enum: ["customer", "author", "admin"], default: "customer", index: true },
         status: { type: String, enum: ["active", "blocked", "suspended"], default: "active", index: true },
         emailVerified: { type: Boolean, default: false, index: true },

@@ -12,7 +12,6 @@ const API = import.meta.env.VITE_API;
 
 function CategoryProducts() {
     const { categoryName } = useParams();
-    // console.log("categoryName: ",categoryName);
     
     const { user } = useContext(BookContext);
 
@@ -25,15 +24,6 @@ function CategoryProducts() {
 
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
-
-    // const normalizeCategory = (value = "") => {
-    //     return decodeURIComponent(value)
-    //         .replace(/-/g, " ")
-    //         .trim()
-    //         .toLowerCase();
-    // };
-
-    // console.log(category, books);
     
     useEffect(() => {
         const fetchCategoryProducts = async () => {
@@ -41,39 +31,11 @@ function CategoryProducts() {
                 setLoading(true);
                 setError("");
 
-                const categoryResponse = await axios.get(`${API}/api/categories/${categoryName}`);
-
+                const categoryResponse = await axios.get(`${API}/api/categories/${categoryName}/products`);
                 const categories = categoryResponse.data?.data || [];
-                // console.log("categories: ",categories.books);
-                
-                // const requestedCategory = normalizeCategory(categoryName);
-
-                // const matchedCategory = categories.find(
-                //     (category) => normalizeCategory(category.name) === requestedCategory
-                // );
-                // if (!matchedCategory) {
-                //     setCategory(null);
-                //     setBooks([]);
-                //     setError(`Category "${categoryName}" was not found.`);
-                //     return;
-                // }
 
                 setCategory(categories.category);
                 setBooks(categories.books || []);
-
-                // const response = await axios.get(
-                //     `${API}/api/product`,
-                //     {
-                //         params: {
-                //             page: 1,
-                //             limit: 50,
-                //             category: matchedCategory._id,
-                //             search: search || undefined,
-                //             sortBy,
-                //             sortOrder,
-                //         },
-                //     }
-                // );
             } catch (error) {
                 console.error("Category products error:", error);
                 setError(error.response?.data?.message || "Failed to load category products.");
@@ -85,8 +47,6 @@ function CategoryProducts() {
         fetchCategoryProducts();
     }, [categoryName, search, sortBy, sortOrder]);
     
-    // console.log("Books: ", books);
-
     return (
         <main className="min-h-screen bg-slate-50">
             <section className="bg-blue-950 text-white">

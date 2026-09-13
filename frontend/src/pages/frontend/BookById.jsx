@@ -29,7 +29,6 @@ function BookById() {
 
     const bookId = book?._id;
 
-    // Destructure with fallbacks for variant-based structure
     const {
         _id,
         title = book.name || "Untitled",
@@ -48,18 +47,16 @@ function BookById() {
         updatedAt,
     } = book || {};
 
-    // Initialize selected options with first variant
     const defaultVariant = variants[0] || {};
-    
+
     const currentVariant = useMemo(() => {
-        return variants.find(v => 
-            Object.entries(selectedOptions).every(([key, value]) => 
+        return variants.find(v =>
+            Object.entries(selectedOptions).every(([key, value]) =>
                 v.options?.[key] === value || v.options?.[key.charAt(0).toUpperCase() + key.slice(1)] === value
             )
         ) || defaultVariant;
     }, [selectedOptions, variants, defaultVariant]);
 
-    // Initialize selected options from default variant
     useEffect(() => {
         if (defaultVariant.options && Object.keys(selectedOptions).length === 0) {
             const initialOptions = {};
@@ -115,7 +112,7 @@ function BookById() {
 
         if (loading) return;
         if (!currentVariant._id) return;
-        
+
         setLoading(true);
 
         const cartItem = {
@@ -133,9 +130,9 @@ function BookById() {
         setCartItems((prev) => {
             const item = prev.find((i) => i.variantId === currentVariant._id);
             return item
-                ? prev.map((i) => 
-                    i.variantId === currentVariant._id 
-                        ? { ...i, quantity: i.quantity + quantity } 
+                ? prev.map((i) =>
+                    i.variantId === currentVariant._id
+                        ? { ...i, quantity: i.quantity + quantity }
                         : i
                 )
                 : [...prev, cartItem];
@@ -149,7 +146,7 @@ function BookById() {
                 quantity,
             }, {
                 headers: {
-                    Authorization: `Bearer ${token}`,
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
                 },
             });
 
@@ -216,7 +213,6 @@ function BookById() {
     return (
         <div className="max-w-7xl mx-auto px-4 py-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-white rounded-2xl p-6">
-                {/* Image Gallery */}
                 <div className="flex flex-col gap-4">
                     <div className="flex justify-center bg-gray-50 rounded-xl p-4">
                         {displayImage && !imageError ? (
@@ -235,17 +231,15 @@ function BookById() {
                             </div>
                         )}
                     </div>
-                    
-                    {/* Image thumbnails */}
+
                     {allImages.length > 1 && (
                         <div className="flex gap-2 overflow-x-auto">
                             {allImages.map((img, index) => (
                                 <button
                                     key={index}
                                     onClick={() => setSelectedImage(index)}
-                                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${
-                                        selectedImage === index ? 'border-blue-600' : 'border-gray-200 hover:border-gray-300'
-                                    }`}
+                                    className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${selectedImage === index ? 'border-blue-600' : 'border-gray-200 hover:border-gray-300'
+                                        }`}
                                 >
                                     <img src={img} alt={`${title} - ${index + 1}`} className="w-full h-full object-cover" />
                                 </button>
@@ -256,7 +250,7 @@ function BookById() {
 
                 <div className="flex flex-col gap-4">
                     <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
-                    
+
                     {/* {description && (
                         <p className="text-gray-600 line-clamp-2">{description}</p>
                     )} */}
@@ -274,7 +268,6 @@ function BookById() {
                         </span>
                     </div>
 
-                    {/* Price Display */}
                     <div className="flex items-baseline gap-3">
                         <div className="text-2xl font-semibold text-blue-950">
                             ₹{displayPrice.toFixed(2)}
@@ -286,14 +279,11 @@ function BookById() {
                         )}
                     </div>
 
-                    {/* Variant Options */}
                     {options.length > 0 && (
                         <div className="space-y-4 mt-2">
                             {options.map((option) => (
                                 <div key={option._id}>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
-                                        {option.name}
-                                    </label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">{option.name}</label>
                                     <div className="flex flex-wrap gap-2">
                                         {option.values.map((value) => {
                                             const isSelected = selectedOptions[option.name.toLowerCase()] === value;
@@ -301,11 +291,10 @@ function BookById() {
                                                 <button
                                                     key={value}
                                                     onClick={() => handleOptionChange(option.name, value)}
-                                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                                                        isSelected
-                                                            ? 'bg-blue-900 text-white shadow-md'
-                                                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                                    }`}
+                                                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${isSelected
+                                                        ? 'bg-blue-900 text-white shadow-md'
+                                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                                        }`}
                                                 >
                                                     {value}
                                                 </button>
@@ -317,14 +306,12 @@ function BookById() {
                         </div>
                     )}
 
-                    {/* Current Selection */}
                     {getVariantOptionsString() && (
                         <div className="text-sm text-gray-600">
                             <span className="font-medium">Selected:</span> {getVariantOptionsString()}
                         </div>
                     )}
 
-                    {/* Stock Status */}
                     <div className="flex items-center gap-2">
                         {stockQty > 0 ? (
                             stockQty <= 5 ? (
@@ -364,7 +351,6 @@ function BookById() {
                         {loading ? "Adding..." : stockQty === 0 ? "Out of Stock" : "Add to Cart"}
                     </button>
 
-                    {/* Description Accordion */}
                     <div className="mt-6 border border-gray-200 rounded-xl overflow-hidden">
                         <button
                             onClick={() => setExpanded(!expanded)}
@@ -394,22 +380,19 @@ function BookById() {
                 </div>
             </div>
 
-            {/* Reviews Section */}
             {showReviewForm && (
                 <ReviewForm
                     onClose={() => setShowReviewForm(false)}
-                    onSubmit={(data) => {
-                        setShowReviewForm(false);
-                    }}
+                    onSubmit={(data) => { setShowReviewForm(false) }}
                     bookId={bookId}
                     userId={user?.id}
                 />
             )}
-            <ReviewByBook 
-                review={approvedReviews} 
-                reviewSectionRef={reviewSectionRef} 
-                showReviewForm={showReviewForm} 
-                setShowReviewForm={setShowReviewForm} 
+            <ReviewByBook
+                review={approvedReviews}
+                reviewSectionRef={reviewSectionRef}
+                showReviewForm={showReviewForm}
+                setShowReviewForm={setShowReviewForm}
             />
         </div>
     );

@@ -66,7 +66,6 @@ function ResetPassword() {
                     otp: form.otp,
                 }
             );
-            // console.log("Response: ", response);
             setResetToken(response.data?.resetToken)
             
             setToastConfig({
@@ -124,7 +123,6 @@ function ResetPassword() {
 
             setTimeout(() => {
                 navigate("/login");
-                // window.location.href = "/login";
             }, 1500);
         } catch (error) {
             setToastConfig({

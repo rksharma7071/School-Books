@@ -95,7 +95,7 @@ export const getAddresses = async (req, res) => {
 
         const [addresses, total] = await Promise.all([
             Address.find(filter)
-                .populate("userId", "username email first_name last_name")
+                .populate("userId", "email name")
                 .sort({ createdAt: -1 })
                 .skip((pageNum - 1) * limitNum)
                 .limit(limitNum)

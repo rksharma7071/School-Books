@@ -48,6 +48,7 @@ const BookProvider = ({ children }) => {
                 console.error("Authentication Error:", error);
                 if (error.response?.status === 401) {
                     localStorage.removeItem("token");
+                    localStorage.removeItem("userId");
                 }
 
                 setUser(null);
@@ -62,6 +63,7 @@ const BookProvider = ({ children }) => {
     const adminLogout = () => {
         localStorage.removeItem("token");
         localStorage.removeItem("userId");
+        localStorage.removeItem("user");
         setUser(null);
         setCartItems([]);
     };
@@ -105,7 +107,7 @@ const BookProvider = ({ children }) => {
     };
 
     // console.log("School User: ", user);
-    
+
 
     return (
         <BookContext.Provider
@@ -140,7 +142,4 @@ const BookProvider = ({ children }) => {
     );
 };
 
-export {
-    BookContext,
-    BookProvider,
-};
+export { BookContext, BookProvider };

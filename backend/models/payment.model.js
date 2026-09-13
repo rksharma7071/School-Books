@@ -25,7 +25,7 @@ const paymentSchema = new mongoose.Schema(
 );
 
 paymentSchema.index({ createdAt: -1 });
-paymentSchema.index({ razorpayOrderId: 1 });
+// paymentSchema.index({ razorpayOrderId: 1 });
 
 const Payment = mongoose.model("Payment", paymentSchema);
 

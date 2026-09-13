@@ -42,6 +42,7 @@ const categorySchema = new mongoose.Schema(
     type: { type: String, enum: ["manual", "automatic"], default: "manual" },
     conditionMatch: { type: String, enum: ["all", "any"], default: "all" },
     conditions: { type: [conditionSchema], default: [] },
+    products: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
     isActive: { type: Boolean, default: true, index: true },
     sortOrder: { type: Number, default: 0, validate: { validator: Number.isInteger, message: "sortOrder must be an integer" } },
   },

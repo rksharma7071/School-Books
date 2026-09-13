@@ -40,7 +40,7 @@ function CartById() {
             <div className="rounded-xl border border-gray-200 bg-white p-5 flex items-center justify-between">
                 <div>
                     <h2 className="text-lg font-semibold text-gray-900">
-                        {cart.user.first_name} {cart.user.last_name}
+                        {cart.user.name}
                     </h2>
                     <p className="text-sm text-gray-500">{cart.user.email}</p>
                     <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">

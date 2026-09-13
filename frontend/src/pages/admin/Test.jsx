@@ -65,7 +65,6 @@ function Test() {
   const mediumStockCount = booksData.filter((b) => b.stock > 8 && b.stock <= 15).length;
   return (
     <div className="min-h-screen flex flex-col bg-slate-50">
-      {/* HEADER */}
       <header className="w-full bg-blue-950 border-b border-blue-900/60 shadow-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
@@ -98,9 +97,7 @@ function Test() {
         </div>
       </header>
 
-      {/* LAYOUT */}
       <div className="flex flex-1 overflow-hidden">
-        {/* SIDEBAR */}
         <aside className="hidden md:block w-64 shrink-0 border-r border-gray-200 bg-white/90 backdrop-blur-sm p-4 overflow-y-auto">
           <nav className="space-y-1 text-sm">
             <button className="w-full flex items-center gap-3 px-3 py-2 rounded-lg bg-blue-50 text-blue-700 font-medium">
@@ -146,10 +143,8 @@ function Test() {
           </nav>
         </aside>
 
-        {/* MAIN */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
           <div className="max-w-7xl mx-auto space-y-4">
-            {/* TOP BAR + STATS */}
             <div className="flex flex-col gap-4 lg:flex-row lg:items-stretch">
               <div className="flex-1 space-y-2">
                 <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">

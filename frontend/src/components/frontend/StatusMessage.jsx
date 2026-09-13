@@ -70,35 +70,26 @@ function StatusMessage({
         rounded-xl border ${config.border} ${config.bg}
         p-5 shadow-lg
         transform transition-all duration-300 ease-in-out
-        ${
-          animate === "enter"
-            ? "translate-x-0 opacity-100 scale-100"
-            : "translate-x-full opacity-0 scale-95"
+        ${animate === "enter"
+          ? "translate-x-0 opacity-100 scale-100"
+          : "translate-x-full opacity-0 scale-95"
         }
       `}
     >
       <div className="flex gap-4 items-start">
-        {/* Icon */}
         <div className="mt-0.5">{config.icon}</div>
-
-        {/* Content */}
         <div className="flex-1">
-          <h4 className={`font-semibold ${config.text}`}>
-            {title || config.title}
-          </h4>
+          <h4 className={`font-semibold ${config.text}`}>{title || config.title}</h4>
 
           {message && (
             <p className="mt-1 text-sm text-gray-700">{message}</p>
           )}
 
           {details && (
-            <div className="mt-3 rounded-md bg-white/70 p-3 text-sm text-gray-700">
-              {details}
-            </div>
+            <div className="mt-3 rounded-md bg-white/70 p-3 text-sm text-gray-700">{details}</div>
           )}
         </div>
 
-        {/* Manual Close */}
         <button
           onClick={() => setAnimate("exit")}
           className="text-gray-400 hover:text-gray-600 text-lg"

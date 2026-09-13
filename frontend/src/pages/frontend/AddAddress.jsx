@@ -44,8 +44,6 @@ function AddAddress() {
             ...form,
             [name]: type === "checkbox" ? checked : value,
         });
-
-        // Clear field error while typing
         if (errors[name]) {
             setErrors({ ...errors, [name]: "" });
         }
@@ -59,14 +57,13 @@ function AddAddress() {
         setLoading(true);
 
         try {
-            // ✅ userId is NOT sent - it will be taken from req.user.id on the server
             await axios.post(
                 `${import.meta.env.VITE_API}/api/address`,
-                form, // ✅ No userId in the request body
+                form,
                 {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
+                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                    }
                 }
             );
 

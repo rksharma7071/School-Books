@@ -30,12 +30,8 @@ function ReviewByBook({ review = [], reviewSectionRef, showReviewForm, setShowRe
                     >
                         <div className="flex items-center justify-between">
                             <div>
-                                <p className="text-sm font-semibold text-gray-900">
-                                    {r.user?.first_name} {r.user?.last_name}
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    {new Date(r.createdAt).toLocaleDateString()}
-                                </p>
+                                <p className="text-sm font-semibold text-gray-900">{r.user?.name}</p>
+                                <p className="text-xs text-gray-500">{new Date(r.createdAt).toLocaleDateString()}</p>
                             </div>
 
                             <Review rating={r.rating} size={14} />
