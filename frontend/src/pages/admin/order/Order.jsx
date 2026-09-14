@@ -1,62 +1,70 @@
-import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
-import UserTable from "../../components/admin/UserTable";
-import { Link } from "react-router-dom";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { useLoaderData } from "react-router-dom";
+import { getOrder } from "../../../data/order.js";
+import OrderTable from "../../../components/admin/OrderTable.jsx";
 
-function User() {
-    const [users, setUsers] = useState([]);
+function Order() {
+    const loader = useLoaderData();
+
+    const [orders, setOrders] = useState(loader || []);
+    const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState("all");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
-    const [render, setRender] = useState(false);
 
     useEffect(() => {
-        const controller = new AbortController();
+        setOrders(loader || []);
+    }, [loader]);
 
-        const fetchUsers = async () => {
-            try {
-                const res = await axios.get(
-                    `${import.meta.env.VITE_API}/api/user`,
-                    {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem("token")}`
-                        },
-                        signal: controller.signal,
-                    }
-                );
+    const refresh = useCallback(async () => {
+        setRefreshing(true);
+        try {
+            const data = await getOrder();
+            setOrders(data || []);
+            setSelectedIds([]);
+        } finally {
+            setRefreshing(false);
+        }
+    }, []);
 
-                const apiUsers = res.data?.users || res.data?.data || [];
-                setUsers(apiUsers);
-            } catch (error) {
-                if (axios.isCancel(error)) return;
-                console.error("Error fetching users:", error.message);
+    const filteredOrders = useMemo(() => {
+        const term = search.trim().toLowerCase();
+
+        return orders.filter((order) => {
+            if (statusFilter !== "all" && order.status !== statusFilter) {
+                return false;
             }
-        };
 
-        fetchUsers();
-        return () => controller.abort();
-    }, [render]);
+            if (!term) return true;
 
-    const filteredUsers = useMemo(() => {
-        const term = (search || "").trim().toLowerCase();
-        if (!term) return users;
-        return users.filter(
-            (user) =>
-                user.email?.toLowerCase().includes(term) ||
-                user.name?.toLowerCase().includes(term)
-        );
-    }, [users, search]);
+            const customer = order.user
+                ? `${order.user.name || ""} ${order.user.email || ""}`.toLowerCase()
+                : "";
 
-    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / rowsPerPage));
+            return (
+                String(order.orderNumber).includes(term) ||
+                order.status?.toLowerCase().includes(term) ||
+                String(order.total).includes(term) ||
+                order.paymentId?.toLowerCase().includes(term) ||
+                customer.includes(term)
+            );
+        });
+    }, [orders, search, statusFilter]);
 
-    const paginatedUsers = useMemo(() => {
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredOrders.length / rowsPerPage)
+    );
+
+    const paginatedOrder = useMemo(() => {
         const safePage = Math.min(currentPage, totalPages);
         const start = (safePage - 1) * rowsPerPage;
-        return filteredUsers.slice(start, start + rowsPerPage);
-    }, [filteredUsers, currentPage, rowsPerPage, totalPages]);
+        return filteredOrders.slice(start, start + rowsPerPage);
+    }, [filteredOrders, currentPage, rowsPerPage, totalPages]);
 
-    const allVisibleIds = paginatedUsers.map((u) => u._id);
+    const allVisibleIds = paginatedOrder.map((o) => o._id);
     const isAllSelected =
         allVisibleIds.length > 0 &&
         allVisibleIds.every((id) => selectedIds.includes(id));
@@ -89,22 +97,37 @@ function User() {
         setCurrentPage((p) => Math.min(totalPages, p + 1));
 
     const startIndex =
-        filteredUsers.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const endIndex = Math.min(currentPage * rowsPerPage, filteredUsers.length);
+        filteredOrders.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
+    const endIndex = Math.min(currentPage * rowsPerPage, filteredOrders.length);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
                     <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        User
+                        Orders
                     </h2>
                     <p className="text-sm text-gray-500">
-                        Manage all school customers.
+                        Track and fulfil customer orders.
                     </p>
                 </div>
 
-                <div className="flex gap-2 w-full sm:w-auto">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto bg-white">
+                    <select
+                        value={statusFilter}
+                        onChange={(e) => {
+                            setStatusFilter(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                        className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="all">All statuses</option>
+                        <option value="in progress">In Progress</option>
+                        <option value="fulfilled">Fulfilled</option>
+                        <option value="unfulfilled">Unfulfilled</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+
                     <input
                         type="search"
                         value={search}
@@ -112,22 +135,24 @@ function User() {
                             setSearch(e.target.value);
                             setCurrentPage(1);
                         }}
-                        placeholder="Search by email, name..."
-                        className="flex-1 sm:w-72 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Search by order #, customer, total..."
+                        className="flex-1 sm:w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <Link
-                        to={`/${import.meta.env.VITE_ADMIN}/add-user`}
-                        className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
+
+                    <button
+                        onClick={refresh}
+                        disabled={refreshing}
+                        className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
                     >
-                        Add User
-                    </Link>
+                        {refreshing ? "Refreshing..." : "Refresh"}
+                    </button>
                 </div>
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 {selectedIds.length > 0 && (
                     <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between text-xs text-gray-600">
-                        <span>{selectedIds.length} user(s) selected</span>
+                        <span>{selectedIds.length} order(s) selected</span>
                         <button
                             className="text-blue-600 hover:underline"
                             onClick={() => setSelectedIds([])}
@@ -138,12 +163,10 @@ function User() {
                 )}
 
                 <div className="overflow-x-auto">
-                    <UserTable
-                        render={render}
-                        setRender={setRender}
+                    <OrderTable
                         isAllSelected={isAllSelected}
                         toggleSelectAll={toggleSelectAll}
-                        paginatedUsers={paginatedUsers}
+                        paginatedOrder={paginatedOrder}
                         selectedIds={selectedIds}
                         toggleSelect={toggleSelect}
                     />
@@ -163,9 +186,9 @@ function User() {
                             <option value={30}>30 rows</option>
                         </select>
                         <span className="hidden sm:inline">
-                            {filteredUsers.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredUsers.length} users`
-                                : "Showing 0 of 0 users"}
+                            {filteredOrders.length > 0
+                                ? `Showing ${startIndex}–${endIndex} of ${filteredOrders.length} orders`
+                                : "Showing 0 of 0 orders"}
                         </span>
                     </div>
 
@@ -173,23 +196,29 @@ function User() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 
-                                ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }`}
                         >
                             Prev
                         </button>
                         <span>
                             Page{" "}
-                            <span className="font-semibold text-gray-700">{Math.min(currentPage, totalPages)}</span>{" "}
+                            <span className="font-semibold text-gray-700">
+                                {Math.min(currentPage, totalPages)}
+                            </span>{" "}
                             of{" "}
-                            <span className="font-semibold text-gray-700">{totalPages}</span>
+                            <span className="font-semibold text-gray-700">
+                                {totalPages}
+                            </span>
                         </span>
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
                             className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
                                 }`}
                         >
                             Next
@@ -201,4 +230,4 @@ function User() {
     );
 }
 
-export default User;
+export default Order;

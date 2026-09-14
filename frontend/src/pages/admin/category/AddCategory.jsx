@@ -1,8 +1,8 @@
 import React, { useContext, useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { BookContext } from "../../context/School.jsx";
-import ImageGridManager from "../../components/admin/ImageGridManager.jsx";
+import { BookContext } from "../../../context/School.jsx";
+import ImageGridManager from "../../../components/admin/ImageGridManager.jsx";
 
 const slugify = (str) =>
   String(str || "")
@@ -334,7 +334,7 @@ function AddCategory() {
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
         <form
           onSubmit={handleSubmit}
-          className="max-w-5xl mx-auto bg-white p-6 space-y-6"
+          className="bg-white p-6 space-y-6"
         >
           {/* ----- basic info ----- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

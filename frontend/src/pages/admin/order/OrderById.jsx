@@ -1,8 +1,8 @@
 import React, { useContext, useState } from "react";
 import axios from "axios";
 import { Link, useLoaderData, useNavigate } from "react-router-dom";
-import { BookContext } from "../../context/School.jsx";
-import InputField from "../../components/UI/InputField.jsx";
+import { BookContext } from "../../../context/School.jsx";
+import InputField from "../../../components/UI/InputField.jsx";
 
 function OrderById() {
     const loaderOrder = useLoaderData();

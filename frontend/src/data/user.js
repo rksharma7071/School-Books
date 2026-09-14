@@ -25,6 +25,11 @@ const editUser = async ({ params }) => {
     }
 };
 
+const getUsersData = async () => {
+
+}
+
 export {
-    editUser
+    editUser,
+    getUsersData
 }

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from "react";
 import axios from "axios";
 import { useLoaderData } from "react-router-dom";
 // import PermissionForm from "../../components/admin/PermissionForm.jsx";
-import { BookContext } from "../../context/School.jsx";
+import { BookContext } from "../../../context/School.jsx";
 
 function EditUser() {
     const { user } = useLoaderData();
@@ -98,7 +98,7 @@ function EditUser() {
             </div>
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="overflow-x-auto">
-                    <form onSubmit={handleSubmit} className="max-w-5xl mx-auto bg-white p-6 space-y-6">
+                    <form onSubmit={handleSubmit} className="bg-white p-6 space-y-6">
 
                         {error && (
                             <div className="bg-red-100 text-red-700 p-2 rounded text-sm">{error}</div>

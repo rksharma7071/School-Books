@@ -1,7 +1,7 @@
 import axios from "axios";
 import React, { useState, useContext } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
-import { BookContext } from "../../context/School.jsx";
+import { BookContext } from "../../../context/School.jsx";
 
 const formatDateTimeLocal = (date) => {
     if (!date) return "";
@@ -78,7 +78,7 @@ function DiscountById() {
                 <div className="overflow-x-auto">
                     <form
                         onSubmit={handleSubmit}
-                        className="max-w-5xl mx-auto bg-white p-6 space-y-6"
+                        className="bg-white p-6 space-y-6"
                     >
                         {/* {error && (
                             <div className="bg-red-100 text-red-700 p-2 rounded text-sm">

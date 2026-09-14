@@ -43,7 +43,7 @@ function UserTable({
     };
 
     const editUser = (id) => {
-        navigate(`/${import.meta.env.VITE_ADMIN}/user/edit/${id}`);
+        navigate(`/${import.meta.env.VITE_ADMIN}/users/edit/${id}`);
     };
 
     return (

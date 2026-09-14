@@ -4,28 +4,31 @@ import App from './App.jsx'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import { BookProvider } from './context/School.jsx'
-import Book from './pages/admin/Book.jsx'
-import AddBook from './pages/admin/AddBook.jsx'
-import Category from './pages/admin/Category.jsx'
-import General from './pages/admin/General.jsx'
-import User from './pages/admin/User.jsx'
-import AddUser from './pages/admin/AddUser.jsx'
-import Role from './pages/admin/Role.jsx'
-import Dashboard from './pages/admin/Dashboard.jsx'
-import Login from './pages/admin/Login.jsx'
-import Register from './pages/admin/Register.jsx'
-import EditUser from './pages/admin/EditUser.jsx'
-import EditBook from './pages/admin/EditBook.jsx'
-import Review from './pages/admin/Review.jsx'
-import Cart from './pages/admin/Cart.jsx'
-import CartById from './pages/admin/CartById.jsx'
-import Discount from './pages/admin/Discount.jsx'
-import DiscountById from './pages/admin/DiscountById.jsx'
-import AddDiscount from './pages/admin/AddDiscount.jsx'
-import Payment from './pages/admin/Payment.jsx'
-import PaymentById from './pages/admin/PaymentById.jsx'
-import Order from './pages/admin/Order.jsx'
-import OrderById from './pages/admin/OrderById.jsx'
+
+import Book from './pages/admin/book/Book.jsx'
+import AddBook from './pages/admin/book/AddBook.jsx'
+import EditBook from './pages/admin/book/EditBook.jsx'
+import Category from './pages/admin/category/Category.jsx'
+import AddCategory from './pages/admin/category/AddCategory.jsx';
+import EditCategory from './pages/admin/category/EditCategory.jsx'
+import User from './pages/admin/user/User.jsx'
+import AddUser from './pages/admin/user/AddUser.jsx'
+import EditUser from './pages/admin/user/EditUser.jsx'
+import General from './pages/admin/settings/General.jsx'
+import Role from './pages/admin/settings/Role.jsx'
+import Dashboard from './pages/admin/dashboard/Dashboard.jsx'
+import Login from './pages/admin/auth/Login.jsx'
+import Register from './pages/admin/auth/Register.jsx'
+import Review from './pages/admin/review/Review.jsx'
+import Cart from './pages/admin/cart/Cart.jsx'
+import CartById from './pages/admin/cart/CartById.jsx'
+import AddDiscount from './pages/admin/discount/AddDiscount.jsx'
+import Discount from './pages/admin/discount/Discount.jsx'
+import DiscountById from './pages/admin/discount/DiscountById.jsx'
+import Payment from './pages/admin/payment/Payment.jsx'
+import PaymentById from './pages/admin/payment/PaymentById.jsx'
+import Order from './pages/admin/order/Order.jsx'
+import OrderById from './pages/admin/order/OrderById.jsx'
 
 import Base from './pages/frontend/Base.jsx'
 import FReview from './pages/frontend/FReview.jsx'
@@ -46,8 +49,8 @@ import AddAddress from './pages/frontend/AddAddress.jsx'
 import ResetPassword from './pages/frontend/ResetPassword.jsx'
 import Categories from "./pages/frontend/Category.jsx";
 import CategoryProducts from './pages/frontend/CategoryProducts.jsx'
-import { editUser } from './data/user.js'
-import { getBookById, getBookByHandle, editBookLoader } from './data/book.js'
+import { editUser, getUsersData } from './data/user.js'
+import { getBooksData, getBookById, getBookByHandle, editBookLoader } from './data/book.js'
 import { getCart, getCartById } from './data/cart.js'
 import { getReview1 } from './data/review.js'
 import { getDiscount, getDiscountById } from './data/discount.js'
@@ -62,9 +65,8 @@ import { getAddress, getAddressById } from './data/address.js'
 import axiosInstance from './utils/axiosConfig.js'
 import VerifyEmail from './components/frontend/VerifyEmail.jsx'
 import ProtectedLogin from './routes/ProtectedLogin.jsx'
-import EditCategory from './pages/admin/EditCategory.jsx'
-import { editCategoryLoader, getCategoryById } from './data/category.js'
-import AddCategory from './pages/admin/AddCategory.jsx'
+import { editCategoryLoader, getCategoriesData, getCategoryById } from './data/category.js'
+
 
 window.axios = axiosInstance;
 
@@ -150,23 +152,23 @@ const router = createBrowserRouter([
         // errorElement: <NotFound />,
         children: [
           { index: true, element: <Dashboard /> },
-          { path: "books", element: <Book /> },
-          { path: "book/add", element: <AddBook /> },
-          { path: "edit-book/:id", element: <EditBook />, loader: editBookLoader },
-          { path: "categories", element: <Category /> },
+          { path: "books", element: <Book />, loader: getBooksData },
+          { path: "books/add", element: <AddBook /> },
+          { path: "books/edit/:id", element: <EditBook />, loader: editBookLoader },
+          { path: "categories", element: <Category />, loader: getCategoriesData },
           { path: "categories/add", element: <AddCategory /> },
-          { path: "category/edit/:id", element: <EditCategory />, loader: editCategoryLoader },
-          { path: "users", element: <User /> },
-          { path: "add-user", element: <AddUser /> },
-          { path: "user/edit/:id", element: <EditUser />, loader: editUser },
+          { path: "categories/edit/:id", element: <EditCategory />, loader: editCategoryLoader },
+          { path: "users", element: <User />, loader: getUsersData },
+          { path: "users/add", element: <AddUser /> },
+          { path: "users/edit/:id", element: <EditUser />, loader: editUser },
           { path: "general", element: <General /> },
           { path: "roles", element: <Role /> },
           { path: "review", element: <Review />, loader: getReview1 },
           { path: "cart", element: <Cart />, loader: getCart },
           { path: "cart/:id", element: <CartById />, loader: getCartById },
-          { path: "discount", element: <Discount />, loader: getDiscount },
-          { path: "add-discount", element: <AddDiscount /> },
-          { path: "discount/:id", element: <DiscountById />, loader: getDiscountById },
+          { path: "discounts", element: <Discount />, loader: getDiscount },
+          { path: "discounts/add", element: <AddDiscount /> },
+          { path: "discounts/:id", element: <DiscountById />, loader: getDiscountById },
           { path: "payment", element: <Payment />, loader: getPayment },
           { path: "payment/:id", element: <PaymentById />, loader: getPaymentById },
           { path: "order", element: <Order />, loader: getOrder },

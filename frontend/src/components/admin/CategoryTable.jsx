@@ -1,8 +1,8 @@
 import React, { useContext } from "react";
+import axios from "axios";
 import { MdDelete } from "react-icons/md";
 import { RiEdit2Fill } from "react-icons/ri";
 import { useNavigate } from "react-router-dom";
-import axios from "axios";
 import { BookContext } from "../../context/School.jsx";
 
 function CategoryTable({
@@ -11,24 +11,19 @@ function CategoryTable({
     toggleSelect,
     paginatedCategories,
     selectedIds,
-    render,
-    setRender,
+    onMutate, // 👈 replaces render/setRender
 }) {
     const navigate = useNavigate();
     const { setToastConfig, setShowToast } = useContext(BookContext);
 
     const deleteCategory = async (id, name) => {
-        if (!window.confirm(`Do you want to delete category "${name}"?`)) return;
+        if (!window.confirm(`Delete category "${name}"?`)) return;
 
         try {
-
+            const token = localStorage.getItem("token");
             await axios.delete(
                 `${import.meta.env.VITE_API}/api/categories/${id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`
-                    }
-                }
+                { headers: { Authorization: `Bearer ${token}` } }
             );
 
             setToastConfig({
@@ -37,7 +32,7 @@ function CategoryTable({
             });
             setShowToast(true);
 
-            setRender(!render);
+            if (onMutate) await onMutate();
         } catch (error) {
             setToastConfig({
                 type: "error",
@@ -50,7 +45,7 @@ function CategoryTable({
     };
 
     const editCategory = (id) => {
-        navigate(`/${import.meta.env.VITE_ADMIN}/category/edit/${id}`);
+        navigate(`/${import.meta.env.VITE_ADMIN}/categories/edit/${id}`);
     };
 
     return (
@@ -98,7 +93,6 @@ function CategoryTable({
                 ) : (
                     paginatedCategories.map((category) => {
                         const isSelected = selectedIds.includes(category.id);
-
                         return (
                             <tr
                                 key={category.id}
@@ -108,26 +102,21 @@ function CategoryTable({
                                     <input
                                         type="checkbox"
                                         checked={isSelected}
-                                        onChange={() =>
-                                            toggleSelect(category.id)
-                                        }
+                                        onChange={() => toggleSelect(category.id)}
                                         className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
                                     />
                                 </td>
-
                                 <td className="px-4 py-3 text-gray-900 font-medium">
                                     {category.name}
                                 </td>
-
                                 <td className="px-4 py-3 text-gray-500 font-mono text-xs">
                                     {category.handle}
                                 </td>
-
                                 <td className="px-4 py-3">
                                     <span
                                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${category.type === "automatic"
-                                            ? "bg-purple-50 text-purple-700"
-                                            : "bg-blue-50 text-blue-700"
+                                                ? "bg-purple-50 text-purple-700"
+                                                : "bg-blue-50 text-blue-700"
                                             }`}
                                     >
                                         {category.type === "automatic"
@@ -135,16 +124,14 @@ function CategoryTable({
                                             : "Manual"}
                                     </span>
                                 </td>
-
                                 <td className="px-4 py-3 text-gray-700">
                                     {category.productCount ?? 0}
                                 </td>
-
                                 <td className="px-4 py-3">
                                     <span
                                         className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${category.isActive
-                                            ? "bg-green-50 text-green-700"
-                                            : "bg-gray-100 text-gray-600"
+                                                ? "bg-green-50 text-green-700"
+                                                : "bg-gray-100 text-gray-600"
                                             }`}
                                     >
                                         {category.isActive
@@ -152,13 +139,10 @@ function CategoryTable({
                                             : "Inactive"}
                                     </span>
                                 </td>
-
                                 <td className="px-4 py-3 text-right">
                                     <button
                                         className="text-lg text-blue-600 hover:cursor-pointer mr-3"
-                                        onClick={() =>
-                                            editCategory(category.id)
-                                        }
+                                        onClick={() => editCategory(category.id)}
                                         title="Edit"
                                     >
                                         <RiEdit2Fill />

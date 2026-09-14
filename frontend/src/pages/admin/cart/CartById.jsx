@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useContext } from 'react';
 import { MdDelete } from 'react-icons/md';
 import { useLoaderData, useNavigate } from 'react-router-dom'
-import { BookContext } from '../../context/School';
+import { BookContext } from '../../../context/School';
 
 function CartById() {
     const cart = useLoaderData();

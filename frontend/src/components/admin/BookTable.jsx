@@ -38,7 +38,7 @@ function BookTable({ isAllSelected, toggleSelectAll, toggleSelect, paginatedBook
 
 
     const editBook = async (id) => {
-        navigate(`/${import.meta.env.VITE_ADMIN}/edit-book/${id}`)
+        navigate(`/${import.meta.env.VITE_ADMIN}/books/edit/${id}`)
     }
 
     return (

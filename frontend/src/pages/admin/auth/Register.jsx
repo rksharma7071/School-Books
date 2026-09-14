@@ -1,59 +1,39 @@
 import axios from "axios";
-import { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { BookContext } from "../../context/School.jsx";
-import StatusMessage from "../../components/frontend/StatusMessage.jsx";
+import { useContext, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { BookContext } from "../../../context/School.jsx"
+import StatusMessage from "../../../components/frontend/StatusMessage.jsx";
 
-function Login() {
-    const { setUser, showToast, toastConfig, setToastConfig, setShowToast } = useContext(BookContext);
-
+function Register() {
     const navigate = useNavigate();
+    const { showToast, toastConfig, setToastConfig, setShowToast } = useContext(BookContext);
 
     const [form, setForm] = useState({
         email: "",
         password: "",
+        name: "",
     });
 
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setForm((prev) => ({ ...prev, [name]: value }));
-    };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const registerAdmin = async () => {
         try {
             setLoading(true);
             setError("");
 
-            const res = await axios.post(`${import.meta.env.VITE_API}/api/auth/login`, form);
-            console.log("Login Response: ", res);
-
-            const { token, user } = res.data;
-
-            setUser(user);
-
-            localStorage.setItem("token", token);
-            localStorage.setItem("userId", user.id);
+            await axios.post(`${import.meta.env.VITE_API}/api/auth/signup`, form);
             setToastConfig({
                 type: "success",
-                message: "Welcome back! You have logged in successfully.",
+                message: "Verfication email sent! Please check your inbox to verify your account.",
             });
             setShowToast(true);
-            if (user.role == "admin") {
-                navigate(`/${import.meta.env.VITE_ADMIN}`, { replace: true });
-            } else {
-                navigate(`/`, { replace: true });
-            }
-
-
+            navigate("/login", { replace: true });
         } catch (error) {
-            setError(error.response?.data?.message || "Invalid email or password");
+            setError(error.response?.data?.message || "Registration failed");
             setToastConfig({
                 type: "error",
-                message: error.response?.data?.message || "Update failed",
+                message: error.response?.data?.messages || "Registration failed",
             });
             setShowToast(true);
         } finally {
@@ -61,19 +41,48 @@ function Login() {
         }
     };
 
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        registerAdmin();
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setForm((prev) => ({ ...prev, [name]: value }));
+    };
+
     return (
         <>
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-800 via-blue-900 to-blue-950">
                 <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8">
 
+                    {/* Title */}
                     <div className="text-center mb-6">
                         <h2 className="text-3xl font-bold text-gray-800">SchoolBook</h2>
-                        <p className="text-gray-500 text-sm mt-1">Sign in to access the dashboard</p>
+                        <p className="text-gray-500 text-sm mt-1">
+                            Create your admin account
+                        </p>
                     </div>
 
-                    {error && (<div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">{error}</div>)}
+                    {/* ERROR MESSAGE */}
+                    {error && (
+                        <div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">
+                            {error}
+                        </div>
+                    )}
 
                     <form onSubmit={handleSubmit} className="space-y-5">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Name</label>
+                            <input
+                                name="name"
+                                value={form.name}
+                                onChange={handleChange}
+                                type="text"
+                                required
+                                className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                            />
+                        </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700">Email</label>
                             <input
@@ -81,9 +90,9 @@ function Login() {
                                 value={form.email}
                                 onChange={handleChange}
                                 type="email"
-                                required
-                                // placeholder="admin@example.com"
                                 className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                                // placeholder="admin@example.com"
+                                required
                             />
                         </div>
 
@@ -94,37 +103,37 @@ function Login() {
                                 value={form.password}
                                 onChange={handleChange}
                                 type="password"
-                                className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                                 required
                                 // placeholder="••••••••"
+                                className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                             />
                         </div>
 
-                        <div className="flex items-center justify-between text-sm">
-                            <label className="flex items-center gap-2">
-                                {/* <input type="checkbox" className="rounded border-gray-300" /> */}
-                                {/* Remember me */}
-                            </label>
-                            <Link to="/reset-password" className="text-blue-600 hover:underline cursor-pointer">Reset password?</Link>
-                        </div>
-
+                        {/* Button */}
                         <button
                             type="submit"
                             disabled={loading}
                             className={`w-full text-white py-2 rounded-lg text-sm font-semibold transition 
                         ${loading ? "bg-gray-400" : "bg-blue-600 hover:bg-blue-700"}`}
-                        >{loading ? "Logging in..." : "Login"}</button>
+                        >
+                            {loading ? "Creating Account..." : "Register"}
+                        </button>
+
                         <div className="text-center text-sm">
                             <span
-                                onClick={() => navigate("/register")}
+                                onClick={() => navigate("/login")}
                                 className="text-blue-600 hover:underline cursor-pointer"
                             >
-                                New user? Register here
+                                Already have an account? Login
                             </span>
                         </div>
                     </form>
 
-                    <p className="text-center text-sm text-gray-500 mt-6">© {new Date().getFullYear()} ZynexIT Solutions</p>
+                    {/* Footer */}
+                    <p className="text-center text-sm text-gray-500 mt-6">
+                        © {new Date().getFullYear()} ZynexIT Solutions
+                    </p>
+
                 </div>
             </div>
             {showToast && (
@@ -134,8 +143,9 @@ function Login() {
                     message={toastConfig.message}
                     onClose={() => setShowToast(false)}
                 />
-            )}</>
+            )}
+        </>
     );
 }
 
-export default Login;
+export default Register;

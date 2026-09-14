@@ -50,12 +50,52 @@ const getCategoryByHandle = async ({ params }) => {
 };
 
 const editCategoryLoader = async ({ params }) => {
-    const token = localStorage.getItem("token");
-    const res = await axios.get(
-        `${import.meta.env.VITE_API}/api/categories/admin/${params.id}`,
-        { headers: { Authorization: `Bearer ${token}` } }
-    );
-    return res.data.data;
+    try {
+        const token = localStorage.getItem("token");
+        const res = await axios.get(
+            `${import.meta.env.VITE_API}/api/categories/admin/${params.id}`,
+            { headers: { Authorization: `Bearer ${token}` } }
+        );
+        // console.log("Edit Category Loader Response:", res.data);
+        return res.data.data;
+    } catch (error) {
+        console.error("Error fetching category by ID:", error);
+        return null;
+    }
 };
 
-export { getCategorys, getCategoryById, getCategoryByHandle, editCategoryLoader }
+const getCategoriesData = async () => {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get(
+        `${import.meta.env.VITE_API}/api/categories/admin`,
+        {
+            params: {
+                includeInactive: true,
+                limit: 100,
+            },
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    const apiCategories = res.data?.data || [];
+
+    return apiCategories.map((category) => ({
+        id: category.id || category._id,
+        name: category.name,
+        handle: category.handle,
+        description: category.description,
+        image: category.image,
+        type: category.type,
+        isActive: category.isActive,
+        sortOrder: category.sortOrder,
+        productCount: category.productCount ?? 0,
+        conditions: category.conditions || [],
+        conditionMatch: category.conditionMatch,
+    }));
+};
+
+
+export { getCategorys, getCategoryById, getCategoryByHandle, editCategoryLoader, getCategoriesData }

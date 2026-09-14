@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { useLoaderData } from "react-router-dom";
-import ReviewTable from "../../components/admin/ReviewTable.jsx";
-import { getReview1 } from "../../data/review.js";
+import ReviewTable from "../../../components/admin/ReviewTable.jsx";
+import { getReview1 } from "../../../data/review.js";
 
 function Review() {
     const loader = useLoaderData();
@@ -45,14 +45,10 @@ function Review() {
     }, [filteredReviews, currentPage, rowsPerPage, totalPages]);
 
     const allVisibleIds = paginatedReviews.map((b) => b._id || b._id);
-    const isAllSelected =
-        allVisibleIds.length > 0 &&
-        allVisibleIds.every((id) => selectedIds.includes(id));
+    const isAllSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.includes(id));
 
     const toggleSelect = (id) => {
-        setSelectedIds((prev) =>
-            prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
-        );
+        setSelectedIds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
     };
 
     const toggleSelectAll = () => {
@@ -98,7 +94,7 @@ function Review() {
                         placeholder="Search by title, author, category..."
                         className="flex-1 sm:w-72 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {/* <Link to={'/book/add'} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Add Book</Link> */}
+                    {/* <Link to={'/books/add'} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Add Book</Link> */}
                 </div>
             </div>
 
@@ -143,27 +139,23 @@ function Review() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                                }`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
                         >
                             Prev
                         </button>
                         <span>
                             Page{" "}
-                            <span className="font-semibold text-gray-700">
-                                {Math.min(currentPage, totalPages)}
-                            </span>{" "}
-                            of{" "}
-                            <span className="font-semibold text-gray-700">
-                                {totalPages}
-                            </span>
+                            <span className="font-semibold text-gray-700">{Math.min(currentPage, totalPages)}</span>
+                            {" "}of{" "}
+                            <span className="font-semibold text-gray-700">{totalPages}</span>
                         </span>
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 
+                                ${currentPage >= totalPages
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
                                 }`}
                         >
                             Next

@@ -1,6 +1,6 @@
 import axios from "axios";
 import React, { useContext, useState } from "react";
-import { BookContext } from "../../context/School";
+import { BookContext } from "../../../context/School";
 
 function AddDiscount() {
     const [form, setForm] = useState({
@@ -65,7 +65,7 @@ function AddDiscount() {
                 <div className="overflow-x-auto">
                     <form
                         onSubmit={handleSubmit}
-                        className="max-w-5xl mx-auto bg-white p-6 space-y-6"
+                        className="bg-white p-6 space-y-6"
                     >
                         {error && (
                             <div className="bg-red-100 text-red-700 p-2 rounded text-sm">
