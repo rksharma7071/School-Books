@@ -190,7 +190,7 @@ export const getAllCategoriesWithCount = async (req, res) => {
         return res.status(200).json({
             success: true,
             data,
-            meta: {
+            pagination: {
                 total,
                 page: pageNum,
                 limit: limitNum,

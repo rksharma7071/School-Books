@@ -15,7 +15,7 @@ function ReviewTable({
 }) {
     const { setToastConfig, setShowToast } = useContext(BookContext);
 
-    console.log("review:", paginatedReviews);
+    // console.log("review:", paginatedReviews);
 
     const updateApproved = async (id, approved) => {
         const action = approved ? "publish" : "unpublish";
@@ -25,8 +25,14 @@ function ReviewTable({
             await axios.patch(
                 `${import.meta.env.VITE_API}/api/review/${id}`,
                 { approved },
-                { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                        "Content-Type": "application/json",
+                    },
+                }
             );
+
             setRender(true);
             setToastConfig({
                 type: "success",
@@ -34,9 +40,13 @@ function ReviewTable({
             });
             setShowToast(true);
         } catch (error) {
+            console.error("updateApproved error:", error.response?.data || error);
+
             setToastConfig({
                 type: "error",
-                message: error.response?.data?.message || `Failed to ${action} the review. Please try again.`,
+                message:
+                    error.response?.data?.message ||
+                    `Failed to ${action} the review. Please try again.`,
             });
             setShowToast(true);
         }

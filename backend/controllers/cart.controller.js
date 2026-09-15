@@ -13,11 +13,19 @@ const findVariant = (product, variantId) => {
 const buildCartResponse = async (cart) => {
     const items = cart.items || [];
 
-    const productIds = [...new Set(items.map((item) => String(item.productId)))];
+    const productIds = [
+        ...new Set(
+            items
+                .map((item) => item.productId)
+                .filter((id) => id && mongoose.Types.ObjectId.isValid(id))
+                .map((id) => String(id))
+        ),
+    ];
 
-    const products = productIds.length ? await Product.find({ _id: { $in: productIds } })
-        .select("title image images variants isActive")
-        .lean()
+    const products = productIds.length
+        ? await Product.find({ _id: { $in: productIds } })
+            .select("title image images variants isActive")
+            .lean()
         : [];
 
     const productMap = new Map(products.map((product) => [String(product._id), product]));
@@ -115,9 +123,15 @@ export const getAllCart = async (req, res) => {
 
             Cart.countDocuments(filter),
         ]);
-
         const data = await Promise.all(
-            carts.map(async (cart) => ({ ...(await buildCartResponse(cart)), user: cart.userId }))
+            carts.map(async (cart) => {
+                const response = await buildCartResponse(cart);
+                return {
+                    ...response,
+                    userId: cart.userId?._id || cart.userId,
+                    user: cart.userId && typeof cart.userId === "object" ? cart.userId : null,
+                };
+            })
         );
 
         return res.status(200).json({
@@ -133,7 +147,7 @@ export const getAllCart = async (req, res) => {
             },
         });
     } catch (error) {
-        console.error(error);
+        console.error("getAllCart error:", error); // already there but check terminal
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };
@@ -167,7 +181,7 @@ export const getCartByUserId = async (req, res) => {
         const data = await buildCartResponse(cart);
         return res.status(200).json({ success: true, data });
     } catch (error) {
-        console.error(error); s
+        console.error(error);
         return res.status(500).json({ success: false, message: "Server error" });
     }
 };

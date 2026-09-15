@@ -1,77 +1,153 @@
+import React, { useState, useMemo, useEffect, useCallback } from "react";
+import { Link, useLoaderData, useSearchParams } from "react-router-dom";
 import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
 import UserTable from "../../../components/admin/UserTable";
-import { Link } from "react-router-dom";
 
 function User() {
-    const [users, setUsers] = useState([]);
-    const [search, setSearch] = useState("");
+    const loaderData = useLoaderData();
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    // ---- URL is the source of truth ----
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const limit = Math.max(1, Number(searchParams.get("limit")) || 20);
+    const searchFromUrl = searchParams.get("search") ?? "";
+
+    // ---- State seeded from loader ----
+    const [users, setUsers] = useState(
+        Array.isArray(loaderData?.data) ? loaderData.data : []
+    );
+    const [pagination, setPagination] = useState(
+        loaderData?.pagination ?? {
+            total: 0,
+            page: 1,
+            limit: 20,
+            totalPages: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+        }
+    );
+
+    const [searchInput, setSearchInput] = useState(searchFromUrl);
     const [selectedIds, setSelectedIds] = useState([]);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [render, setRender] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-    useEffect(() => {
-        const controller = new AbortController();
-
-        const fetchUsers = async () => {
+    // ---- Refetch whenever URL params change ----
+    const fetchUsers = useCallback(
+        async (signal) => {
+            setLoading(true);
             try {
-                const res = await axios.get(
-                    `${import.meta.env.VITE_API}/api/user`,
+                const token = localStorage.getItem("token");
+
+                const params = new URLSearchParams();
+                params.set("page", String(page));
+                params.set("limit", String(limit));
+                if (searchFromUrl) params.set("search", searchFromUrl);
+
+                const { data } = await axios.get(
+                    `${import.meta.env.VITE_API}/api/user?${params.toString()}`,
                     {
-                        headers: {
-                            Authorization: `Bearer ${localStorage.getItem("token")}`
-                        },
-                        signal: controller.signal,
+                        headers: { Authorization: `Bearer ${token}` },
+                        signal,
                     }
                 );
 
-                const apiUsers = res.data?.users || res.data?.data || [];
-                setUsers(apiUsers);
+                const list = Array.isArray(data?.users)
+                    ? data.users
+                    : Array.isArray(data?.data)
+                        ? data.data
+                        : [];
+
+                const meta = data?.pagination ?? data?.meta ?? {};
+
+                setUsers(list);
+                setPagination({
+                    total: meta.total ?? list.length,
+                    page: meta.page ?? page,
+                    limit: meta.limit ?? limit,
+                    totalPages:
+                        meta.totalPages ??
+                        Math.max(1, Math.ceil((meta.total ?? list.length) / limit)),
+                    hasNextPage:
+                        meta.hasNextPage ??
+                        (meta.page ?? page) * limit < (meta.total ?? list.length),
+                    hasPreviousPage: meta.hasPreviousPage ?? (meta.page ?? page) > 1,
+                });
             } catch (error) {
-                if (axios.isCancel(error)) return;
-                console.error("Error fetching users:", error.message);
+                if (axios.isCancel?.(error)) return;
+                console.error("Error fetching users:", error);
+                setUsers([]);
+                setPagination({
+                    total: 0,
+                    page,
+                    limit,
+                    totalPages: 1,
+                    hasNextPage: false,
+                    hasPreviousPage: false,
+                });
+            } finally {
+                setLoading(false);
             }
-        };
+        },
+        [page, limit, searchFromUrl]
+    );
 
-        fetchUsers();
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchUsers(controller.signal);
         return () => controller.abort();
-    }, [render]);
+    }, [fetchUsers]);
 
-    const filteredUsers = useMemo(() => {
-        const term = (search || "").trim().toLowerCase();
-        if (!term) return users;
-        return users.filter(
-            (user) =>
-                user.email?.toLowerCase().includes(term) ||
-                user.name?.toLowerCase().includes(term)
+    // ---- URL update helper (merges existing params) ----
+    const updateParams = (patch, { replace = false } = {}) => {
+        setSearchParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
+                Object.entries(patch).forEach(([k, v]) => {
+                    if (v === "" || v === null || v === undefined) next.delete(k);
+                    else next.set(k, String(v));
+                });
+                return next;
+            },
+            { replace }
         );
-    }, [users, search]);
+    };
 
-    const totalPages = Math.max(1, Math.ceil(filteredUsers.length / rowsPerPage));
+    // ---- Handlers ----
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        updateParams({ search: searchInput.trim(), page: 1 });
+    };
 
-    const paginatedUsers = useMemo(() => {
-        const safePage = Math.min(currentPage, totalPages);
-        const start = (safePage - 1) * rowsPerPage;
-        return filteredUsers.slice(start, start + rowsPerPage);
-    }, [filteredUsers, currentPage, rowsPerPage, totalPages]);
+    const handleLimitChange = (e) => {
+        updateParams({ limit: Number(e.target.value), page: 1 });
+    };
 
-    const allVisibleIds = paginatedUsers.map((u) => u._id);
+    const handlePrevPage = () => {
+        if (pagination.hasPreviousPage) updateParams({ page: page - 1 });
+    };
+
+    const handleNextPage = () => {
+        if (pagination.hasNextPage) updateParams({ page: page + 1 });
+    };
+
+    // ---- Selection ----
+    const allVisibleIds = useMemo(
+        () => users.map((u) => u._id || u.id).filter(Boolean),
+        [users]
+    );
+
     const isAllSelected =
         allVisibleIds.length > 0 &&
         allVisibleIds.every((id) => selectedIds.includes(id));
 
-    const toggleSelect = (id) => {
+    const toggleSelect = (id) =>
         setSelectedIds((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
         );
-    };
 
     const toggleSelectAll = () => {
         if (isAllSelected) {
-            setSelectedIds((prev) =>
-                prev.filter((id) => !allVisibleIds.includes(id))
-            );
+            setSelectedIds((prev) => prev.filter((id) => !allVisibleIds.includes(id)));
         } else {
             setSelectedIds((prev) =>
                 Array.from(new Set([...prev, ...allVisibleIds]))
@@ -79,18 +155,11 @@ function User() {
         }
     };
 
-    const handlePaginationChange = (e) => {
-        setRowsPerPage(Number(e.target.value));
-        setCurrentPage(1);
-    };
-
-    const handlePrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
-    const handleNextPage = () =>
-        setCurrentPage((p) => Math.min(totalPages, p + 1));
-
-    const startIndex =
-        filteredUsers.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const endIndex = Math.min(currentPage * rowsPerPage, filteredUsers.length);
+    // ---- Footer counters ----
+    const total = pagination.total ?? users.length;
+    const startIndex = total > 0 ? (page - 1) * limit + 1 : 0;
+    const endIndex = Math.min(page * limit, total);
+    const totalPages = pagination.totalPages ?? 1;
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
@@ -105,16 +174,15 @@ function User() {
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto">
-                    <input
-                        type="search"
-                        value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setCurrentPage(1);
-                        }}
-                        placeholder="Search by email, name..."
-                        className="flex-1 sm:w-72 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <form onSubmit={handleSearchSubmit} className="flex-1 sm:w-72">
+                        <input
+                            type="search"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            placeholder="Search by email, name..."
+                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </form>
                     <Link
                         to={`/${import.meta.env.VITE_ADMIN}/users/add`}
                         className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
@@ -139,11 +207,11 @@ function User() {
 
                 <div className="overflow-x-auto">
                     <UserTable
-                        render={render}
-                        setRender={setRender}
+                        render={loading}
+                        setRender={fetchUsers}
                         isAllSelected={isAllSelected}
                         toggleSelectAll={toggleSelectAll}
-                        paginatedUsers={paginatedUsers}
+                        paginatedUsers={users}
                         selectedIds={selectedIds}
                         toggleSelect={toggleSelect}
                     />
@@ -153,8 +221,8 @@ function User() {
                     <div className="flex items-center gap-2">
                         <span>Rows per page:</span>
                         <select
-                            value={rowsPerPage}
-                            onChange={handlePaginationChange}
+                            value={limit}
+                            onChange={handleLimitChange}
                             className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value={5}>5 rows</option>
@@ -163,8 +231,8 @@ function User() {
                             <option value={30}>30 rows</option>
                         </select>
                         <span className="hidden sm:inline">
-                            {filteredUsers.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredUsers.length} users`
+                            {total > 0
+                                ? `Showing ${startIndex}–${endIndex} of ${total} users`
                                 : "Showing 0 of 0 users"}
                         </span>
                     </div>
@@ -172,24 +240,25 @@ function User() {
                     <div className="flex items-center gap-3 justify-end">
                         <button
                             onClick={handlePrevPage}
-                            disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 
-                                ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
+                            disabled={!pagination.hasPreviousPage || loading}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${!pagination.hasPreviousPage || loading
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
+                                }`}
                         >
                             Prev
                         </button>
                         <span>
                             Page{" "}
-                            <span className="font-semibold text-gray-700">{Math.min(currentPage, totalPages)}</span>{" "}
-                            of{" "}
+                            <span className="font-semibold text-gray-700">{page}</span> of{" "}
                             <span className="font-semibold text-gray-700">{totalPages}</span>
                         </span>
                         <button
                             onClick={handleNextPage}
-                            disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
+                            disabled={!pagination.hasNextPage || loading}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${!pagination.hasNextPage || loading
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
                                 }`}
                         >
                             Next

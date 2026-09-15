@@ -55,8 +55,6 @@ function Register() {
         <>
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-r from-blue-800 via-blue-900 to-blue-950">
                 <div className="bg-white w-full max-w-md rounded-2xl shadow-xl p-8">
-
-                    {/* Title */}
                     <div className="text-center mb-6">
                         <h2 className="text-3xl font-bold text-gray-800">SchoolBook</h2>
                         <p className="text-gray-500 text-sm mt-1">
@@ -64,7 +62,6 @@ function Register() {
                         </p>
                     </div>
 
-                    {/* ERROR MESSAGE */}
                     {error && (
                         <div className="bg-red-100 text-red-700 p-2 rounded mb-4 text-sm">
                             {error}
@@ -109,7 +106,6 @@ function Register() {
                             />
                         </div>
 
-                        {/* Button */}
                         <button
                             type="submit"
                             disabled={loading}
@@ -129,7 +125,6 @@ function Register() {
                         </div>
                     </form>
 
-                    {/* Footer */}
                     <p className="text-center text-sm text-gray-500 mt-6">
                         © {new Date().getFullYear()} ZynexIT Solutions
                     </p>

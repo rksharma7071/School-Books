@@ -24,7 +24,7 @@ function SortableImage({ img, index, onRemove }) {
     transform: CSS.Transform.toString(transform),
     transition,
   };
-  console.log("SortableImage");
+  // console.log("SortableImage");
 
   return (
     <div
@@ -60,7 +60,7 @@ function BookImages({ existingImages, onImagesChange, onMetaChange }) {
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-  console.log("BookImages");
+  // console.log("BookImages");
   
   useEffect(() => {
     const mapped = existingImages.map((img) => ({
@@ -70,7 +70,6 @@ function BookImages({ existingImages, onImagesChange, onMetaChange }) {
     setImages(mapped);
   }, [existingImages]);
 
-  /* ---------------- ADD NEW IMAGES ---------------- */
   const handleNewImages = (e) => {
     const files = Array.from(e.target.files);
 
@@ -85,7 +84,6 @@ function BookImages({ existingImages, onImagesChange, onMetaChange }) {
     onImagesChange(files);
   };
 
-  /* ---------------- REMOVE IMAGE ---------------- */
   const removeImage = (img) => {
     setImages((prev) => prev.filter((i) => i !== img));
 
@@ -97,7 +95,6 @@ function BookImages({ existingImages, onImagesChange, onMetaChange }) {
     }
   };
 
-  /* ---------------- DRAG END ---------------- */
   const handleDragEnd = (event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;

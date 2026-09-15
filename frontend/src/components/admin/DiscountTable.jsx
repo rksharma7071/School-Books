@@ -36,7 +36,6 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
     }
   };
 
-
   const unpublishReview = async (id) => {
     if (window.confirm("Do you want to update this Review?")) {
       try {
@@ -77,6 +76,9 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
     }
   };
 
+  const handleNext = () => {
+    setSearchParams({ page: page + 1, limit });
+  };
 
   return (
     <table className="min-w-full text-sm">
@@ -96,10 +98,10 @@ function DiscountTable({ render, setRender, isAllSelected, toggleSelectAll, togg
             <td colSpan={7} className="px-4 py-6 text-center text-gray-500">No reviews found.</td>
           </tr>
         ) : (
-          paginatedDiscount.map((discount) => {
+          paginatedDiscount.map((discount, index) => {
             const isSelected = selectedIds.includes(discount._id);
             return (
-              <tr key={discount._id} className="border-t border-gray-100 hover:bg-gray-50">
+              <tr key={index} className="border-t border-gray-100 hover:bg-gray-50">
                 <td className="px-4 py-3"><input type="checkbox" checked={isSelected} onChange={() => toggleSelect(discount._id)} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" /></td>
                 <td className="px-4 py-3 text-gray-900 font-medium">
                   <Link to={discount._id}>{discount?.discount_code || "Loading..."}</Link>

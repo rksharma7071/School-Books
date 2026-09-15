@@ -159,7 +159,6 @@ function ProductCard({ book, rating = 0 }) {
                     <p className="mt-1.5 text-xs text-gray-500 line-clamp-2">{book.description}</p>
                 )}
 
-                {/* Options Selectors */}
                 {/* {book.options && book.options.length > 0 && (
                     <div className="mt-3 space-y-2">
                         {book.options.map((option) => (

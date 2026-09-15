@@ -61,18 +61,18 @@ function PaymentById() {
 
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
           <h3 className="font-semibold text-gray-800">Order Information</h3>
-          <InfoRow label="Order Number" value={`#${payment.order.orderNumber}`} />
-          <InfoRow label="Order Status" value={payment.order.status} />
-          <InfoRow label="Subtotal" value={`₹${payment.order.subtotal}`} />
-          <InfoRow label="Shipping" value={`₹${payment.order.shipping}`} />
-          <InfoRow label="Total" value={`₹${payment.order.total}`} />
+          <InfoRow label="Order Number" value={payment.order ? `#${payment.order.orderNumber}` : "—"} />
+          <InfoRow label="Order Status" value={payment.order?.status ?? "—"} />
+          <InfoRow label="Subtotal" value={payment.order ? `₹${payment.order.subtotal}` : "—"} />
+          <InfoRow label="Shipping" value={payment.order ? `₹${payment.order.shipping}` : "—"} />
+          <InfoRow label="Total" value={payment.order ? `₹${payment.order.total}` : "—"} />
         </div>
 
         <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-3">
           <h3 className="font-semibold text-gray-800">Customer Information</h3>
-          <InfoRow label="Email" value={payment.user.email} />
-          <InfoRow label="Role" value={payment.user.role} />
-          <InfoRow label="User ID" value={payment.user._id} />
+          <InfoRow label="Email" value={payment.user?.email ?? "—"} />
+          <InfoRow label="Role" value={payment.user?.role ?? "—"} />
+          <InfoRow label="User ID" value={payment.user?._id ?? "—"} />
         </div>
       </div>
 
@@ -80,24 +80,27 @@ function PaymentById() {
         <h3 className="font-semibold text-gray-800 mb-4">Order Items</h3>
 
         <div className="divide-y">
-          {payment.order.items.map((item) => (
-            <div
-              key={item.bookId._id}
-              className="flex justify-between py-3 text-sm"
-            >
-              <div>
-                <p className="font-medium text-gray-900">
-                  <Link to={`/products/${item.bookId._id}`}>{item.bookId.name}</Link>
-                </p>
-                <p className="text-gray-500">
-                  Qty: {item.quantity} × ₹{item.unit_price}
-                </p>
+          {payment.order?.items?.length ? (
+            payment.order.items.map((item, index) => (
+              <div key={index} className="flex justify-between py-3 text-sm">
+                <div>
+                  <p className="font-medium text-gray-900">
+                    {item.bookId?._id ? (
+                      <Link to={`/products/${item.bookId._id}`}>{item.bookId.name}</Link>
+                    ) : (
+                      <span>{item.bookId?.name ?? "Unknown product"}</span>
+                    )}
+                  </p>
+                  <p className="text-gray-500">
+                    Qty: {item.quantity} × ₹{item.unit_price}
+                  </p>
+                </div>
+                <div className="font-semibold text-gray-800">₹{item.total_price}</div>
               </div>
-              <div className="font-semibold text-gray-800">
-                ₹{item.total_price}
-              </div>
-            </div>
-          ))}
+            ))
+          ) : (
+            <p className="text-sm text-gray-500 py-3">No items</p>
+          )}
         </div>
       </div>
 

@@ -95,9 +95,6 @@ const checkVerifiedPurchase = async (userId, productId) => {
     return !!exists;
 };
 
-/* ------------------------------------------------------------------ */
-/* GET /reviews  (admin)                                              */
-/* ------------------------------------------------------------------ */
 export const getAllReview = async (req, res) => {
     try {
         const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -202,9 +199,6 @@ export const getAllReview = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* GET /reviews/:id                                                   */
-/* ------------------------------------------------------------------ */
 export const getReviewById = async (req, res) => {
     try {
         const { id } = req.params;
@@ -238,9 +232,6 @@ export const getReviewById = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* POST /reviews                                                      */
-/* ------------------------------------------------------------------ */
 export const createReview = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -340,12 +331,18 @@ export const createReview = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* PATCH /reviews/:id                                                 */
-/* ------------------------------------------------------------------ */
 export const updateReview = async (req, res) => {
     try {
         const review = req.review;
+
+        console.log("=== DEBUG updateReview ===");
+        console.log("review._id        :", review._id);
+        console.log("review.productId  :", review.productId);
+        console.log("typeof productId  :", typeof review.productId);
+        console.log("isModified(productId):", review.isModified("productId"));
+        console.log("doc keys          :", Object.keys(review.toObject()));
+        console.log("=========================");
+
         const isAdmin = req.user.role === "admin";
         const isOwner = String(review.userId) === String(req.user.id);
 
@@ -353,38 +350,26 @@ export const updateReview = async (req, res) => {
 
         if (approved !== undefined) {
             if (!isAdmin) {
-                return res.status(403).json({
-                    success: false,
-                    message: "Only admins can change approval status",
-                });
+                return res.status(403).json({ success: false, message: "Only admins can change approval status" });
             }
             if (isOwner) {
-                return res.status(403).json({
-                    success: false,
-                    message: "You cannot moderate your own review",
-                });
+                return res.status(403).json({ success: false, message: "You cannot moderate your own review" });
             }
+
             review.approved = approved === true;
             review.approvedAt = review.approved ? new Date() : null;
         }
 
-        const wantsContentEdit =
-            rating !== undefined || title !== undefined || body !== undefined;
+        const wantsContentEdit = rating !== undefined || title !== undefined || body !== undefined;
 
         if (wantsContentEdit) {
             if (!isOwner) {
-                return res.status(403).json({
-                    success: false,
-                    message: "Only the review owner can edit its content",
-                });
+                return res.status(403).json({ success: false, message: "Only the review owner can edit its content" });
             }
 
             if (rating !== undefined) {
                 if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-                    return res.status(400).json({
-                        success: false,
-                        message: "rating must be an integer between 1 and 5",
-                    });
+                    return res.status(400).json({ success: false, message: "rating must be an integer between 1 and 5" });
                 }
                 review.rating = rating;
             }
@@ -423,24 +408,22 @@ export const updateReview = async (req, res) => {
 
         await review.save();
 
-        const data = isAdmin
-            ? formatAdminReview(review.toObject())
-            : formatOwnerReview(review.toObject());
+        const populated = await Review.findById(review._id)
+            .populate("userId", "name email")
+            .populate("productId", "title handle")
+            .lean();
 
-        return res.status(200).json({
-            success: true,
-            message: "Review updated successfully",
-            data,
-        });
+        const data = isAdmin
+            ? formatAdminReview(populated)
+            : formatOwnerReview(populated);
+
+        return res.status(200).json({ success: true, message: "Review updated successfully", data });
     } catch (error) {
         console.error("updateReview error:", error);
         return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* DELETE /reviews/:id                                                */
-/* ------------------------------------------------------------------ */
 export const deleteReview = async (req, res) => {
     try {
         await Review.findByIdAndDelete(req.review._id);
@@ -451,9 +434,6 @@ export const deleteReview = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* GET /reviews/summary                                               */
-/* ------------------------------------------------------------------ */
 export const getReviewSummary = async (req, res) => {
     try {
         const [r1, r2, r3, r4, r5] = buildRatingDistributionStages();
@@ -500,9 +480,6 @@ export const getReviewSummary = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* GET /reviews/product/:productId                                    */
-/* ------------------------------------------------------------------ */
 export const getReviewsByProduct = async (req, res) => {
     try {
         const { productId } = req.params;
@@ -585,9 +562,6 @@ export const getReviewsByProduct = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* GET /reviews/my-reviews                                            */
-/* ------------------------------------------------------------------ */
 export const getMyReviews = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -636,9 +610,6 @@ export const getMyReviews = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* GET /reviews/published                                             */
-/* ------------------------------------------------------------------ */
 export const getAllPublishedReviews = async (req, res) => {
     try {
         const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -699,9 +670,6 @@ export const getAllPublishedReviews = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* GET /reviews/eligibility/:productId                                */
-/* ------------------------------------------------------------------ */
 export const getReviewEligibility = async (req, res) => {
     try {
         const { productId } = req.params;
@@ -772,9 +740,6 @@ export const getReviewEligibility = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* POST /reviews/:id/vote                                             */
-/* ------------------------------------------------------------------ */
 export const voteReview = async (req, res) => {
     try {
         const { id } = req.params;
@@ -840,9 +805,6 @@ export const voteReview = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* POST /reviews/:id/report                                           */
-/* ------------------------------------------------------------------ */
 export const reportReview = async (req, res) => {
     try {
         const { id } = req.params;
@@ -883,9 +845,6 @@ export const reportReview = async (req, res) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* GET /reviews/admin/stats                                           */
-/* ------------------------------------------------------------------ */
 export const getAdminReviewStats = async (req, res) => {
     try {
         const [r1, r2, r3, r4, r5] = buildRatingDistributionStages();

@@ -11,13 +11,7 @@ import {
 
 function NavItem({ to, children, label }) {
     return (
-        <NavLink
-            to={to}
-            className={({ isActive }) =>
-                `flex flex-col items-center justify-center transition-colors ${isActive ? "text-blue-600" : "text-gray-500"
-                }`
-            }
-        >
+        <NavLink to={to} className={({ isActive }) => `flex flex-col items-center justify-center transition-colors ${isActive ? "text-blue-600" : "text-gray-500"}`}>
             {children}
             <span className="sr-only">{label}</span>
         </NavLink>
@@ -43,7 +37,7 @@ function SideMenu() {
                     </Link>
                     <p className="px-3 pt-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Management</p>
                     <div>
-                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/books`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/books?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">B</span>
                                 Books
@@ -51,7 +45,7 @@ function SideMenu() {
                         </NavLink>
                     </div>
                     <div>
-                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/categories`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/categories?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">B</span>
                                 Categories
@@ -60,7 +54,7 @@ function SideMenu() {
                     </div>
 
                     <div>
-                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/users`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/users?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs">U</span>
                                 Users
@@ -68,7 +62,7 @@ function SideMenu() {
                         </NavLink>
                     </div>
                     <div>
-                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/review`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/review?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-violet-50 text-cyan-600 flex items-center justify-center text-xs">R</span>
                                 Review
@@ -76,7 +70,7 @@ function SideMenu() {
                         </NavLink>
                     </div>
                     <div>
-                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/order`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/order?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-violet-50 text-red-600 flex items-center justify-center text-xs">C</span>
                                 Order
@@ -84,7 +78,7 @@ function SideMenu() {
                         </NavLink>
                     </div>
                     <div>
-                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/cart`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/cart?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-violet-50 text-violet-600 flex items-center justify-center text-xs">C</span>
                                 Cart
@@ -92,7 +86,7 @@ function SideMenu() {
                         </NavLink>
                     </div>
                     <div>
-                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/payment`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/payment?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-violet-50 text-violet-600 flex items-center justify-center text-xs">P</span>
                                 Payment
@@ -100,10 +94,10 @@ function SideMenu() {
                         </NavLink>
                     </div>
                     <div>
-                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/discount`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/discounts?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-gray-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-violet-50 text-cyan-600 flex items-center justify-center text-xs">D</span>
-                                Discount
+                                Discounts
                             </span>
                         </NavLink>
                     </div>

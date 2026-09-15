@@ -29,19 +29,14 @@ function Login() {
             setError("");
 
             const res = await axios.post(`${import.meta.env.VITE_API}/api/auth/login`, form);
-            console.log("Login Response: ", res);
-
             const { token, user } = res.data;
-
             setUser(user);
 
             localStorage.setItem("token", token);
             localStorage.setItem("userId", user.id);
-            setToastConfig({
-                type: "success",
-                message: "Welcome back! You have logged in successfully.",
-            });
+            setToastConfig({ type: "success", message: "Welcome back! You have logged in successfully." });
             setShowToast(true);
+
             if (user.role == "admin") {
                 navigate(`/${import.meta.env.VITE_ADMIN}`, { replace: true });
             } else {
@@ -51,10 +46,7 @@ function Login() {
 
         } catch (error) {
             setError(error.response?.data?.message || "Invalid email or password");
-            setToastConfig({
-                type: "error",
-                message: error.response?.data?.message || "Update failed",
-            });
+            setToastConfig({ type: "error", message: error.response?.data?.message || "Update failed" });
             setShowToast(true);
         } finally {
             setLoading(false);
@@ -96,7 +88,7 @@ function Login() {
                                 type="password"
                                 className="mt-1 w-full border border-gray-300 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                                 required
-                                // placeholder="••••••••"
+                            // placeholder="••••••••"
                             />
                         </div>
 

@@ -336,7 +336,6 @@ function AddCategory() {
           onSubmit={handleSubmit}
           className="bg-white p-6 space-y-6"
         >
-          {/* ----- basic info ----- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700">
@@ -413,7 +412,6 @@ function AddCategory() {
             </div>
           </div>
 
-          {/* ----- manual product picker ----- */}
           {form.type === "manual" && (
             <div className="border-t pt-4 border-gray-200 space-y-3">
               <div className="flex items-center justify-between">
@@ -439,7 +437,6 @@ function AddCategory() {
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
 
-              {/* selected chips */}
               {selectedProducts.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {selectedProducts.map((p) => (
@@ -513,7 +510,6 @@ function AddCategory() {
             </div>
           )}
 
-          {/* ----- automatic conditions ----- */}
           {form.type === "automatic" && (
             <div className="border-t pt-4 border-gray-200 space-y-4">
               <div className="flex items-center justify-between">
@@ -604,7 +600,6 @@ function AddCategory() {
                 ))}
               </div>
 
-              {/* ----- live preview ----- */}
               <div className="mt-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-3">
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-semibold text-gray-700">
@@ -659,7 +654,6 @@ function AddCategory() {
             </div>
           )}
 
-          {/* ----- image ----- */}
           <div className="border-t pt-4 border-gray-200">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Image</h3>
             <ImageGridManager onImagesChange={setImages} />

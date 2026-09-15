@@ -473,7 +473,6 @@ function EditCategory() {
             </div>
           </div>
 
-          {/* ----- manual product picker ----- */}
           {form.type === "manual" && (
             <div className="border-t pt-4 border-gray-200 space-y-3">
               <div className="flex items-center justify-between">

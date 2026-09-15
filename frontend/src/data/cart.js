@@ -2,13 +2,8 @@ import axios from "axios";
 
 const API = import.meta.env.VITE_API;
 
-const authHeaders = () => ({
-    Authorization: `Bearer ${localStorage.getItem("token")}`,
-});
-
 export const getCart = async (arg = {}) => {
-    const isLoaderArg =
-        arg && (arg.params !== undefined || arg.request !== undefined);
+    const isLoaderArg = arg && (arg.params !== undefined || arg.request !== undefined);
 
     const queryParams = isLoaderArg ? {} : (arg || {});
     const signal = isLoaderArg ? arg.request?.signal : undefined;
@@ -17,7 +12,7 @@ export const getCart = async (arg = {}) => {
         const { data } = await axios.get(`${API}/api/cart`, {
             params: queryParams,
             signal,
-            headers: authHeaders(),
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         return data?.data || [];
     } catch (error) {
@@ -30,14 +25,11 @@ export const getCart = async (arg = {}) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* Single cart — GET /api/cart/:id                                    */
-/* ------------------------------------------------------------------ */
 export const getCartById = async ({ params, request } = {}) => {
     try {
         const { data } = await axios.get(`${API}/api/cart/${params.id}`, {
             signal: request?.signal,
-            headers: authHeaders(),
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         return data?.data || { items: [], totalItems: 0, subtotal: 0 };
     } catch (error) {
@@ -54,13 +46,10 @@ export const getCartById = async ({ params, request } = {}) => {
     }
 };
 
-/* ------------------------------------------------------------------ */
-/* Other helpers                                                      */
-/* ------------------------------------------------------------------ */
 export const getMyCart = async () => {
     try {
         const { data } = await axios.get(`${API}/api/cart/me`, {
-            headers: authHeaders(),
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         return data?.data || { items: [], totalItems: 0, subtotal: 0 };
     } catch (error) {
@@ -74,7 +63,7 @@ export const getMyCart = async () => {
 export const getCartByUserId = async (userId) => {
     try {
         const { data } = await axios.get(`${API}/api/cart/${userId}`, {
-            headers: authHeaders(),
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         return data?.data || { items: [], totalItems: 0, subtotal: 0 };
     } catch (error) {
@@ -87,21 +76,21 @@ export const getCartByUserId = async (userId) => {
 
 export const deleteCart = async (cartId) => {
     const { data } = await axios.delete(`${API}/api/cart/${cartId}`, {
-        headers: authHeaders(),
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     });
     return data;
 };
 
 export const clearMyCart = async () => {
     const { data } = await axios.delete(`${API}/api/cart/clear`, {
-        headers: authHeaders(),
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     });
     return data;
 };
 
 export const clearUserCart = async (userId) => {
     const { data } = await axios.delete(`${API}/api/cart/clear/${userId}`, {
-        headers: authHeaders(),
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
     });
     return data;
 };

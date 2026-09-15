@@ -56,22 +56,13 @@ function AddDiscount() {
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        Add Discount
-                    </h2>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Add Discount</h2>
                 </div>
             </div>
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="overflow-x-auto">
-                    <form
-                        onSubmit={handleSubmit}
-                        className="bg-white p-6 space-y-6"
-                    >
-                        {error && (
-                            <div className="bg-red-100 text-red-700 p-2 rounded text-sm">
-                                {error}
-                            </div>
-                        )}
+                    <form onSubmit={handleSubmit} className="bg-white p-6 space-y-6">
+                        {error && (<div className="bg-red-100 text-red-700 p-2 rounded text-sm">{error}</div>)}
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
@@ -105,8 +96,8 @@ function AddDiscount() {
                                     name="amount"
                                     value={form.amount}
                                     onChange={handleChange}
-                                    required
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
                                 />
                             </div>
 
@@ -117,8 +108,8 @@ function AddDiscount() {
                                     name="starts_at"
                                     value={form.starts_at}
                                     onChange={handleChange}
-                                    required
                                     className="mt-1 w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    required
                                 />
                             </div>
 
@@ -134,7 +125,6 @@ function AddDiscount() {
                                 />
                             </div>
 
-                            {/* Usage Limit */}
                             <div>
                                 <label className="text-sm font-medium">Usage Limit <span className="text-red-500">*</span></label>
                                 <input
@@ -146,7 +136,6 @@ function AddDiscount() {
                                 />
                             </div>
 
-                            {/* Status */}
                             <div>
                                 <label className="text-sm font-medium">Status <span className="text-red-500">*</span></label>
                                 <select

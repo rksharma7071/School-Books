@@ -1,105 +1,100 @@
-import React, { useState, useMemo, useEffect, useContext } from "react";
-import axios from "axios";
-import { Link, useLoaderData } from "react-router-dom";
+import React, { useContext, useState, useMemo, useCallback } from "react";
+import { Link, useLoaderData, useSearchParams } from "react-router-dom";
 import BookTable from "../../../components/admin/BookTable.jsx";
 import { BookContext } from "../../../context/School.jsx";
 
 function Book() {
     const { setToastConfig, setShowToast } = useContext(BookContext);
+    const loaderData = useLoaderData();
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    const bookLoaderData = useLoaderData();
-    const books = bookLoaderData || [];
+    const books = loaderData?.data ?? [];
+    const pagination = loaderData?.pagination ?? {};
 
-    const [search, setSearch] = useState("");
+    // URL is the source of truth
+    const page = Number(searchParams.get("page")) || 1;
+    const limit = Number(searchParams.get("limit")) || 20;
+    const searchFromUrl = searchParams.get("search") ?? "";
+
+    // Local input only — mirrors the URL, doesn't drive it
+    const [searchInput, setSearchInput] = useState(searchFromUrl);
     const [selectedIds, setSelectedIds] = useState([]);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
 
-    const filteredBooks = useMemo(() => {
-        const term = search.trim().toLowerCase();
-        if (!term) return books;
-
-        return books.filter(
-            (b) =>
-                b.title?.toLowerCase().includes(term) ||
-                b.handle?.toLowerCase().includes(term) ||
-                b.category?.toLowerCase().includes(term) ||
-                b.classes?.some((c) => c.toLowerCase().includes(term)) ||
-                b.mediums?.some((m) => m.toLowerCase().includes(term)) ||
-                b.editions?.some((e) => e.toLowerCase().includes(term))
-        );
-    }, [books, search]);
-
-    const totalPages = Math.max(
-        1,
-        Math.ceil(filteredBooks.length / rowsPerPage)
+    // Update URL query params (single helper)
+    const updateParams = useCallback(
+        (patch, { replace = false } = {}) => {
+            setSearchParams(
+                (prev) => {
+                    const next = new URLSearchParams(prev);
+                    Object.entries(patch).forEach(([k, v]) => {
+                        if (v === "" || v === null || v === undefined) next.delete(k);
+                        else next.set(k, String(v));
+                    });
+                    return next;
+                },
+                { replace }
+            );
+        },
+        [setSearchParams]
     );
 
-    const paginatedBooks = useMemo(() => {
-        const safePage = Math.min(currentPage, totalPages);
-        const start = (safePage - 1) * rowsPerPage;
-        return filteredBooks.slice(start, start + rowsPerPage);
-    }, [filteredBooks, currentPage, rowsPerPage, totalPages]);
+    // Search submit — updates URL, resets to page 1
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        updateParams({ search: searchInput.trim(), page: 1 });
+    };
 
-    const allVisibleIds = paginatedBooks.map((b) => b.id);
+    // Pagination
+    const handleNextPage = () => pagination.hasNextPage && updateParams({ page: page + 1 });
+    const handlePrevPage = () => pagination.hasPreviousPage && updateParams({ page: page - 1 });
+    const handleLimitChange = (e) => updateParams({ limit: Number(e.target.value), page: 1 });
+
+    // Selection (current page slice)
+    const allVisibleIds = useMemo(
+        () => books.map((b) => b.id || b._id).filter(Boolean),
+        [books]
+    );
+
     const isAllSelected =
         allVisibleIds.length > 0 &&
         allVisibleIds.every((id) => selectedIds.includes(id));
 
-    const toggleSelect = (id) => {
+    const toggleSelect = (id) =>
         setSelectedIds((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
         );
-    };
 
     const toggleSelectAll = () => {
         if (isAllSelected) {
-            setSelectedIds((prev) =>
-                prev.filter((id) => !allVisibleIds.includes(id))
-            );
+            setSelectedIds((prev) => prev.filter((id) => !allVisibleIds.includes(id)));
         } else {
-            setSelectedIds((prev) =>
-                Array.from(new Set([...prev, ...allVisibleIds]))
-            );
+            setSelectedIds((prev) => Array.from(new Set([...prev, ...allVisibleIds])));
         }
     };
 
-    const handlePaginationChange = (e) => {
-        setRowsPerPage(Number(e.target.value));
-        setCurrentPage(1);
-    };
-
-    const handlePrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
-    const handleNextPage = () =>
-        setCurrentPage((p) => Math.min(totalPages, p + 1));
-
-    const startIndex =
-        filteredBooks.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const endIndex = Math.min(currentPage * rowsPerPage, filteredBooks.length);
+    const total = pagination.total ?? 0;
+    const startIndex = total > 0 ? (page - 1) * limit + 1 : 0;
+    const endIndex = Math.min(page * limit, total);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        Books
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                        Manage all school books and inventory.
-                    </p>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Books</h2>
+                    <p className="text-sm text-gray-500">Manage all school books and inventory.</p>
                 </div>
 
                 <div className="flex gap-2 w-full sm:w-auto">
-                    <input
-                        type="search"
-                        value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setCurrentPage(1);
-                        }}
-                        placeholder="Search by title, class, medium, edition..."
-                        className="flex-1 sm:w-72 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    <form onSubmit={handleSearchSubmit} className="flex-1 sm:w-72">
+                        <input
+                            type="search"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            placeholder="Search by title, class, medium, edition..."
+                            className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </form>
+
                     <Link
                         to={`/${import.meta.env.VITE_ADMIN}/books/add`}
                         className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
@@ -126,7 +121,7 @@ function Book() {
                     <BookTable
                         isAllSelected={isAllSelected}
                         toggleSelectAll={toggleSelectAll}
-                        paginatedBooks={paginatedBooks}
+                        paginatedBooks={books}
                         selectedIds={selectedIds}
                         toggleSelect={toggleSelect}
                     />
@@ -136,8 +131,8 @@ function Book() {
                     <div className="flex items-center gap-2">
                         <span>Rows per page:</span>
                         <select
-                            value={rowsPerPage}
-                            onChange={handlePaginationChange}
+                            value={limit}
+                            onChange={handleLimitChange}
                             className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value={5}>5 rows</option>
@@ -145,9 +140,10 @@ function Book() {
                             <option value={20}>20 rows</option>
                             <option value={30}>30 rows</option>
                         </select>
+
                         <span className="hidden sm:inline">
-                            {filteredBooks.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredBooks.length} books`
+                            {total > 0
+                                ? `Showing ${startIndex}–${endIndex} of ${total} books`
                                 : "Showing 0 of 0 books"}
                         </span>
                     </div>
@@ -155,30 +151,25 @@ function Book() {
                     <div className="flex items-center gap-3 justify-end">
                         <button
                             onClick={handlePrevPage}
-                            disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
+                            disabled={!pagination.hasPreviousPage}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${!pagination.hasPreviousPage ? "opacity-50 cursor-not-allowed" : ""
                                 }`}
                         >
                             Prev
                         </button>
+
                         <span>
                             Page{" "}
+                            <span className="font-semibold text-gray-700">{page}</span> of{" "}
                             <span className="font-semibold text-gray-700">
-                                {Math.min(currentPage, totalPages)}
-                            </span>{" "}
-                            of{" "}
-                            <span className="font-semibold text-gray-700">
-                                {totalPages}
+                                {pagination.totalPages ?? 1}
                             </span>
                         </span>
+
                         <button
                             onClick={handleNextPage}
-                            disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
+                            disabled={!pagination.hasNextPage}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${!pagination.hasNextPage ? "opacity-50 cursor-not-allowed" : ""
                                 }`}
                         >
                             Next

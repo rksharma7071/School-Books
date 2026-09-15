@@ -302,7 +302,6 @@ function AddBook() {
                         </div>
                     </div>
 
-                    {/* options */}
                     <div className="border-t pt-4 border-gray-200">
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-gray-800">

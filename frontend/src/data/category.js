@@ -1,24 +1,15 @@
 import axios from "axios";
 import api from "../utils/api.js";
 
-const getCategorys = async ({
-    page = 1,
-    limit = 12,
-    search = "",
-    category = "",
-    author = "",
-    subject = "",
-    language = "",
-    classLevel = "",
-    minPrice = "",
-    maxPrice = "",
-    sortBy = "createdAt",
-    sortOrder = "desc",
-} = {}) => {
+const getCategorys = async ({ request } = {}) => {
+    const url = new URL(request?.url ?? window.location.href);
+
     const params = new URLSearchParams();
 
-    params.set("page", page);
-    params.set("limit", limit);
+
+    const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+    const limit = Math.max(1, Number(url.searchParams.get("limit")) || 20);
+
     params.set("sortBy", sortBy);
     params.set("sortOrder", sortOrder);
 
@@ -64,37 +55,65 @@ const editCategoryLoader = async ({ params }) => {
     }
 };
 
-const getCategoriesData = async () => {
-    const token = localStorage.getItem("token");
+const getCategoriesData = async ({ request } = {}) => {
+    try {
+        const url = new URL(request?.url ?? window.location.href);
+        const token = localStorage.getItem("token");
 
-    const res = await axios.get(
-        `${import.meta.env.VITE_API}/api/categories/admin`,
-        {
-            params: {
-                includeInactive: true,
-                limit: 100,
+        url.searchParams.set("includeInactive", "true");
+
+        const { data } = await axios.get(
+            `${import.meta.env.VITE_API}/api/categories/admin?${url.searchParams.toString()}`,
+            {
+                headers: { Authorization: `Bearer ${token}` },
+                signal: request?.signal,
+            }
+        );
+
+        const list = Array.isArray(data?.data) ? data.data : [];
+
+        const categories = list.map((category) => ({
+            id: category.id || category._id,
+            name: category.name,
+            handle: category.handle,
+            description: category.description,
+            image: category.image,
+            type: category.type,
+            isActive: category.isActive,
+            sortOrder: category.sortOrder,
+            productCount: category.productCount ?? 0,
+            conditions: category.conditions || [],
+            conditionMatch: category.conditionMatch,
+        }));
+
+        const pagination = data?.pagination ?? data?.pagination ?? {};
+        const page = Number(url.searchParams.get("page")) || 1;
+        const limit = Number(url.searchParams.get("limit")) || 20;
+
+        return {
+            data: categories,
+            pagination: {
+                total: pagination.total ?? categories.length,
+                page: pagination.page ?? page,
+                limit: pagination.limit ?? limit,
+                totalPages: pagination.totalPages ?? 1,
+                hasNextPage: pagination.hasNextPage ?? false,
+                hasPreviousPage: pagination.hasPreviousPage ?? false,
             },
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+        };
+    } catch (error) {
+        if (axios.isCancel?.(error)) {
+            return {
+                data: [],
+                pagination: { total: 0, page: 1, limit: 20, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+            };
         }
-    );
-
-    const apiCategories = res.data?.data || [];
-
-    return apiCategories.map((category) => ({
-        id: category.id || category._id,
-        name: category.name,
-        handle: category.handle,
-        description: category.description,
-        image: category.image,
-        type: category.type,
-        isActive: category.isActive,
-        sortOrder: category.sortOrder,
-        productCount: category.productCount ?? 0,
-        conditions: category.conditions || [],
-        conditionMatch: category.conditionMatch,
-    }));
+        console.error("Failed to fetch categories:", error);
+        return {
+            data: [],
+            pagination: { total: 0, page: 1, limit: 20, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+        };
+    }
 };
 
 

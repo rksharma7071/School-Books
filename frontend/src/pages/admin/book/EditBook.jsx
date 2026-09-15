@@ -40,10 +40,7 @@ const emptyVariant = (options) => ({
 });
 
 const normalizeOptions = (opts) => {
-    const entries = Object.entries(opts || {}).map(([k, v]) => [
-        String(k).trim().toLowerCase(),
-        v,
-    ]);
+    const entries = Object.entries(opts || {}).map(([k, v]) => [String(k).trim().toLowerCase(), v]);
     entries.sort((a, b) => a[0].localeCompare(b[0]));
     return Object.fromEntries(entries);
 };
@@ -54,7 +51,8 @@ function EditBook() {
     const navigate = useNavigate();
     const { setToastConfig, setShowToast } = useContext(BookContext);
     const loadedBook = useLoaderData();
-
+    // console.log("loadedBook: ", loadedBook);
+    
     const [imageMeta, setImageMeta] = useState({
         removedPublicIds: [],
         order: [],
@@ -195,9 +193,7 @@ function EditBook() {
     }, [generatedCombos, prefilled]);
 
     const updateVariantField = (index, field, value) =>
-        setVariants((prev) =>
-            prev.map((v, i) => (i === index ? { ...v, [field]: value } : v))
-        );
+        setVariants((prev) => prev.map((v, i) => (i === index ? { ...v, [field]: value } : v)));
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -228,9 +224,7 @@ function EditBook() {
                         ? undefined
                         : Number(v.compareAtPrice);
                 if (compareAt !== undefined && compareAt < price) {
-                    throw new Error(
-                        `Variant ${i + 1}: compareAtPrice (${compareAt}) must be >= price (${price})`
-                    );
+                    throw new Error(`Variant ${i + 1}: compareAtPrice (${compareAt}) must be >= price (${price})`);
                 }
             }
 
@@ -394,7 +388,6 @@ function EditBook() {
                         </div>
                     </div>
 
-                    {/* options */}
                     <div className="border-t pt-4 border-gray-200">
                         <div className="flex items-center justify-between mb-3">
                             <h3 className="text-sm font-semibold text-gray-800">
@@ -470,7 +463,6 @@ function EditBook() {
                         </div>
                     </div>
 
-                    {/* variants */}
                     <div className="border-t pt-4 border-gray-200">
                         <h3 className="text-sm font-semibold text-gray-800 mb-3">
                             Variants ({variants.length})

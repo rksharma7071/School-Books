@@ -141,8 +141,6 @@ function OrderDetails() {
     )
 }
 
-/* ---------- Reusable Components ---------- */
-
 function InfoCard({ title, children }) {
     return (
         <div className="bg-slate-50 rounded-lg p-4">

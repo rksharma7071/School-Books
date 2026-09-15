@@ -52,7 +52,7 @@ import CategoryProducts from './pages/frontend/CategoryProducts.jsx'
 import { editUser, getUsersData } from './data/user.js'
 import { getBooksData, getBookById, getBookByHandle, editBookLoader } from './data/book.js'
 import { getCart, getCartById } from './data/cart.js'
-import { getReview1 } from './data/review.js'
+import { getReview1, getReviewData } from './data/review.js'
 import { getDiscount, getDiscountById } from './data/discount.js'
 import { getPayment, getPaymentById } from './data/payment.js'
 import { getOrder, getOrderById } from './data/order.js'
@@ -162,8 +162,8 @@ const router = createBrowserRouter([
           { path: "users/add", element: <AddUser /> },
           { path: "users/edit/:id", element: <EditUser />, loader: editUser },
           { path: "general", element: <General /> },
-          { path: "roles", element: <Role /> },
-          { path: "review", element: <Review />, loader: getReview1 },
+          { path: "roles", element: <Role />,  },
+          { path: "review", element: <Review />, loader: getReviewData },
           { path: "cart", element: <Cart />, loader: getCart },
           { path: "cart/:id", element: <CartById />, loader: getCartById },
           { path: "discounts", element: <Discount />, loader: getDiscount },

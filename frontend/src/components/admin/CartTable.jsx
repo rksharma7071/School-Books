@@ -16,12 +16,14 @@ function CartTable({ paginatedCarts }) {
                     No carts found
                 </div>
             )}
-
             {paginatedCarts.map((cart) => {
-                const totalAmount = cart.items.reduce((sum, item) => sum + item.quantity * item.book.price, 0 );
+                const totalAmount = cart.items.reduce((sum, item) => {
+                    const price = item.product?.price ?? 0;
+                    return sum + item.quantity * price;
+                }, 0);
 
                 return (
-                    <Link 
+                    <Link
                         key={cart._id}
                         to={cart._id}
                         className="rounded-xl border border-gray-200 bg-white overflow-hidden block"
