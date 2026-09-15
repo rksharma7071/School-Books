@@ -6,21 +6,23 @@ import CartTable from "../../../components/admin/CartTable.jsx";
 function Cart() {
     const loader = useLoaderData();
 
-    const [carts, setCarts] = useState(loader || []);
+    const [carts, setCarts] = useState(Array.isArray(loader) ? loader : []);
     const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState("");
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
-        setCarts(loader || []);
+        setCarts(Array.isArray(loader) ? loader : []);
     }, [loader]);
 
     const refresh = useCallback(async () => {
         setRefreshing(true);
         try {
             const data = await getCart();
-            setCarts(data || []);
+            setCarts(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error("Refresh carts failed:", err);
         } finally {
             setRefreshing(false);
         }
@@ -28,13 +30,19 @@ function Cart() {
 
     const filteredCarts = useMemo(() => {
         const term = search.trim().toLowerCase();
-
         if (!term) return carts;
 
         return carts.filter((cart) => {
-            const user = `${cart.user?.name || ""} ${cart.user?.email || ""}`.toLowerCase();
-            const hasBook = (cart.items || []).some((item) => item.book?.name?.toLowerCase().includes(term));
-            return user.includes(term) || hasBook;
+            // Admin route returns populated `user`
+            const userStr = cart.user
+                ? `${cart.user.name || ""} ${cart.user.email || ""}`.toLowerCase()
+                : "";
+
+            const hasBook = (cart.items || []).some((item) =>
+                item.product?.name?.toLowerCase().includes(term)
+            );
+
+            return userStr.includes(term) || hasBook;
         });
     }, [carts, search]);
 
@@ -67,7 +75,7 @@ function Cart() {
                         Carts
                     </h2>
                     <p className="text-sm text-gray-500">
-                        Active carts that haven’t been checked out.
+                        Active carts that haven't been checked out.
                     </p>
                 </div>
 
@@ -119,9 +127,7 @@ function Cart() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
                                 }`}
                         >
                             Prev
@@ -132,16 +138,12 @@ function Cart() {
                                 {Math.min(currentPage, totalPages)}
                             </span>{" "}
                             of{" "}
-                            <span className="font-semibold text-gray-700">
-                                {totalPages}
-                            </span>
+                            <span className="font-semibold text-gray-700">{totalPages}</span>
                         </span>
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
-                                ? "opacity-50 cursor-not-allowed"
-                                : ""
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages ? "opacity-50 cursor-not-allowed" : ""
                                 }`}
                         >
                             Next

@@ -50,7 +50,7 @@ const getBookById = async ({ params }) => {
 const getBookByHandle = async ({ params }) => {
     try {
         const { data } = await api.get(`/api/product/${params.handle}`);
-        console.log("Get Book By Handle: ", data.data);
+        // console.log("Get Book By Handle: ", data.data);
         return data?.data || null;
     } catch (error) {
         console.error("Error fetching book by handle:", error);

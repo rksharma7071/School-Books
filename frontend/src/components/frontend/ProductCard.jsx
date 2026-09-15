@@ -2,6 +2,7 @@ import axios from "axios";
 import React, { useContext, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BookContext } from "../../context/School.jsx";
+import { getImageUrl } from "../../data/file.js";
 
 function ProductCard({ book, rating = 0 }) {
     const { user, setCartItems, setToastConfig, setShowToast, token } = useContext(BookContext);
@@ -17,10 +18,7 @@ function ProductCard({ book, rating = 0 }) {
     ) || defaultVariant;
 
     const handleOptionChange = (optionName, value) => {
-        setSelectedOptions(prev => ({
-            ...prev,
-            [optionName]: value
-        }));
+        setSelectedOptions(prev => ({ ...prev, [optionName]: value }));
     };
 
     const handleAddToCart = async () => {
@@ -34,19 +32,12 @@ function ProductCard({ book, rating = 0 }) {
             bookId: book._id,
             variantId: currentVariant._id,
             quantity: 1,
-            book: {
-                ...book,
-                selectedVariant: currentVariant
-            }
+            book: { ...book, selectedVariant: currentVariant }
         };
 
         setCartItems((prev) => {
             const item = prev.find((i) => i.variantId === currentVariant._id);
-            return item
-                ? prev.map((i) =>
-                    i.variantId === currentVariant._id ? { ...i, quantity: i.quantity + 1 } : i
-                )
-                : [...prev, cartItem];
+            return item ? prev.map((i) => i.variantId === currentVariant._id ? { ...i, quantity: i.quantity + 1 } : i) : [...prev, cartItem];
         });
 
         try {
@@ -56,9 +47,7 @@ function ProductCard({ book, rating = 0 }) {
                 variantId: currentVariant._id,
                 quantity: 1,
             }, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`
-                }
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
             });
             setToastConfig({
                 type: "success",
@@ -81,9 +70,17 @@ function ProductCard({ book, rating = 0 }) {
         setIsWishlisted(!isWishlisted);
     };
 
-    const img = book.images?.[0] || currentVariant.images?.[0] || "/placeholder-image.jpg";
+    // const img = import.meta.env.VITE_API + "/api/" + book.images[0]?.publicId || currentVariant.images?.[0] || "/placeholder-image.jpg";
+    // console.log("getImageUrl(book.images[0]): ",getImageUrl(book.images[0]));
+    
+    const img = getImageUrl(book.images[0]) || currentVariant.images?.[0] || "/placeholder-image.jpg";
     const displayPrice = currentVariant.price || book.minPrice || 0;
     const stockQty = currentVariant.inventory_quantity ?? book.totalInventory ?? 0;
+
+
+
+    // console.log("Book", book.images[0]);
+    // console.log("img", { title: book.title, img });
 
     return (
         <div className="group relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-300 flex flex-col hover:-translate-y-1">

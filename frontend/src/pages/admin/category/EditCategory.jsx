@@ -389,19 +389,10 @@ function EditCategory() {
     <div className="max-w-7xl mx-auto space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-            Edit Category
-          </h2>
-          <p className="text-sm text-gray-500">
-            Update the category details, conditions, and image.
-          </p>
+          <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Edit Category</h2>
+          <p className="text-sm text-gray-500">Update the category details, conditions, and image.</p>
         </div>
-        <Link
-          to={`/${import.meta.env.VITE_ADMIN}/categories`}
-          className="text-sm text-blue-600 hover:underline"
-        >
-          ← Back to Categories
-        </Link>
+        <Link to={`/${import.meta.env.VITE_ADMIN}/categories`} className="text-sm text-blue-600 hover:underline">← Back to Categories</Link>
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
@@ -409,12 +400,9 @@ function EditCategory() {
           onSubmit={handleSubmit}
           className="bg-white p-6 space-y-6"
         >
-          {/* ----- basic info ----- */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Name <span className="text-red-500">*</span>
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Name <span className="text-red-500">*</span></label>
               <input
                 name="name"
                 value={form.name}
@@ -426,9 +414,7 @@ function EditCategory() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Handle
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Handle</label>
               <input
                 name="handle"
                 value={form.handle}
@@ -440,9 +426,7 @@ function EditCategory() {
             </div>
 
             <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Description
-              </label>
+              <label className="block text-sm font-medium text-gray-700">Description</label>
               <textarea
                 name="description"
                 value={form.description}
@@ -493,9 +477,7 @@ function EditCategory() {
           {form.type === "manual" && (
             <div className="border-t pt-4 border-gray-200 space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-800">
-                  Products ({selectedProductIds.length} selected)
-                </h3>
+                <h3 className="text-sm font-semibold text-gray-800">Products ({selectedProductIds.length} selected)</h3>
                 {selectedProductIds.length > 0 && (
                   <button
                     type="button"
@@ -517,19 +499,10 @@ function EditCategory() {
 
               {selectedProducts.length > 0 && (
                 <div className="flex flex-wrap gap-2">
-                  {selectedProducts.map((p) => (
-                    <span
-                      key={p.id}
-                      className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700"
-                    >
-                      {p.title}
-                      <button
-                        type="button"
-                        onClick={() => toggleProduct(p.id)}
-                        className="text-blue-500 hover:text-blue-700"
-                      >
-                        ×
-                      </button>
+                  {selectedProducts.map((product) => (
+                    <span key={product.id} className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1 text-xs text-blue-700">
+                      {product.title}
+                      <button type="button" onClick={() => toggleProduct(product.id)} className="text-blue-500 hover:text-blue-700">×</button>
                     </span>
                   ))}
                 </div>
@@ -537,45 +510,28 @@ function EditCategory() {
 
               <div className="max-h-72 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
                 {productsLoading ? (
-                  <p className="p-4 text-sm text-gray-500">
-                    Loading products…
-                  </p>
+                  <p className="p-4 text-sm text-gray-500">Loading products…</p>
                 ) : filteredProducts.length === 0 ? (
-                  <p className="p-4 text-sm text-gray-500">
-                    No products found.
-                  </p>
+                  <p className="p-4 text-sm text-gray-500">No products found.</p>
                 ) : (
-                  filteredProducts.map((p) => {
-                    const checked = selectedProductIds.includes(
-                      p.id
-                    );
+                  filteredProducts.map((product) => {
+                    const checked = selectedProductIds.includes(product.id);
                     return (
-                      <label
-                        key={p.id}
-                        className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50"
-                      >
+                      <label key={product.id} className="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-50">
                         <input
                           type="checkbox"
                           checked={checked}
-                          onChange={() => toggleProduct(p.id)}
+                          onChange={() => toggleProduct(product.id)}
                           className="h-4 w-4 rounded border-gray-300"
                         />
-                        {p.image ? (
-                          <img
-                            src={p.image}
-                            alt=""
-                            className="h-9 w-9 rounded object-cover border border-gray-200"
-                          />
+                        {product.image ? (
+                          <img src={product.image} alt="" className="h-9 w-9 rounded object-cover border border-gray-200" />
                         ) : (
                           <div className="h-9 w-9 rounded bg-gray-100 border border-gray-200" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-900 truncate">
-                            {p.title}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">
-                            {p.handle}
-                          </p>
+                          <p className="text-sm text-gray-900 truncate">{product.title}</p>
+                          <p className="text-xs text-gray-500 truncate">{product.handle}</p>
                         </div>
                       </label>
                     );
@@ -585,26 +541,15 @@ function EditCategory() {
             </div>
           )}
 
-          {/* ----- automatic conditions ----- */}
           {form.type === "automatic" && (
             <div className="border-t pt-4 border-gray-200 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-800">
-                  Conditions
-                </h3>
-                <button
-                  type="button"
-                  onClick={addCondition}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  + Add condition
-                </button>
+                <h3 className="text-sm font-semibold text-gray-800">Conditions</h3>
+                <button type="button" onClick={addCondition} className="text-sm text-blue-600 hover:underline">+ Add condition</button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Match
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Match</label>
                 <select
                   name="conditionMatch"
                   value={form.conditionMatch}
@@ -617,61 +562,40 @@ function EditCategory() {
               </div>
 
               {conditions.length === 0 && (
-                <p className="text-sm text-gray-500">
-                  No conditions yet. Add at least one.
-                </p>
+                <p className="text-sm text-gray-500">No conditions yet. Add at least one.</p>
               )}
 
               <div className="space-y-2">
                 {conditions.map((cond, i) => (
-                  <div
-                    key={i}
-                    className="flex flex-wrap gap-2 items-center border border-gray-200 rounded-lg p-2"
-                  >
+                  <div key={i} className="flex flex-wrap gap-2 items-center border border-gray-200 rounded-lg p-2">
                     <select
                       value={cond.field}
-                      onChange={(e) =>
-                        updateCondition(i, "field", e.target.value)
-                      }
+                      onChange={(e) => updateCondition(i, "field", e.target.value)}
                       className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
                     >
-                      {FIELD_OPTIONS.map((f) => (
-                        <option key={f.value} value={f.value}>
-                          {f.label}
-                        </option>
+                      {FIELD_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
 
                     <select
                       value={cond.operator}
-                      onChange={(e) =>
-                        updateCondition(i, "operator", e.target.value)
-                      }
+                      onChange={(e) => updateCondition(i, "operator", e.target.value)}
                       className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
                     >
-                      {OPERATOR_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
+                      {OPERATOR_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>{option.label}</option>
                       ))}
                     </select>
 
                     <input
                       value={cond.value}
-                      onChange={(e) =>
-                        updateCondition(i, "value", e.target.value)
-                      }
+                      onChange={(e) => updateCondition(i, "value", e.target.value)}
                       placeholder="value"
                       className="flex-1 min-w-[140px] border border-gray-300 rounded-lg px-2 py-1 text-sm"
                     />
 
-                    <button
-                      type="button"
-                      onClick={() => removeCondition(i)}
-                      className="text-red-500 text-xs hover:underline"
-                    >
-                      Remove
-                    </button>
+                    <button type="button" onClick={() => removeCondition(i)} className="text-red-500 text-xs hover:underline">Remove</button>
                   </div>
                 ))}
               </div>
@@ -680,10 +604,7 @@ function EditCategory() {
                 <div className="flex items-center justify-between mb-2">
                   <h4 className="text-xs font-semibold text-gray-700">Matching products</h4>
                   <span className="text-xs text-gray-500">
-                    {previewLoading
-                      ? "Checking…"
-                      : `${previewTotal} match${previewTotal === 1 ? "" : "es"
-                      }`}
+                    {previewLoading ? "Checking…" : `${previewTotal} match${previewTotal === 1 ? "" : "es"}`}
                   </span>
                 </div>
 
@@ -691,65 +612,38 @@ function EditCategory() {
                   <p className="text-xs text-gray-500">
                     {conditions.length === 0
                       ? "Add conditions to preview matches."
-                      : previewLoading
-                        ? "Checking matches…"
-                        : "No products match the current conditions."}
+                      : previewLoading ? "Checking matches…" : "No products match the current conditions."}
                   </p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
-                    {previewProducts.map((p) => (
-                      <span
-                        key={p.id}
-                        className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-3 py-1 text-xs text-gray-700"
-                      >
-                        {p.image ? (
-                          <img
-                            src={p.image}
-                            alt=""
-                            className="h-5 w-5 rounded object-cover"
-                          />
+                    {previewProducts.map((product) => (
+                      <span key={product.id} className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-3 py-1 text-xs text-gray-700">
+                        {product.image ? (
+                          <img src={product.image} alt="" className="h-5 w-5 rounded object-cover" />
                         ) : null}
-                        {p.title}
+                        {product.title}
                       </span>
                     ))}
                     {previewTotal > previewProducts.length && (
-                      <span className="text-xs text-gray-500 self-center">
-                        +{previewTotal - previewProducts.length} more
-                      </span>
+                      <span className="text-xs text-gray-500 self-center">+{previewTotal - previewProducts.length} more</span>
                     )}
                   </div>
                 )}
               </div>
 
-              <p className="text-xs text-gray-500">
-                Note: products are assigned automatically by
-                conditions — <code>category.products</code> stays empty.
-              </p>
+              <p className="text-xs text-gray-500">Note: products are assigned automatically by conditions — <code>category.products</code> stays empty.</p>
             </div>
           )}
 
-          {/* ----- image ----- */}
           <div className="border-t pt-4 border-gray-200">
-            <h3 className="text-sm font-semibold text-gray-800 mb-3">
-              Category Image
-            </h3>
+            <h3 className="text-sm font-semibold text-gray-800 mb-3">Category Image</h3>
 
             {currentImage && !removeImage && (
               <div className="mb-3 flex items-center gap-3">
-                <img
-                  src={currentImage}
-                  alt="Current category"
-                  className="h-20 w-20 object-cover rounded-lg border border-gray-200"
-                />
+                <img src={currentImage} alt="Current category" className="h-20 w-20 object-cover rounded-lg border border-gray-200" />
                 <div className="text-xs text-gray-500">
                   <p>Current image</p>
-                  <button
-                    type="button"
-                    onClick={() => setRemoveImage(true)}
-                    className="text-red-600 hover:underline mt-1"
-                  >
-                    Remove image
-                  </button>
+                  <button type="button" onClick={() => setRemoveImage(true)} className="text-red-600 hover:underline mt-1">Remove image</button>
                 </div>
               </div>
             )}
@@ -757,21 +651,12 @@ function EditCategory() {
             {removeImage && (
               <div className="mb-3 text-xs text-red-600">
                 Current image will be removed on save.{" "}
-                <button
-                  type="button"
-                  onClick={() => setRemoveImage(false)}
-                  className="text-blue-600 hover:underline"
-                >
-                  Undo
-                </button>
+                <button type="button" onClick={() => setRemoveImage(false)} className="text-blue-600 hover:underline">Undo</button>
               </div>
             )}
 
             <ImageGridManager onImagesChange={setImages} />
-            <p className="mt-2 text-xs text-gray-500">
-              Upload a new image to replace the current one. Only the first
-              file is used.
-            </p>
+            <p className="mt-2 text-xs text-gray-500">Upload a new image to replace the current one. Only the first file is used.</p>
           </div>
 
           <button

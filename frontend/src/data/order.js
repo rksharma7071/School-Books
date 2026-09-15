@@ -1,35 +1,37 @@
-import api from "../utils/api.js";
+import axios from "axios";
 
-const normalizeOrder = (order) => ({
-    ...order,
-    user: order.userId || null,
-    items: (order.items || []).map((item) => ({
-        ...item,
-        book: item.bookId || null,
-    })),
+const authHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
 });
 
-const getOrder = async ({ request } = {}) => {
+export const getOrder = async (params = {}) => {
     try {
-        const { data } = await api.get(`/api/order`, {
-            signal: request?.signal,
-        });
-        return (data || []).map(normalizeOrder);
+        const { data } = await axios.get(
+            `${import.meta.env.VITE_API}/api/order`,
+            {
+                params, headers: { Authorization: `Bearer ${localStorage.getItem("token")}` }
+            }
+        );
+        return data?.data || [];
     } catch (error) {
-        if (axios.isCancel(error)) return [];
-        console.error("Failed to fetch orders:", error.message);
-        return [];
+        console.error("Get Order Error:", error);
+        throw error?.response?.data || { message: "Failed to fetch orders" };
     }
 };
 
-const getOrderById = async ({ params, request } = {}) => {
+export const getOrderById = async ({ params, request } = {}) => {
     try {
-        const { data } = await api.get(`/api/order/${params.id}`, {
-            signal: request?.signal,
-        });
-        return normalizeOrder(data);
+        const { data } = await axios.get(
+            `${import.meta.env.VITE_API}/api/order/${params.id}`,
+            {
+                signal: request?.signal,
+                headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+            }
+        );
+        return data?.data || null;
     } catch (error) {
         if (axios.isCancel(error)) return null;
+
         console.error("Failed to fetch order by ID:", error.message);
 
         throw new Response("Order not found", {
@@ -37,5 +39,3 @@ const getOrderById = async ({ params, request } = {}) => {
         });
     }
 };
-
-export { getOrder, getOrderById };

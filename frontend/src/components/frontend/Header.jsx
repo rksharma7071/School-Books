@@ -21,7 +21,7 @@ function Header() {
     const [searching, setSearching] = useState(false);
 
     const { user, adminLogout, cartItems } = useContext(BookContext);
-    console.log("results: ", results);
+    // console.log("results: ", results);
 
     const menuRef = useRef(null);
     const navigate = useNavigate();

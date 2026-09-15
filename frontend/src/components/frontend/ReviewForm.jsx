@@ -7,34 +7,45 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
     const [hover, setHover] = useState(0);
     const [title, setTitle] = useState("");
     const [body, setBody] = useState("");
+    const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        if (submitting) return;
+
+        setError("");
+        setSubmitting(true);
 
         try {
             const res = await axios.post(
                 `${import.meta.env.VITE_API}/api/review`,
                 {
+                    productId: bookId,   // ✅ correct field name
                     rating,
                     title,
                     body,
-                    bookId,
                 },
                 {
                     headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
                     },
                 }
             );
 
-            onSubmit(res.data);
+            onSubmit?.(res.data);
             setRating(0);
             setTitle("");
             setBody("");
             onClose();
-
-        } catch (error) {
-            console.error("Review Add Error:", error.response?.data || error.message);
+        } catch (err) {
+            const message =
+                err.response?.data?.message ||
+                "Failed to submit review. Please try again.";
+            console.error("Review Add Error:", err.response?.data || err.message);
+            setError(message);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -55,12 +66,7 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
             >
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-xl font-semibold text-gray-900">Write a review</h3>
-                    <button
-                        onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 text-2xl"
-                    >
-                        ✕
-                    </button>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-2xl">✕</button>
                 </div>
 
                 <div className="mb-5">
@@ -77,8 +83,8 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
                             >
                                 <FaStar
                                     className={`text-2xl transition ${(hover || rating) >= star
-                                        ? "text-yellow-400"
-                                        : "text-gray-300"
+                                            ? "text-yellow-400"
+                                            : "text-gray-300"
                                         }`}
                                 />
                             </button>
@@ -86,11 +92,10 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
                     </div>
 
                     {!rating && (
-                        <p className="text-xs text-gray-400 mt-1">
-                            Click to rate
-                        </p>
+                        <p className="text-xs text-gray-400 mt-1">Click to rate</p>
                     )}
                 </div>
+
                 <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Review title</label>
                     <input
@@ -101,6 +106,7 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
                         className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500"
                     />
                 </div>
+
                 <div className="mb-6">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Review</label>
                     <textarea
@@ -111,6 +117,13 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
                         className="w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 resize-none"
                     />
                 </div>
+
+                {error && (
+                    <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-red-700">
+                        {error}
+                    </div>
+                )}
+
                 <div className="flex justify-end gap-3">
                     <button
                         onClick={onClose}
@@ -121,10 +134,10 @@ function ReviewForm({ onClose, onSubmit, bookId, userId }) {
 
                     <button
                         onClick={handleSubmit}
-                        disabled={!rating || !title || !body}
+                        disabled={!rating || !title || !body || submitting}
                         className="px-6 py-2 rounded-md bg-blue-900 text-white text-sm font-medium hover:bg-blue-950 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
                     >
-                        Submit review
+                        {submitting ? "Submitting..." : "Submit review"}
                     </button>
                 </div>
             </div>

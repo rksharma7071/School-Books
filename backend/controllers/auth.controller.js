@@ -117,6 +117,8 @@ export const signUp = async (req, res) => {
 
         await sendVerificationEmail(user, rawToken);
 
+        console.log({ user, rawToken });
+
         return res.status(201).json({
             success: true,
             token: signToken(user),

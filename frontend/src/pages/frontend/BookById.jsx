@@ -8,6 +8,7 @@ import ReviewForm from "../../components/frontend/ReviewForm.jsx";
 import { IoIosArrowDown } from "react-icons/io";
 import Loading from "../../components/UI/Loading.jsx";
 import { useSEO } from "../../seo/SEO.jsx";
+import { getImageUrl } from "../../data/file.js";
 
 function BookById() {
     const book = useLoaderData();
@@ -82,8 +83,14 @@ function BookById() {
     const displayPrice = currentVariant.price || minPrice || 0;
     const stockQty = currentVariant.inventory_quantity ?? totalInventory ?? 0;
     const allImages = images.length > 0 ? images : (currentVariant.images || []);
-    const displayImage = allImages[selectedImage] || allImages[0] || null;
+    // console.log("allImages", allImages);
 
+    const displayImage = allImages[selectedImage] || allImages[0] || null;
+    
+    // console.log("displayImage", displayImage);
+    
+    const displayImageUrl = displayImage ? getImageUrl(displayImage) : null;
+    // console.log("displayImageUrl", displayImageUrl);
     const increaseQty = () => {
         if (quantity < stockQty) setQuantity((q) => q + 1);
     };
@@ -215,9 +222,9 @@ function BookById() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10 bg-white rounded-2xl p-6">
                 <div className="flex flex-col gap-4">
                     <div className="flex justify-center bg-gray-50 rounded-xl p-4">
-                        {displayImage && !imageError ? (
+                        {displayImageUrl && !imageError ? (
                             <img
-                                src={displayImage}
+                                src={displayImageUrl}
                                 alt={title}
                                 className="w-full max-w-md rounded-xl aspect-3/4 object-contain"
                                 onError={() => setImageError(true)}
@@ -388,12 +395,12 @@ function BookById() {
                     userId={user?.id}
                 />
             )}
-            <ReviewByBook
+            {/* <ReviewByBook
                 review={approvedReviews}
                 reviewSectionRef={reviewSectionRef}
                 showReviewForm={showReviewForm}
                 setShowReviewForm={setShowReviewForm}
-            />
+            /> */}
         </div>
     );
 }

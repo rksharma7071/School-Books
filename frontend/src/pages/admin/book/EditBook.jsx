@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import axios from "axios";
 import BookImages from "../../../components/admin/BookImages.jsx";
@@ -39,6 +39,17 @@ const emptyVariant = (options) => ({
     options,
 });
 
+const normalizeOptions = (opts) => {
+    const entries = Object.entries(opts || {}).map(([k, v]) => [
+        String(k).trim().toLowerCase(),
+        v,
+    ]);
+    entries.sort((a, b) => a[0].localeCompare(b[0]));
+    return Object.fromEntries(entries);
+};
+
+const optionsKey = (opts) => JSON.stringify(normalizeOptions(opts));
+
 function EditBook() {
     const navigate = useNavigate();
     const { setToastConfig, setShowToast } = useContext(BookContext);
@@ -62,6 +73,9 @@ function EditBook() {
     const [variants, setVariants] = useState([]);
     const [submitting, setSubmitting] = useState(false);
 
+    // Guards the sync effect until the prefill from loadedBook has been applied.
+    const [prefilled, setPrefilled] = useState(false);
+
     // ----- prefill -----
     useEffect(() => {
         if (!loadedBook) return;
@@ -75,27 +89,35 @@ function EditBook() {
         });
 
         const loadedOptions = (loadedBook.options || []).map((option) => ({
-            name: option.name,
+            name: String(option.name || "").trim().toLowerCase(),
             values: [...(option.values || [])],
         }));
         setOptions(
             loadedOptions.length ? loadedOptions : [{ name: "class", values: [""] }]
         );
 
-        const loadedVariants = (loadedBook.variants || []).map((variant) => ({
-            _id: variant._id,
-            sku: variant.sku || "",
-            price: variant.price ?? "",
-            cost: variant.cost ?? "",
-            compareAtPrice: variant.compareAtPrice ?? "",
-            inventory_quantity: variant.inventory_quantity ?? "",
-            isActive: variant.isActive !== false,
-            options:
+        const loadedVariants = (loadedBook.variants || []).map((variant) => {
+            const rawOptions =
                 variant.options instanceof Map
                     ? Object.fromEntries(variant.options)
-                    : { ...(variant.options || {}) },
-        }));
+                    : { ...(variant.options || {}) };
+
+            return {
+                _id: variant._id,
+                sku: variant.sku || "",
+                price: variant.price ?? "",
+                cost: variant.cost ?? "",
+                compareAtPrice: variant.compareAtPrice ?? "",
+                inventory_quantity: variant.inventory_quantity ?? "",
+                isActive: variant.isActive !== false,
+                options: normalizeOptions(rawOptions),
+            };
+        });
         setVariants(loadedVariants);
+
+        // Allow the sync effect to run on the *next* commit, when
+        // options + variants + generatedCombos are all consistent.
+        setPrefilled(true);
     }, [loadedBook]);
 
     const handleChange = (e) => {
@@ -103,7 +125,10 @@ function EditBook() {
         setForm((prev) => ({ ...prev, [name]: type === "checkbox" ? checked : value }));
     };
 
-    const updateOptionName = (index, name) => setOptions((prev) => prev.map((opt, i) => (i === index ? { ...opt, name } : opt)));
+    const updateOptionName = (index, name) =>
+        setOptions((prev) =>
+            prev.map((opt, i) => (i === index ? { ...opt, name } : opt))
+        );
 
     const updateOptionValue = (optIndex, valIndex, value) =>
         setOptions((prev) =>
@@ -117,18 +142,24 @@ function EditBook() {
 
     const addOptionValue = (optIndex) =>
         setOptions((prev) =>
-            prev.map((opt, i) => i === optIndex ? { ...opt, values: [...opt.values, ""] } : opt)
+            prev.map((opt, i) =>
+                i === optIndex ? { ...opt, values: [...opt.values, ""] } : opt
+            )
         );
 
     const removeOptionValue = (optIndex, valIndex) =>
         setOptions((prev) =>
             prev.map((opt, i) => {
                 if (i !== optIndex) return opt;
-                return { ...opt, values: opt.values.filter((_, vi) => vi !== valIndex) };
+                return {
+                    ...opt,
+                    values: opt.values.filter((_, vi) => vi !== valIndex),
+                };
             })
         );
 
-    const addOption = () => setOptions((prev) => [...prev, { name: "", values: [""] }]);
+    const addOption = () =>
+        setOptions((prev) => [...prev, { name: "", values: [""] }]);
 
     const removeOption = (index) =>
         setOptions((prev) => prev.filter((_, i) => i !== index));
@@ -146,18 +177,22 @@ function EditBook() {
     }, [options]);
 
     useEffect(() => {
+        // Don't clobber the loaded variants before the prefill effect has run.
+        if (!prefilled) return;
+
         setVariants((prev) => {
-            const byKey = new Map(
-                prev.map((v) => [JSON.stringify(v.options), v])
-            );
+            const byKey = new Map(prev.map((v) => [optionsKey(v.options), v]));
+
             return generatedCombos.map((combo) => {
-                const key = JSON.stringify(combo);
+                const key = optionsKey(combo);
                 const existing = byKey.get(key);
-                if (existing) return existing;
-                return emptyVariant(combo);
+                if (existing) {
+                    return { ...existing, options: normalizeOptions(combo) };
+                }
+                return emptyVariant(normalizeOptions(combo));
             });
         });
-    }, [generatedCombos]);
+    }, [generatedCombos, prefilled]);
 
     const updateVariantField = (index, field, value) =>
         setVariants((prev) =>
@@ -185,7 +220,6 @@ function EditBook() {
                 throw new Error("At least one variant is required");
             }
 
-            // Client-side compareAtPrice check
             for (let i = 0; i < variants.length; i++) {
                 const v = variants[i];
                 const price = Number(v.price);
@@ -245,7 +279,10 @@ function EditBook() {
                 }
             );
 
-            setToastConfig({ type: "success", message: "Book updated successfully." });
+            setToastConfig({
+                type: "success",
+                message: "Book updated successfully.",
+            });
             setShowToast(true);
             navigate(`/${import.meta.env.VITE_ADMIN}/books`);
         } catch (error) {
@@ -281,10 +318,7 @@ function EditBook() {
             </div>
 
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
-                <form
-                    onSubmit={handleSubmit}
-                    className="bg-white p-6 space-y-6"
-                >
+                <form onSubmit={handleSubmit} className="bg-white p-6 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block text-sm font-medium text-gray-700">
@@ -379,7 +413,7 @@ function EditBook() {
                             {options.map((opt, oi) => (
                                 <div
                                     key={oi}
-                                    className="border border-gray-200 rounded-lg p-3 space-y-2"
+                                    className="rounded-lg p-3 space-y-2"
                                 >
                                     <div className="flex items-center gap-2">
                                         <input
@@ -451,88 +485,79 @@ function EditBook() {
                                 <table className="min-w-full text-sm">
                                     <thead>
                                         <tr className="text-left text-gray-500 border-b border-gray-300">
-                                            <th className="py-1 pr-3">Options</th>
-                                            <th className="py-1 pr-3">SKU</th>
-                                            <th className="py-1 pr-3">Price *</th>
-                                            <th className="py-1 pr-3">Cost</th>
-                                            <th className="py-1 pr-3">Compare At</th>
-                                            <th className="py-1 pr-3">Stock *</th>
-                                            <th className="py-1 pr-3">Active</th>
+                                            <th className="border-r border-l border-t border-gray-200 p-2">Options</th>
+                                            <th className="border-r border-l border-t border-gray-200 p-2">SKU</th>
+                                            <th className="border-r border-l border-t border-gray-200 p-2">Price *</th>
+                                            <th className="border-r border-l border-t border-gray-200 p-2">Cost</th>
+                                            <th className="border-r border-l border-t border-gray-200 p-2">Compare At</th>
+                                            <th className="border-r border-l border-t border-gray-200 p-2">Stock *</th>
+                                            <th className="border-r border-l border-t border-gray-200 p-2">Active</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {variants.map((variant, vi) => (
-                                            <tr key={variant._id || vi} className="border-b border-gray-200">
-                                                <td className="py-1 pr-3 text-gray-700">
+                                            <tr
+                                                key={variant._id || vi}
+                                                className="border-b border-gray-200"
+                                            >
+                                                <td className="border-r border-l border-gray-200 p-2 text-gray-700">
                                                     {Object.entries(variant.options)
                                                         .map(([k, val]) => `${k}=${val}`)
                                                         .join(", ")}
                                                 </td>
-                                                <td className="py-1 pr-3">
+                                                <td className="border-r border-gray-200">
                                                     <input
                                                         value={variant.sku}
-                                                        onChange={(e) =>
-                                                            updateVariantField(vi, "sku", e.target.value)
-                                                        }
+                                                        onChange={(e) => updateVariantField(vi, "sku", e.target.value)}
                                                         placeholder="auto"
-                                                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-32"
+                                                        className="p-2 text-sm w-full"
                                                     />
                                                 </td>
-                                                <td className="py-1 pr-3">
+                                                <td className="border-r border-gray-200">
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         value={variant.price}
-                                                        onChange={(e) =>
-                                                            updateVariantField(vi, "price", e.target.value)
-                                                        }
+                                                        onChange={(e) => updateVariantField(vi, "price", e.target.value)}
                                                         required
-                                                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-24"
+                                                        className="p-2 text-sm w-full"
                                                     />
                                                 </td>
-                                                <td className="py-1 pr-3">
+                                                <td className="border-r border-gray-200">
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         value={variant.cost}
-                                                        onChange={(e) =>
-                                                            updateVariantField(vi, "cost", e.target.value)
-                                                        }
-                                                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-24"
+                                                        onChange={(e) => updateVariantField(vi, "cost", e.target.value)}
+                                                        className="p-2 text-sm w-full"
                                                     />
                                                 </td>
-                                                <td className="py-1 pr-3">
+                                                <td className="border-r border-gray-200">
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         value={variant.compareAtPrice}
-                                                        onChange={(e) =>
-                                                            updateVariantField(vi, "compareAtPrice", e.target.value)
-                                                        }
-                                                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-24"
+                                                        onChange={(e) => updateVariantField(vi, "compareAtPrice", e.target.value)}
+                                                        className="p-2 text-sm w-24"
                                                     />
                                                 </td>
-                                                <td className="py-1 pr-3">
+                                                <td className="border-r border-gray-200">
                                                     <input
                                                         type="number"
                                                         min="0"
                                                         step="1"
                                                         value={variant.inventory_quantity}
-                                                        onChange={(e) =>
-                                                            updateVariantField(vi, "inventory_quantity", e.target.value)
-                                                        }
+                                                        onChange={(e) => updateVariantField(vi, "inventory_quantity", e.target.value)}
                                                         required
-                                                        className="border border-gray-300 rounded-lg px-2 py-1 text-sm w-24"
+                                                        className="p-2 text-sm w-24"
                                                     />
                                                 </td>
-                                                <td className="py-1 pr-3">
+                                                <td className="border-r border-gray-200">
                                                     <input
                                                         type="checkbox"
                                                         checked={variant.isActive !== false}
-                                                        onChange={(e) =>
-                                                            updateVariantField(vi, "isActive", e.target.checked)
-                                                        }
-                                                        className="h-4 w-4"
+                                                        onChange={(e) => updateVariantField(vi, "isActive", e.target.checked)}
+                                                        className="h-4 w-4 p-2"
                                                     />
                                                 </td>
                                             </tr>

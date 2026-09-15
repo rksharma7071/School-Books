@@ -2,7 +2,9 @@ import mongoose from "mongoose";
 import { Review } from "../models/review.model.js";
 import { Product } from "../models/product.model.js";
 import { Order } from "../models/order.model.js";
-import { ApiError, handleError } from "../utils/apiError.js";
+
+const REQUIRE_VERIFIED_PURCHASE =
+    process.env.REQUIRE_VERIFIED_PURCHASE !== "false";
 
 const PRODUCT_REVIEW_SORTS = {
     newest: { createdAt: -1 },
@@ -10,31 +12,6 @@ const PRODUCT_REVIEW_SORTS = {
     highest: { rating: -1, createdAt: -1 },
     lowest: { rating: 1, createdAt: -1 },
     helpful: { helpfulCount: -1, createdAt: -1 },
-};
-
-const validateRating = (rating) => {
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-        throw new ApiError(400, `rating must be an integer between 1 and 5`);
-    }
-};
-
-const validateTitle = (title) => {
-    if (typeof title !== "string" || !title.trim()) throw new ApiError(400, "title is required");
-    const trimmed = title.trim();
-    if (trimmed.length < 3) throw new ApiError(400, `title must be at least 3 characters`);
-    if (trimmed.length > 120) throw new ApiError(400, `title must be at most 120 characters`);
-};
-
-const validateBody = (body) => {
-    if (typeof body !== "string" || !body.trim()) throw new ApiError(400, "body is required");
-    const trimmed = body.trim();
-    if (trimmed.length < 10) throw new ApiError(400, `body must be at least 10 characters`);
-    if (trimmed.length > 3000) throw new ApiError(400, `body must be at most 3000 characters`);
-};
-
-const checkVerifiedPurchase = async (userId, productId) => {
-    const exists = await Order.exists({ userId, status: "fulfilled", "items.productId": productId });
-    return !!exists;
 };
 
 const buildRatingDistributionStages = () => [
@@ -47,7 +24,7 @@ const buildRatingDistributionStages = () => [
 
 const formatPublicUser = (u) => {
     if (!u || typeof u !== "object") return null;
-    return { id: u._id, name: name };
+    return { id: u._id, name: u.name };
 };
 
 const formatPublicProduct = (p) => {
@@ -89,9 +66,10 @@ const formatAdminReview = (r) => ({
     productId: r.productId?._id ? r.productId._id : r.productId,
     product: r.productId?.title ? formatPublicProduct(r.productId) : undefined,
     userId: r.userId?._id ? r.userId._id : r.userId,
-    user: r.userId && typeof r.userId === "object"
-        ? { id: r.userId._id, name: r.userId.name, email: r.userId.email }
-        : undefined,
+    user:
+        r.userId && typeof r.userId === "object"
+            ? { id: r.userId._id, name: r.userId.name, email: r.userId.email }
+            : undefined,
     rating: r.rating,
     title: r.title,
     body: r.body,
@@ -108,43 +86,83 @@ const formatAdminReview = (r) => ({
     updatedAt: r.updatedAt,
 });
 
+const checkVerifiedPurchase = async (userId, productId) => {
+    const exists = await Order.exists({
+        userId,
+        status: "fulfilled",
+        "items.productId": productId,
+    });
+    return !!exists;
+};
+
+/* ------------------------------------------------------------------ */
+/* GET /reviews  (admin)                                              */
+/* ------------------------------------------------------------------ */
 export const getAllReview = async (req, res) => {
     try {
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(100, Math.max(1, +req.query.limit || 20));
 
-        const { approved, productId, userId, rating, verifiedPurchase, reported, search, sortBy = "createdAt", sortOrder = "desc" } = req.query;
+        const {
+            approved,
+            productId,
+            userId,
+            rating,
+            verifiedPurchase,
+            reported,
+            search,
+            sortBy = "createdAt",
+            sortOrder = "desc",
+        } = req.query;
 
         const filter = {};
 
         if (approved !== undefined) filter.approved = approved === "true" || approved === true;
 
         if (productId !== undefined) {
-            if (!mongoose.Types.ObjectId.isValid(productId)) throw new ApiError(400, "Invalid productId");
+            if (!mongoose.Types.ObjectId.isValid(productId)) {
+                return res.status(400).json({ success: false, message: "Invalid productId" });
+            }
             filter.productId = productId;
         }
 
         if (userId !== undefined) {
-            if (!mongoose.Types.ObjectId.isValid(userId)) throw new ApiError(400, "Invalid userId");
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                return res.status(400).json({ success: false, message: "Invalid userId" });
+            }
             filter.userId = userId;
         }
 
         if (rating !== undefined) {
             const r = Number(rating);
-            if (!Number.isInteger(r) || r < 1 || r > 5) throw new ApiError(400, "Invalid rating filter");
+            if (!Number.isInteger(r) || r < 1 || r > 5) {
+                return res.status(400).json({ success: false, message: "Invalid rating filter" });
+            }
             filter.rating = r;
         }
 
-        if (verifiedPurchase !== undefined) filter.verifiedPurchase = verifiedPurchase === "true" || verifiedPurchase === true;
-        if (reported !== undefined) filter.reported = reported === "true" || reported === true;
+        if (verifiedPurchase !== undefined) {
+            filter.verifiedPurchase = verifiedPurchase === "true" || verifiedPurchase === true;
+        }
+
+        if (reported !== undefined) {
+            filter.reported = reported === "true" || reported === true;
+        }
 
         if (search) {
             const safe = String(search).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-            filter.$or = [{ title: { $regex: safe, $options: "i" } }, { body: { $regex: safe, $options: "i" } }];
+            filter.$or = [
+                { title: { $regex: safe, $options: "i" } },
+                { body: { $regex: safe, $options: "i" } },
+            ];
         }
+
         const ADMIN_SORT_WHITELIST = ["createdAt", "updatedAt", "rating", "helpfulCount", "reportCount"];
         if (!ADMIN_SORT_WHITELIST.includes(sortBy)) {
-            throw new ApiError(400, `Invalid sortBy. Allowed: ${ADMIN_SORT_WHITELIST.join(", ")}`);
+            return res.status(400).json({
+                success: false,
+                message: `Invalid sortBy. Allowed: ${ADMIN_SORT_WHITELIST.join(", ")}`,
+            });
         }
         const sortOrderValue = sortOrder === "asc" ? 1 : -1;
 
@@ -157,10 +175,13 @@ export const getAllReview = async (req, res) => {
                 .limit(limit)
                 .lean(),
             Review.countDocuments(filter),
-            Review.aggregate([{ $match: { approved: true } }, { $group: { _id: null, avg: { $avg: "$rating" } } }]),
+            Review.aggregate([
+                { $match: { approved: true } },
+                { $group: { _id: null, avg: { $avg: "$rating" } } },
+            ]),
         ]);
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             data: reviews.map(formatAdminReview),
             meta: {
@@ -171,56 +192,118 @@ export const getAllReview = async (req, res) => {
                 hasNextPage: page * limit < total,
                 hasPreviousPage: page > 1,
             },
-            approvedAverageRating: approvedAvgAgg[0] ? Math.round(approvedAvgAgg[0].avg * 10) / 10 : 0,
+            approvedAverageRating: approvedAvgAgg[0]
+                ? Math.round(approvedAvgAgg[0].avg * 10) / 10
+                : 0,
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("getAllReview error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* GET /reviews/:id                                                   */
+/* ------------------------------------------------------------------ */
 export const getReviewById = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid review id");
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid review id" });
+        }
 
         const review = await Review.findById(id).populate("userId", "name").lean();
-        if (!review) throw new ApiError(404, "Review not found");
+        if (!review) {
+            return res.status(404).json({ success: false, message: "Review not found" });
+        }
 
         const reviewOwnerId = review.userId?._id || review.userId;
         const isOwner = !!req.user && String(reviewOwnerId) === String(req.user.id);
         const isAdmin = req.user?.role === "admin";
 
         if (!review.approved && !isOwner && !isAdmin) {
-            throw new ApiError(404, "Review not found");
+            return res.status(404).json({ success: false, message: "Review not found" });
         }
 
-        const data = isAdmin ? formatAdminReview(review) : isOwner ? formatOwnerReview(review) : formatPublicReview(review);
-        res.status(200).json({ success: true, data });
+        const data = isAdmin
+            ? formatAdminReview(review)
+            : isOwner
+                ? formatOwnerReview(review)
+                : formatPublicReview(review);
+
+        return res.status(200).json({ success: true, data });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("getReviewById error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* POST /reviews                                                      */
+/* ------------------------------------------------------------------ */
 export const createReview = async (req, res) => {
     try {
         const userId = req.user.id;
         const { productId, rating, title, body } = req.body;
 
-        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) throw new ApiError(400, "A valid productId is required");
-        validateRating(rating);
-        validateTitle(title);
-        validateBody(body);
+        if (!productId || !mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({ success: false, message: "A valid productId is required" });
+        }
+
+        if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+            return res.status(400).json({
+                success: false,
+                message: "rating must be an integer between 1 and 5",
+            });
+        }
+
+        if (typeof title !== "string" || !title.trim()) {
+            return res.status(400).json({ success: false, message: "title is required" });
+        }
+        const trimmedTitle = title.trim();
+        if (trimmedTitle.length < 3) {
+            return res.status(400).json({ success: false, message: "title must be at least 3 characters" });
+        }
+        if (trimmedTitle.length > 120) {
+            return res.status(400).json({ success: false, message: "title must be at most 120 characters" });
+        }
+
+        if (typeof body !== "string" || !body.trim()) {
+            return res.status(400).json({ success: false, message: "body is required" });
+        }
+        const trimmedBody = body.trim();
+        if (trimmedBody.length < 10) {
+            return res.status(400).json({ success: false, message: "body must be at least 10 characters" });
+        }
+        if (trimmedBody.length > 3000) {
+            return res.status(400).json({ success: false, message: "body must be at most 3000 characters" });
+        }
 
         const product = await Product.findById(productId).select("isActive").lean();
-        if (!product) throw new ApiError(404, "Product not found");
-        if (product.isActive === false) throw new ApiError(400, "This product is not available for review");
+        if (!product) {
+            return res.status(404).json({ success: false, message: "Product not found" });
+        }
+        if (product.isActive === false) {
+            return res.status(400).json({
+                success: false,
+                message: "This product is not available for review",
+            });
+        }
 
         const existingReview = await Review.findOne({ productId, userId }).lean();
-        if (existingReview) throw new ApiError(409, "You have already reviewed this product");
+        if (existingReview) {
+            return res.status(409).json({
+                success: false,
+                message: "You have already reviewed this product",
+            });
+        }
 
         const verifiedPurchase = await checkVerifiedPurchase(userId, productId);
-        if (true && !verifiedPurchase) {
-            throw new ApiError(403, "You can only review products you have purchased and received");
+        if (REQUIRE_VERIFIED_PURCHASE && !verifiedPurchase) {
+            return res.status(403).json({
+                success: false,
+                message: "You can only review products you have purchased and received",
+            });
         }
 
         let review;
@@ -229,28 +312,37 @@ export const createReview = async (req, res) => {
                 productId,
                 userId,
                 rating,
-                title: title.trim(),
-                body: body.trim(),
+                title: trimmedTitle,
+                body: trimmedBody,
                 verifiedPurchase,
                 verifiedPurchaseAt: verifiedPurchase ? new Date() : null,
                 approved: false,
                 approvedAt: null,
             });
         } catch (error) {
-            if (error.code === 11000) throw new ApiError(409, "You have already reviewed this product");
+            if (error.code === 11000) {
+                return res.status(409).json({
+                    success: false,
+                    message: "You have already reviewed this product",
+                });
+            }
             throw error;
         }
 
-        res.status(201).json({
+        return res.status(201).json({
             success: true,
             message: "Review submitted successfully and is pending moderation",
             data: formatOwnerReview(review.toObject()),
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("createReview error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* PATCH /reviews/:id                                                 */
+/* ------------------------------------------------------------------ */
 export const updateReview = async (req, res) => {
     try {
         const review = req.review;
@@ -260,27 +352,69 @@ export const updateReview = async (req, res) => {
         const { rating, title, body, approved } = req.body;
 
         if (approved !== undefined) {
-            if (!isAdmin) throw new ApiError(403, "Only admins can change approval status");
-            if (isOwner) throw new ApiError(403, "You cannot moderate your own review");
+            if (!isAdmin) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Only admins can change approval status",
+                });
+            }
+            if (isOwner) {
+                return res.status(403).json({
+                    success: false,
+                    message: "You cannot moderate your own review",
+                });
+            }
             review.approved = approved === true;
             review.approvedAt = review.approved ? new Date() : null;
         }
 
-        const wantsContentEdit = rating !== undefined || title !== undefined || body !== undefined;
+        const wantsContentEdit =
+            rating !== undefined || title !== undefined || body !== undefined;
+
         if (wantsContentEdit) {
-            if (!isOwner) throw new ApiError(403, "Only the review owner can edit its content");
+            if (!isOwner) {
+                return res.status(403).json({
+                    success: false,
+                    message: "Only the review owner can edit its content",
+                });
+            }
 
             if (rating !== undefined) {
-                validateRating(rating);
+                if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+                    return res.status(400).json({
+                        success: false,
+                        message: "rating must be an integer between 1 and 5",
+                    });
+                }
                 review.rating = rating;
             }
+
             if (title !== undefined) {
-                validateTitle(title);
-                review.title = title.trim();
+                if (typeof title !== "string" || !title.trim()) {
+                    return res.status(400).json({ success: false, message: "title is required" });
+                }
+                const trimmedTitle = title.trim();
+                if (trimmedTitle.length < 3) {
+                    return res.status(400).json({ success: false, message: "title must be at least 3 characters" });
+                }
+                if (trimmedTitle.length > 120) {
+                    return res.status(400).json({ success: false, message: "title must be at most 120 characters" });
+                }
+                review.title = trimmedTitle;
             }
+
             if (body !== undefined) {
-                validateBody(body);
-                review.body = body.trim();
+                if (typeof body !== "string" || !body.trim()) {
+                    return res.status(400).json({ success: false, message: "body is required" });
+                }
+                const trimmedBody = body.trim();
+                if (trimmedBody.length < 10) {
+                    return res.status(400).json({ success: false, message: "body must be at least 10 characters" });
+                }
+                if (trimmedBody.length > 3000) {
+                    return res.status(400).json({ success: false, message: "body must be at most 3000 characters" });
+                }
+                review.body = trimmedBody;
             }
 
             review.approved = false;
@@ -289,22 +423,37 @@ export const updateReview = async (req, res) => {
 
         await review.save();
 
-        const data = isAdmin ? formatAdminReview(review.toObject()) : formatOwnerReview(review.toObject());
-        res.status(200).json({ success: true, message: "Review updated successfully", data });
+        const data = isAdmin
+            ? formatAdminReview(review.toObject())
+            : formatOwnerReview(review.toObject());
+
+        return res.status(200).json({
+            success: true,
+            message: "Review updated successfully",
+            data,
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("updateReview error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* DELETE /reviews/:id                                                */
+/* ------------------------------------------------------------------ */
 export const deleteReview = async (req, res) => {
     try {
         await Review.findByIdAndDelete(req.review._id);
-        res.status(200).json({ success: true, message: "Review deleted successfully" });
+        return res.status(200).json({ success: true, message: "Review deleted successfully" });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("deleteReview error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* GET /reviews/summary                                               */
+/* ------------------------------------------------------------------ */
 export const getReviewSummary = async (req, res) => {
     try {
         const [r1, r2, r3, r4, r5] = buildRatingDistributionStages();
@@ -325,41 +474,62 @@ export const getReviewSummary = async (req, res) => {
         ]);
 
         res.set("Cache-Control", "public, max-age=120");
-        res.json({
+        return res.json({
             success: true,
-            data: data.map((d) => ({
-                productId: String(d._id),
-                avgRating: Math.round((d.avgRating || 0) * 10) / 10,
-                count: d.totalReviews,
-                totalReviews: d.totalReviews,
-                averageRating: Math.round((d.avgRating || 0) * 10) / 10,
-                distribution: { 1: d.rating1, 2: d.rating2, 3: d.rating3, 4: d.rating4, 5: d.rating5 },
-            })),
+            data: data.map((d) => {
+                const avg = Math.round((d.avgRating || 0) * 10) / 10;
+                return {
+                    productId: String(d._id),
+                    avgRating: avg,
+                    averageRating: avg,
+                    count: d.totalReviews,
+                    totalReviews: d.totalReviews,
+                    distribution: {
+                        1: d.rating1,
+                        2: d.rating2,
+                        3: d.rating3,
+                        4: d.rating4,
+                        5: d.rating5,
+                    },
+                };
+            }),
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("getReviewSummary error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* GET /reviews/product/:productId                                    */
+/* ------------------------------------------------------------------ */
 export const getReviewsByProduct = async (req, res) => {
     try {
         const { productId } = req.params;
-        if (!productId) throw new ApiError(400, "Product ID or handle is required");
+        if (!productId) {
+            return res.status(400).json({ success: false, message: "Product ID or handle is required" });
+        }
 
         let productObjectId;
         if (mongoose.Types.ObjectId.isValid(productId)) {
             productObjectId = new mongoose.Types.ObjectId(productId);
         } else {
             const product = await Product.findOne({ handle: productId }).select("_id").lean();
-            if (!product) throw new ApiError(404, "Product not found");
+            if (!product) {
+                return res.status(404).json({ success: false, message: "Product not found" });
+            }
             productObjectId = product._id;
         }
 
         const page = Math.max(1, parseInt(req.query.page) || 1);
         const limit = Math.min(100, Math.max(1, +req.query.limit || 20));
         const sortKey = req.query.sort || "newest";
+
         if (!PRODUCT_REVIEW_SORTS[sortKey]) {
-            throw new ApiError(400, `Invalid sort. Allowed: ${Object.keys(PRODUCT_REVIEW_SORTS).join(", ")}`);
+            return res.status(400).json({
+                success: false,
+                message: `Invalid sort. Allowed: ${Object.keys(PRODUCT_REVIEW_SORTS).join(", ")}`,
+            });
         }
 
         const filter = { productId: productObjectId, approved: true };
@@ -375,13 +545,23 @@ export const getReviewsByProduct = async (req, res) => {
             Review.countDocuments(filter),
             Review.aggregate([
                 { $match: filter },
-                { $group: { _id: null, avgRating: { $avg: "$rating" }, rating1: r1, rating2: r2, rating3: r3, rating4: r4, rating5: r5 } },
+                {
+                    $group: {
+                        _id: null,
+                        avgRating: { $avg: "$rating" },
+                        rating1: r1,
+                        rating2: r2,
+                        rating3: r3,
+                        rating4: r4,
+                        rating5: r5,
+                    },
+                },
             ]),
         ]);
 
         const stats = statsAgg[0];
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             productId: productObjectId,
             averageRating: stats ? Math.round((stats.avgRating || 0) * 10) / 10 : 0,
@@ -400,10 +580,14 @@ export const getReviewsByProduct = async (req, res) => {
             },
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("getReviewsByProduct error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* GET /reviews/my-reviews                                            */
+/* ------------------------------------------------------------------ */
 export const getMyReviews = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -413,10 +597,14 @@ export const getMyReviews = async (req, res) => {
 
         const filter = { userId };
         if (approved !== undefined) filter.approved = approved === "true" || approved === true;
-        if (verifiedPurchase !== undefined) filter.verifiedPurchase = verifiedPurchase === "true" || verifiedPurchase === true;
+        if (verifiedPurchase !== undefined) {
+            filter.verifiedPurchase = verifiedPurchase === "true" || verifiedPurchase === true;
+        }
         if (rating !== undefined) {
             const r = Number(rating);
-            if (!Number.isInteger(r) || r < 1 || r > 5) throw new ApiError(400, "Invalid rating filter");
+            if (!Number.isInteger(r) || r < 1 || r > 5) {
+                return res.status(400).json({ success: false, message: "Invalid rating filter" });
+            }
             filter.rating = r;
         }
 
@@ -430,7 +618,7 @@ export const getMyReviews = async (req, res) => {
             Review.countDocuments(filter),
         ]);
 
-        res.json({
+        return res.json({
             success: true,
             data: reviews.map(formatOwnerReview),
             pagination: {
@@ -443,10 +631,14 @@ export const getMyReviews = async (req, res) => {
             },
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("getMyReviews error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* GET /reviews/published                                             */
+/* ------------------------------------------------------------------ */
 export const getAllPublishedReviews = async (req, res) => {
     try {
         const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -454,20 +646,29 @@ export const getAllPublishedReviews = async (req, res) => {
         const { rating, productId, verifiedPurchase, sort = "newest" } = req.query;
 
         if (!PRODUCT_REVIEW_SORTS[sort]) {
-            throw new ApiError(400, `Invalid sort. Allowed: ${Object.keys(PRODUCT_REVIEW_SORTS).join(", ")}`);
+            return res.status(400).json({
+                success: false,
+                message: `Invalid sort. Allowed: ${Object.keys(PRODUCT_REVIEW_SORTS).join(", ")}`,
+            });
         }
 
         const filter = { approved: true };
         if (rating !== undefined) {
             const r = Number(rating);
-            if (!Number.isInteger(r) || r < 1 || r > 5) throw new ApiError(400, "Invalid rating filter");
+            if (!Number.isInteger(r) || r < 1 || r > 5) {
+                return res.status(400).json({ success: false, message: "Invalid rating filter" });
+            }
             filter.rating = r;
         }
         if (productId !== undefined) {
-            if (!mongoose.Types.ObjectId.isValid(productId)) throw new ApiError(400, "Invalid productId");
+            if (!mongoose.Types.ObjectId.isValid(productId)) {
+                return res.status(400).json({ success: false, message: "Invalid productId" });
+            }
             filter.productId = productId;
         }
-        if (verifiedPurchase !== undefined) filter.verifiedPurchase = verifiedPurchase === "true" || verifiedPurchase === true;
+        if (verifiedPurchase !== undefined) {
+            filter.verifiedPurchase = verifiedPurchase === "true" || verifiedPurchase === true;
+        }
 
         const [reviews, total] = await Promise.all([
             Review.find(filter)
@@ -480,7 +681,7 @@ export const getAllPublishedReviews = async (req, res) => {
             Review.countDocuments(filter),
         ]);
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             data: reviews.map(formatPublicReview),
             pagination: {
@@ -493,26 +694,42 @@ export const getAllPublishedReviews = async (req, res) => {
             },
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("getAllPublishedReviews error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* GET /reviews/eligibility/:productId                                */
+/* ------------------------------------------------------------------ */
 export const getReviewEligibility = async (req, res) => {
     try {
         const { productId } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(productId)) throw new ApiError(400, "Invalid productId");
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            return res.status(400).json({ success: false, message: "Invalid productId" });
+        }
 
         const product = await Product.findById(productId).select("isActive").lean();
         if (!product) {
             return res.status(200).json({
                 success: true,
-                data: { canReview: false, reason: "product_not_found", alreadyReviewed: false, verifiedPurchase: false },
+                data: {
+                    canReview: false,
+                    reason: "product_not_found",
+                    alreadyReviewed: false,
+                    verifiedPurchase: false,
+                },
             });
         }
         if (product.isActive === false) {
             return res.status(200).json({
                 success: true,
-                data: { canReview: false, reason: "product_unavailable", alreadyReviewed: false, verifiedPurchase: false },
+                data: {
+                    canReview: false,
+                    reason: "product_unavailable",
+                    alreadyReviewed: false,
+                    verifiedPurchase: false,
+                },
             });
         }
 
@@ -524,35 +741,65 @@ export const getReviewEligibility = async (req, res) => {
         if (existingReview) {
             return res.status(200).json({
                 success: true,
-                data: { canReview: false, reason: "already_reviewed", alreadyReviewed: true, verifiedPurchase },
+                data: {
+                    canReview: false,
+                    reason: "already_reviewed",
+                    alreadyReviewed: true,
+                    verifiedPurchase,
+                },
             });
         }
 
         if (REQUIRE_VERIFIED_PURCHASE && !verifiedPurchase) {
             return res.status(200).json({
                 success: true,
-                data: { canReview: false, reason: "not_purchased", alreadyReviewed: false, verifiedPurchase: false },
+                data: {
+                    canReview: false,
+                    reason: "not_purchased",
+                    alreadyReviewed: false,
+                    verifiedPurchase: false,
+                },
             });
         }
 
-        res.status(200).json({ success: true, data: { canReview: true, alreadyReviewed: false, verifiedPurchase } });
+        return res.status(200).json({
+            success: true,
+            data: { canReview: true, alreadyReviewed: false, verifiedPurchase },
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("getReviewEligibility error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* POST /reviews/:id/vote                                             */
+/* ------------------------------------------------------------------ */
 export const voteReview = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid review id");
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid review id" });
+        }
 
         const { vote } = req.body;
-        if (!["helpful", "not_helpful"].includes(vote)) throw new ApiError(400, "vote must be 'helpful' or 'not_helpful'");
+        if (!["helpful", "not_helpful"].includes(vote)) {
+            return res.status(400).json({
+                success: false,
+                message: "vote must be 'helpful' or 'not_helpful'",
+            });
+        }
 
         const review = await Review.findById(id).select("+votes helpfulCount notHelpfulCount approved userId");
-        if (!review || !review.approved) throw new ApiError(404, "Review not found");
+        if (!review || !review.approved) {
+            return res.status(404).json({ success: false, message: "Review not found" });
+        }
 
-        const existingIdx = review.votes.findIndex((v) => String(v.userId) === String(req.user.id));
+        const existingIdx = review.votes.findIndex(
+            (v) => String(v.userId) === String(req.user.id)
+        );
+
+        let currentUserVote = vote;
 
         if (existingIdx === -1) {
             review.votes.push({ userId: req.user.id, vote });
@@ -560,9 +807,14 @@ export const voteReview = async (req, res) => {
             else review.notHelpfulCount += 1;
         } else {
             const existing = review.votes[existingIdx];
-            if (existing.vote !== vote) {
-                if (existing.vote === "helpful") review.helpfulCount = Math.max(0, review.helpfulCount - 1);
-                else review.notHelpfulCount = Math.max(0, review.notHelpfulCount - 1);
+            if (existing.vote === vote) {
+                currentUserVote = existing.vote;
+            } else {
+                if (existing.vote === "helpful") {
+                    review.helpfulCount = Math.max(0, review.helpfulCount - 1);
+                } else {
+                    review.notHelpfulCount = Math.max(0, review.notHelpfulCount - 1);
+                }
 
                 if (vote === "helpful") review.helpfulCount += 1;
                 else review.notHelpfulCount += 1;
@@ -574,25 +826,44 @@ export const voteReview = async (req, res) => {
 
         await review.save();
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
-            data: { helpfulCount: review.helpfulCount, notHelpfulCount: review.notHelpfulCount, currentUserVote: vote },
+            data: {
+                helpfulCount: review.helpfulCount,
+                notHelpfulCount: review.notHelpfulCount,
+                currentUserVote,
+            },
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("voteReview error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* POST /reviews/:id/report                                           */
+/* ------------------------------------------------------------------ */
 export const reportReview = async (req, res) => {
     try {
         const { id } = req.params;
-        if (!mongoose.Types.ObjectId.isValid(id)) throw new ApiError(400, "Invalid review id");
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid review id" });
+        }
 
         const review = await Review.findById(id).select("+reporters reportCount reported");
-        if (!review) throw new ApiError(404, "Review not found");
+        if (!review) {
+            return res.status(404).json({ success: false, message: "Review not found" });
+        }
 
-        const alreadyReported = review.reporters.some((r) => String(r.userId) === String(req.user.id));
-        if (alreadyReported) throw new ApiError(409, "You have already reported this review");
+        const alreadyReported = review.reporters.some(
+            (r) => String(r.userId) === String(req.user.id)
+        );
+        if (alreadyReported) {
+            return res.status(409).json({
+                success: false,
+                message: "You have already reported this review",
+            });
+        }
 
         review.reporters.push({ userId: req.user.id });
         review.reportCount += 1;
@@ -601,12 +872,20 @@ export const reportReview = async (req, res) => {
 
         await review.save();
 
-        res.status(200).json({ success: true, message: "Review reported. Thank you for the feedback.", data: { reportCount: review.reportCount } });
+        return res.status(200).json({
+            success: true,
+            message: "Review reported. Thank you for the feedback.",
+            data: { reportCount: review.reportCount },
+        });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("reportReview error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };
 
+/* ------------------------------------------------------------------ */
+/* GET /reviews/admin/stats                                           */
+/* ------------------------------------------------------------------ */
 export const getAdminReviewStats = async (req, res) => {
     try {
         const [r1, r2, r3, r4, r5] = buildRatingDistributionStages();
@@ -618,7 +897,17 @@ export const getAdminReviewStats = async (req, res) => {
             Review.countDocuments({}),
             Review.aggregate([
                 { $match: { approved: true } },
-                { $group: { _id: null, avgRating: { $avg: "$rating" }, rating1: r1, rating2: r2, rating3: r3, rating4: r4, rating5: r5 } },
+                {
+                    $group: {
+                        _id: null,
+                        avgRating: { $avg: "$rating" },
+                        rating1: r1,
+                        rating2: r2,
+                        rating3: r3,
+                        rating4: r4,
+                        rating5: r5,
+                    },
+                },
             ]),
         ]);
 
@@ -626,7 +915,7 @@ export const getAdminReviewStats = async (req, res) => {
         const pendingCount = statusAgg.find((s) => s._id === false)?.count || 0;
         const ratingStats = ratingAgg[0];
 
-        res.status(200).json({
+        return res.status(200).json({
             success: true,
             stats: {
                 totalReviews,
@@ -634,13 +923,22 @@ export const getAdminReviewStats = async (req, res) => {
                 pendingReviews: pendingCount,
                 verifiedPurchaseReviews: verifiedAgg[0]?.count || 0,
                 reportedReviews: reportedAgg[0]?.count || 0,
-                averageApprovedRating: ratingStats ? Math.round((ratingStats.avgRating || 0) * 10) / 10 : 0,
+                averageApprovedRating: ratingStats
+                    ? Math.round((ratingStats.avgRating || 0) * 10) / 10
+                    : 0,
                 ratingDistribution: ratingStats
-                    ? { 1: ratingStats.rating1, 2: ratingStats.rating2, 3: ratingStats.rating3, 4: ratingStats.rating4, 5: ratingStats.rating5 }
+                    ? {
+                        1: ratingStats.rating1,
+                        2: ratingStats.rating2,
+                        3: ratingStats.rating3,
+                        4: ratingStats.rating4,
+                        5: ratingStats.rating5,
+                    }
                     : { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 },
             },
         });
     } catch (error) {
-        handleError(error, req, res);
+        console.error("getAdminReviewStats error:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
 };

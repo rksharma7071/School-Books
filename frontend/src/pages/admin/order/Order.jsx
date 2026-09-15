@@ -6,7 +6,7 @@ import OrderTable from "../../../components/admin/OrderTable.jsx";
 function Order() {
     const loader = useLoaderData();
 
-    const [orders, setOrders] = useState(loader || []);
+    const [orders, setOrders] = useState(Array.isArray(loader) ? loader : []);
     const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
@@ -15,15 +15,17 @@ function Order() {
     const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
-        setOrders(loader || []);
+        setOrders(Array.isArray(loader) ? loader : []);
     }, [loader]);
 
     const refresh = useCallback(async () => {
         setRefreshing(true);
         try {
             const data = await getOrder();
-            setOrders(data || []);
+            setOrders(Array.isArray(data) ? data : []);
             setSelectedIds([]);
+        } catch (err) {
+            console.error("Refresh orders failed:", err);
         } finally {
             setRefreshing(false);
         }
@@ -39,8 +41,9 @@ function Order() {
 
             if (!term) return true;
 
-            const customer = order.user
-                ? `${order.user.name || ""} ${order.user.email || ""}`.toLowerCase()
+            // Backend populates userId → { _id, name, email }
+            const customer = order.userId
+                ? `${order.userId.name || ""} ${order.userId.email || ""}`.toLowerCase()
                 : "";
 
             return (
@@ -53,10 +56,7 @@ function Order() {
         });
     }, [orders, search, statusFilter]);
 
-    const totalPages = Math.max(
-        1,
-        Math.ceil(filteredOrders.length / rowsPerPage)
-    );
+    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / rowsPerPage));
 
     const paginatedOrder = useMemo(() => {
         const safePage = Math.min(currentPage, totalPages);
@@ -77,13 +77,9 @@ function Order() {
 
     const toggleSelectAll = () => {
         if (isAllSelected) {
-            setSelectedIds((prev) =>
-                prev.filter((id) => !allVisibleIds.includes(id))
-            );
+            setSelectedIds((prev) => prev.filter((id) => !allVisibleIds.includes(id)));
         } else {
-            setSelectedIds((prev) =>
-                Array.from(new Set([...prev, ...allVisibleIds]))
-            );
+            setSelectedIds((prev) => Array.from(new Set([...prev, ...allVisibleIds])));
         }
     };
 
@@ -104,12 +100,8 @@ function Order() {
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
-                        Orders
-                    </h2>
-                    <p className="text-sm text-gray-500">
-                        Track and fulfil customer orders.
-                    </p>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Orders</h2>
+                    <p className="text-sm text-gray-500">Track and fulfil customer orders.</p>
                 </div>
 
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto bg-white">
@@ -196,9 +188,7 @@ function Order() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
                                 }`}
                         >
                             Prev
@@ -209,16 +199,12 @@ function Order() {
                                 {Math.min(currentPage, totalPages)}
                             </span>{" "}
                             of{" "}
-                            <span className="font-semibold text-gray-700">
-                                {totalPages}
-                            </span>
+                            <span className="font-semibold text-gray-700">{totalPages}</span>
                         </span>
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages ? "opacity-50 cursor-not-allowed" : ""
                                 }`}
                         >
                             Next

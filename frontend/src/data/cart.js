@@ -1,91 +1,107 @@
 import axios from "axios";
-import api from "../utils/api.js";
 
 const API = import.meta.env.VITE_API;
 
-const getMyCart = async () => {
-    try {
-        const token = localStorage.getItem("token");
+const authHeaders = () => ({
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+});
 
-        const { data } = await api.get(`/api/cart/me`);
-        return data;
+export const getCart = async (arg = {}) => {
+    const isLoaderArg =
+        arg && (arg.params !== undefined || arg.request !== undefined);
+
+    const queryParams = isLoaderArg ? {} : (arg || {});
+    const signal = isLoaderArg ? arg.request?.signal : undefined;
+
+    try {
+        const { data } = await axios.get(`${API}/api/cart`, {
+            params: queryParams,
+            signal,
+            headers: authHeaders(),
+        });
+        return data?.data || [];
     } catch (error) {
-        if (error.response?.status === 404) {
-            return { items: [], total: 0 };
-        }
-        throw error;
+        if (axios.isCancel(error)) return [];
+
+        console.error("Get Cart Error:", error);
+        throw new Response("Failed to fetch carts", {
+            status: error.response?.status || 500,
+        });
     }
 };
 
-const getMyCartDirect = async () => {
+/* ------------------------------------------------------------------ */
+/* Single cart — GET /api/cart/:id                                    */
+/* ------------------------------------------------------------------ */
+export const getCartById = async ({ params, request } = {}) => {
+    try {
+        const { data } = await axios.get(`${API}/api/cart/${params.id}`, {
+            signal: request?.signal,
+            headers: authHeaders(),
+        });
+        return data?.data || { items: [], totalItems: 0, subtotal: 0 };
+    } catch (error) {
+        if (axios.isCancel(error)) return null;
+
+        if (error.response?.status === 404) {
+            return { items: [], totalItems: 0, subtotal: 0 };
+        }
+
+        console.error("Failed to fetch cart by id:", error.message);
+        throw new Response("Cart not found", {
+            status: error.response?.status || 500,
+        });
+    }
+};
+
+/* ------------------------------------------------------------------ */
+/* Other helpers                                                      */
+/* ------------------------------------------------------------------ */
+export const getMyCart = async () => {
     try {
         const { data } = await axios.get(`${API}/api/cart/me`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
+            headers: authHeaders(),
         });
-
-        return data;
+        return data?.data || { items: [], totalItems: 0, subtotal: 0 };
     } catch (error) {
         if (error.response?.status === 404) {
-            return { items: [], total: 0 };
+            return { items: [], totalItems: 0, subtotal: 0 };
         }
         throw error;
     }
 };
 
-const getCart = getMyCart;
-
-const getCartByUserId = async (userId) => {
+export const getCartByUserId = async (userId) => {
     try {
         const { data } = await axios.get(`${API}/api/cart/${userId}`, {
-            headers: {
-                Authorization: `Bearer ${localStorage.getItem("token")}`
-            }
+            headers: authHeaders(),
         });
-
-        return data;
+        return data?.data || { items: [], totalItems: 0, subtotal: 0 };
     } catch (error) {
         if (error.response?.status === 404) {
-            return { items: [], total: 0 };
+            return { items: [], totalItems: 0, subtotal: 0 };
         }
         throw error;
     }
 };
 
-const getCartById = async ({ params }) => {
-    const { data } = await axios.get(`${API}/api/cart/${params.id}`);
+export const deleteCart = async (cartId) => {
+    const { data } = await axios.delete(`${API}/api/cart/${cartId}`, {
+        headers: authHeaders(),
+    });
     return data;
 };
 
-const clearMyCart = async () => {
+export const clearMyCart = async () => {
     const { data } = await axios.delete(`${API}/api/cart/clear`, {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-        }
+        headers: authHeaders(),
     });
-
     return data;
 };
 
-const clearUserCart = async (userId) => {
-    const token = localStorage.getItem("token");
-
+export const clearUserCart = async (userId) => {
     const { data } = await axios.delete(`${API}/api/cart/clear/${userId}`, {
-        headers: {
-            Authorization: `Bearer ${localStorage.getItem("token")}`
-        }
+        headers: authHeaders(),
     });
-
     return data;
 };
-
-export {
-    getMyCart,
-    getMyCartDirect,
-    getCart,
-    getCartByUserId,
-    getCartById,
-    clearMyCart,
-    clearUserCart
-}

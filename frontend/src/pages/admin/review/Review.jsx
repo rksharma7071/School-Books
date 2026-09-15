@@ -5,7 +5,7 @@ import { getReview1 } from "../../../data/review.js";
 
 function Review() {
     const loader = useLoaderData();
-    const [reviews, setReviews] = useState(loader || []);
+    const [reviews, setReviews] = useState(Array.isArray(loader) ? loader : []);
     const [search, setSearch] = useState("");
     const [selectedIds, setSelectedIds] = useState([]);
     const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -13,27 +13,44 @@ function Review() {
     const [render, setRender] = useState(false);
 
     useEffect(() => {
+        let cancelled = false;
+
         async function fetchReview() {
-            const data = await getReview1();
-            setReviews(data);
-            setRender(false);
+            try {
+                const data = await getReview1({ limit: 100 });
+                if (!cancelled) {
+                    setReviews(Array.isArray(data) ? data : []);
+                    setRender(false);
+                }
+            } catch (err) {
+                console.error("Failed to refresh reviews:", err);
+                if (!cancelled) setRender(false);
+            }
         }
 
-        if (render) {
-            fetchReview();
-        }
+        if (render) fetchReview();
+
+        return () => {
+            cancelled = true;
+        };
     }, [render]);
 
-
-
     const filteredReviews = useMemo(() => {
-        const term = search?.toLowerCase();
-        return reviews.filter(
-            (b) =>
-                b.title?.toLowerCase().includes(term) ||
-                b.body?.toLowerCase().includes(term) ||
-                b.userId?.toLowerCase().includes(term)
-        );
+        const term = search?.toLowerCase().trim();
+        if (!term) return reviews;
+
+        return reviews.filter((r) => {
+            const title = (r.title || "").toLowerCase();
+            const body = (r.body || "").toLowerCase();
+            const userName = (r.user?.name || "").toLowerCase();
+            const productTitle = (r.product?.title || "").toLowerCase();
+            return (
+                title.includes(term) ||
+                body.includes(term) ||
+                userName.includes(term) ||
+                productTitle.includes(term)
+            );
+        });
     }, [reviews, search]);
 
     const totalPages = Math.max(1, Math.ceil(filteredReviews.length / rowsPerPage));
@@ -44,7 +61,7 @@ function Review() {
         return filteredReviews.slice(start, start + rowsPerPage);
     }, [filteredReviews, currentPage, rowsPerPage, totalPages]);
 
-    const allVisibleIds = paginatedReviews.map((b) => b._id || b._id);
+    const allVisibleIds = paginatedReviews.map((r) => r.id);
     const isAllSelected = allVisibleIds.length > 0 && allVisibleIds.every((id) => selectedIds.includes(id));
 
     const toggleSelect = (id) => {
@@ -60,18 +77,12 @@ function Review() {
     };
 
     const handlePaginationChange = (e) => {
-        const value = Number(e.target.value);
-        setRowsPerPage(value);
+        setRowsPerPage(Number(e.target.value));
         setCurrentPage(1);
     };
 
-    const handlePrevPage = () => {
-        setCurrentPage((prev) => Math.max(1, prev - 1));
-    };
-
-    const handleNextPage = () => {
-        setCurrentPage((prev) => Math.min(totalPages, prev + 1));
-    };
+    const handlePrevPage = () => setCurrentPage((prev) => Math.max(1, prev - 1));
+    const handleNextPage = () => setCurrentPage((prev) => Math.min(totalPages, prev + 1));
 
     const startIndex = filteredReviews.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
     const endIndex = Math.min(currentPage * rowsPerPage, filteredReviews.length);
@@ -91,10 +102,9 @@ function Review() {
                             setSearch(e.target.value);
                             setCurrentPage(1);
                         }}
-                        placeholder="Search by title, author, category..."
+                        placeholder="Search by title, body, user, book..."
                         className="flex-1 sm:w-72 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {/* <Link to={'/books/add'} className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">+ Add Book</Link> */}
                 </div>
             </div>
 
@@ -112,7 +122,15 @@ function Review() {
                 )}
 
                 <div className="overflow-x-auto">
-                    <ReviewTable render={render} setRender={setRender} isAllSelected={isAllSelected} toggleSelectAll={toggleSelectAll} paginatedReviews={paginatedReviews} selectedIds={selectedIds} toggleSelect={toggleSelect} />
+                    <ReviewTable
+                        render={render}
+                        setRender={setRender}
+                        isAllSelected={isAllSelected}
+                        toggleSelectAll={toggleSelectAll}
+                        paginatedReviews={paginatedReviews}
+                        selectedIds={selectedIds}
+                        toggleSelect={toggleSelect}
+                    />
                 </div>
 
                 <div className="border-t border-gray-100 px-4 py-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between text-xs text-gray-500">
@@ -130,8 +148,8 @@ function Review() {
                         </select>
                         <span className="hidden sm:inline">
                             {filteredReviews.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredReviews.length} books`
-                                : "Showing 0 of 0 books"}
+                                ? `Showing ${startIndex}–${endIndex} of ${filteredReviews.length} reviews`
+                                : "Showing 0 of 0 reviews"}
                         </span>
                     </div>
 
@@ -139,23 +157,23 @@ function Review() {
                         <button
                             onClick={handlePrevPage}
                             disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""}`}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+                                }`}
                         >
                             Prev
                         </button>
                         <span>
                             Page{" "}
-                            <span className="font-semibold text-gray-700">{Math.min(currentPage, totalPages)}</span>
-                            {" "}of{" "}
+                            <span className="font-semibold text-gray-700">
+                                {Math.min(currentPage, totalPages)}
+                            </span>{" "}
+                            of{" "}
                             <span className="font-semibold text-gray-700">{totalPages}</span>
                         </span>
                         <button
                             onClick={handleNextPage}
                             disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 
-                                ${currentPage >= totalPages
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages ? "opacity-50 cursor-not-allowed" : ""
                                 }`}
                         >
                             Next
