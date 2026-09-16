@@ -1,79 +1,73 @@
-import React, { useState, useMemo, useEffect, useCallback } from "react";
-import { useLoaderData } from "react-router-dom";
-import { getOrder } from "../../../data/order.js";
+import React, { useMemo, useState } from "react";
+import { useLoaderData, useSearchParams } from "react-router-dom";
 import OrderTable from "../../../components/admin/OrderTable.jsx";
 
 function Order() {
     const loader = useLoaderData();
+    const [searchParams, setSearchParams] = useSearchParams();
 
-    const [orders, setOrders] = useState(Array.isArray(loader) ? loader : []);
-    const [refreshing, setRefreshing] = useState(false);
-    const [search, setSearch] = useState("");
-    const [statusFilter, setStatusFilter] = useState("all");
+    const orders = Array.isArray(loader?.data) ? loader.data : [];
+    const pagination = loader?.pagination ?? {};
+
+    // ---- URL is the source of truth ----
+    const page = Math.max(1, Number(searchParams.get("page")) || 1);
+    const limit = Math.max(1, Number(searchParams.get("limit")) || 20);
+    const searchFromUrl = searchParams.get("search") ?? "";
+    const statusFilter = searchParams.get("status") ?? "all";
+
+    const [searchInput, setSearchInput] = useState(searchFromUrl);
     const [selectedIds, setSelectedIds] = useState([]);
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
 
-    useEffect(() => {
-        setOrders(Array.isArray(loader) ? loader : []);
-    }, [loader]);
+    // ---- URL param helper (merges, never clobbers) ----
+    const updateParams = (patch, { replace = false } = {}) => {
+        setSearchParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
+                Object.entries(patch).forEach(([k, v]) => {
+                    if (v === "" || v === null || v === undefined) next.delete(k);
+                    else next.set(k, String(v));
+                });
+                return next;
+            },
+            { replace }
+        );
+    };
 
-    const refresh = useCallback(async () => {
-        setRefreshing(true);
-        try {
-            const data = await getOrder();
-            setOrders(Array.isArray(data) ? data : []);
-            setSelectedIds([]);
-        } catch (err) {
-            console.error("Refresh orders failed:", err);
-        } finally {
-            setRefreshing(false);
-        }
-    }, []);
+    const handleSearchSubmit = (e) => {
+        e.preventDefault();
+        updateParams({ search: searchInput.trim(), page: 1 });
+    };
 
-    const filteredOrders = useMemo(() => {
-        const term = search.trim().toLowerCase();
+    const handleStatusChange = (e) => {
+        const value = e.target.value;
+        updateParams({ status: value === "all" ? "" : value, page: 1 });
+    };
 
-        return orders.filter((order) => {
-            if (statusFilter !== "all" && order.status !== statusFilter) {
-                return false;
-            }
+    const handleLimitChange = (e) =>
+        updateParams({ limit: Number(e.target.value), page: 1 });
 
-            if (!term) return true;
+    const handlePrevPage = () => {
+        if (pagination.hasPreviousPage) updateParams({ page: page - 1 });
+    };
 
-            // Backend populates userId → { _id, name, email }
-            const customer = order.userId
-                ? `${order.userId.name || ""} ${order.userId.email || ""}`.toLowerCase()
-                : "";
+    const handleNextPage = () => {
+        if (pagination.hasNextPage) updateParams({ page: page + 1 });
+    };
 
-            return (
-                String(order.orderNumber).includes(term) ||
-                order.status?.toLowerCase().includes(term) ||
-                String(order.total).includes(term) ||
-                order.paymentId?.toLowerCase().includes(term) ||
-                customer.includes(term)
-            );
-        });
-    }, [orders, search, statusFilter]);
+    // ---- Selection (current page slice) ----
+    const allVisibleIds = useMemo(
+        () => orders.map((o) => o._id).filter(Boolean),
+        [orders]
+    );
 
-    const totalPages = Math.max(1, Math.ceil(filteredOrders.length / rowsPerPage));
-
-    const paginatedOrder = useMemo(() => {
-        const safePage = Math.min(currentPage, totalPages);
-        const start = (safePage - 1) * rowsPerPage;
-        return filteredOrders.slice(start, start + rowsPerPage);
-    }, [filteredOrders, currentPage, rowsPerPage, totalPages]);
-
-    const allVisibleIds = paginatedOrder.map((o) => o._id);
     const isAllSelected =
         allVisibleIds.length > 0 &&
         allVisibleIds.every((id) => selectedIds.includes(id));
 
-    const toggleSelect = (id) => {
+    const toggleSelect = (id) =>
         setSelectedIds((prev) =>
             prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]
         );
-    };
 
     const toggleSelectAll = () => {
         if (isAllSelected) {
@@ -83,34 +77,28 @@ function Order() {
         }
     };
 
-    const handlePaginationChange = (e) => {
-        setRowsPerPage(Number(e.target.value));
-        setCurrentPage(1);
-    };
-
-    const handlePrevPage = () => setCurrentPage((p) => Math.max(1, p - 1));
-    const handleNextPage = () =>
-        setCurrentPage((p) => Math.min(totalPages, p + 1));
-
-    const startIndex =
-        filteredOrders.length === 0 ? 0 : (currentPage - 1) * rowsPerPage + 1;
-    const endIndex = Math.min(currentPage * rowsPerPage, filteredOrders.length);
+    // ---- Footer counters ----
+    const total = pagination.total ?? orders.length;
+    const totalPages = pagination.totalPages ?? 1;
+    const startIndex = total > 0 ? (page - 1) * limit + 1 : 0;
+    const endIndex = Math.min(page * limit, total);
 
     return (
         <div className="max-w-7xl mx-auto space-y-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
                 <div>
-                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Orders</h2>
-                    <p className="text-sm text-gray-500">Track and fulfil customer orders.</p>
+                    <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">
+                        Orders
+                    </h2>
+                    <p className="text-sm text-gray-500">
+                        Track and fulfil customer orders.
+                    </p>
                 </div>
 
-                <div className="flex flex-wrap gap-2 w-full sm:w-auto bg-white">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     <select
                         value={statusFilter}
-                        onChange={(e) => {
-                            setStatusFilter(e.target.value);
-                            setCurrentPage(1);
-                        }}
+                        onChange={handleStatusChange}
                         className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                         <option value="all">All statuses</option>
@@ -120,24 +108,18 @@ function Order() {
                         <option value="cancelled">Cancelled</option>
                     </select>
 
-                    <input
-                        type="search"
-                        value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setCurrentPage(1);
-                        }}
-                        placeholder="Search by order #, customer, total..."
-                        className="flex-1 sm:w-64 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-
-                    <button
-                        onClick={refresh}
-                        disabled={refreshing}
-                        className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+                    <form
+                        onSubmit={handleSearchSubmit}
+                        className="flex-1 sm:w-64"
                     >
-                        {refreshing ? "Refreshing..." : "Refresh"}
-                    </button>
+                        <input
+                            type="search"
+                            value={searchInput}
+                            onChange={(e) => setSearchInput(e.target.value)}
+                            placeholder="Search by order #, customer, total..."
+                            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                    </form>
                 </div>
             </div>
 
@@ -158,7 +140,7 @@ function Order() {
                     <OrderTable
                         isAllSelected={isAllSelected}
                         toggleSelectAll={toggleSelectAll}
-                        paginatedOrder={paginatedOrder}
+                        paginatedOrder={orders}
                         selectedIds={selectedIds}
                         toggleSelect={toggleSelect}
                     />
@@ -168,8 +150,8 @@ function Order() {
                     <div className="flex items-center gap-2">
                         <span>Rows per page:</span>
                         <select
-                            value={rowsPerPage}
-                            onChange={handlePaginationChange}
+                            value={limit}
+                            onChange={handleLimitChange}
                             className="border border-gray-300 rounded-lg px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >
                             <option value={5}>5 rows</option>
@@ -178,8 +160,8 @@ function Order() {
                             <option value={30}>30 rows</option>
                         </select>
                         <span className="hidden sm:inline">
-                            {filteredOrders.length > 0
-                                ? `Showing ${startIndex}–${endIndex} of ${filteredOrders.length} orders`
+                            {total > 0
+                                ? `Showing ${startIndex}–${endIndex} of ${total} orders`
                                 : "Showing 0 of 0 orders"}
                         </span>
                     </div>
@@ -187,8 +169,10 @@ function Order() {
                     <div className="flex items-center gap-3 justify-end">
                         <button
                             onClick={handlePrevPage}
-                            disabled={currentPage === 1}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
+                            disabled={!pagination.hasPreviousPage}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${!pagination.hasPreviousPage
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
                                 }`}
                         >
                             Prev
@@ -196,15 +180,19 @@ function Order() {
                         <span>
                             Page{" "}
                             <span className="font-semibold text-gray-700">
-                                {Math.min(currentPage, totalPages)}
+                                {page}
                             </span>{" "}
                             of{" "}
-                            <span className="font-semibold text-gray-700">{totalPages}</span>
+                            <span className="font-semibold text-gray-700">
+                                {totalPages}
+                            </span>
                         </span>
                         <button
                             onClick={handleNextPage}
-                            disabled={currentPage >= totalPages}
-                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${currentPage >= totalPages ? "opacity-50 cursor-not-allowed" : ""
+                            disabled={!pagination.hasNextPage}
+                            className={`px-2 py-1 rounded border border-gray-200 hover:bg-gray-50 ${!pagination.hasNextPage
+                                    ? "opacity-50 cursor-not-allowed"
+                                    : ""
                                 }`}
                         >
                             Next

@@ -116,5 +116,154 @@ const getCategoriesData = async ({ request } = {}) => {
     }
 };
 
+const getCategories = async ({ request } = {}) => {
+    try {
+        const url = new URL(request?.url ?? window.location.href);
 
-export { getCategorys, getCategoryById, getCategoryByHandle, editCategoryLoader, getCategoriesData }
+        const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+        const limit = Math.max(1, Number(url.searchParams.get("limit")) || 20);
+        const search = url.searchParams.get("search") ?? "";
+        const sortBy = url.searchParams.get("sortBy") ?? "sortOrder";
+        const sortOrder = url.searchParams.get("sortOrder") ?? "asc";
+
+        const params = new URLSearchParams();
+        params.set("page", String(page));
+        params.set("limit", String(limit));
+        params.set("sortBy", sortBy);
+        params.set("sortOrder", sortOrder);
+        if (search) params.set("search", search);
+
+        const { data } = await axios.get(
+            `${import.meta.env.VITE_API}/api/categories?${params.toString()}`,
+            { signal: request?.signal }
+        );
+
+        const list = Array.isArray(data?.data) ? data.data : [];
+
+        const categories = list.map((c) => ({
+            id: c.id || c._id,
+            name: c.name,
+            handle: c.handle,
+            description: c.description,
+            image: c.image,
+            type: c.type,
+            isActive: c.isActive,
+            sortOrder: c.sortOrder,
+            productCount: c.productCount ?? 0,
+            conditionMatch: c.conditionMatch,
+        }));
+
+        const meta = data?.pagination ?? {};
+
+        return {
+            data: categories,
+            pagination: {
+                total: meta.total ?? categories.length,
+                page: meta.page ?? page,
+                limit: meta.limit ?? limit,
+                totalPages:
+                    meta.totalPages ??
+                    Math.max(1, Math.ceil((meta.total ?? categories.length) / limit)),
+                hasNextPage: meta.hasNextPage ?? false,
+                hasPreviousPage: meta.hasPreviousPage ?? false,
+            },
+        };
+    } catch (error) {
+        if (axios.isCancel?.(error)) {
+            return {
+                data: [],
+                pagination: {
+                    total: 0,
+                    page: 1,
+                    limit: 20,
+                    totalPages: 1,
+                    hasNextPage: false,
+                    hasPreviousPage: false,
+                },
+            };
+        }
+        console.error("Failed to fetch categories:", error);
+        return {
+            data: [],
+            pagination: {
+                total: 0,
+                page: 1,
+                limit: 20,
+                totalPages: 1,
+                hasNextPage: false,
+                hasPreviousPage: false,
+            },
+        };
+    }
+};
+
+const getCategoryProducts = async ({ params, request } = {}) => {
+    try {
+        const handle = params?.handle;
+        if (!handle) {
+            return {
+                category: null,
+                products: [],
+                pagination: { total: 0, page: 1, limit: 20, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+            };
+        }
+
+
+        const url = new URL(request?.url ?? window.location.href);
+        const page = Math.max(1, Number(url.searchParams.get("page")) || 1);
+        const limit = Math.max(1, Number(url.searchParams.get("limit")) || 20);
+        const sortBy = url.searchParams.get("sortBy") ?? "createdAt";
+        const sortOrder = url.searchParams.get("sortOrder") ?? "desc";
+
+        const params2 = new URLSearchParams();
+        params2.set("page", String(page));
+        params2.set("limit", String(limit));
+        params2.set("sortBy", sortBy);
+        params2.set("sortOrder", sortOrder);
+
+        const { data } = await axios.get(
+            `${import.meta.env.VITE_API}/api/categories/${handle}/products?${params2.toString()}`,
+            { signal: request?.signal }
+        );
+
+        const d = data?.data ?? {};
+
+        return {
+            category: d.category ?? null,
+            products: Array.isArray(d.products) ? d.products : [],
+            pagination: {
+                total: d.pagination?.total ?? 0,
+                page: d.pagination?.page ?? page,
+                limit: d.pagination?.limit ?? limit,
+                totalPages: d.pagination?.totalPages ?? 1,
+                hasNextPage: d.pagination?.hasNextPage ?? false,
+                hasPreviousPage: d.pagination?.hasPreviousPage ?? false,
+            },
+        };
+    } catch (error) {
+        if (axios.isCancel?.(error)) {
+            return {
+                category: null,
+                products: [],
+                pagination: { total: 0, page: 1, limit: 20, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+            };
+        }
+
+        // 404 → let the component show "category not found"
+        if (error.response?.status === 404) {
+            return {
+                category: null,
+                products: [],
+                pagination: { total: 0, page: 1, limit: 20, totalPages: 1, hasNextPage: false, hasPreviousPage: false },
+                notFound: true,
+            };
+        }
+
+        console.error("Failed to fetch category products:", error);
+        throw new Response("Failed to load category products", {
+            status: error.response?.status || 500,
+        });
+    }
+};
+
+export { getCategorys, getCategoryById, getCategoryByHandle, editCategoryLoader, getCategoriesData, getCategories, getCategoryProducts }

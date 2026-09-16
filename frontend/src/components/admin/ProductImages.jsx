@@ -54,13 +54,12 @@ function SortableImage({ img, index, onRemove }) {
   );
 }
 
-function BookImages({ existingImages, onImagesChange, onMetaChange }) {
+function ProductImages({ existingImages, onImagesChange, onMetaChange }) {
   const [images, setImages] = useState([]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
   );
-  // console.log("BookImages");
   
   useEffect(() => {
     const mapped = existingImages.map((img) => ({
@@ -164,4 +163,4 @@ function BookImages({ existingImages, onImagesChange, onMetaChange }) {
   );
 }
 
-export default BookImages;
+export default ProductImages;

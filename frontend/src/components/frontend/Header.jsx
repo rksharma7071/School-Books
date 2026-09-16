@@ -11,6 +11,11 @@ const cdn = (url, w = 300) =>
         ? url.replace("/upload/", `/upload/f_auto,q_auto,c_limit,w_${w}/`)
         : url;
 
+const getProductImage = (book) =>
+    cdn(book?.images?.[0]?.url) ||
+    cdn(book?.image?.url) ||
+    "/placeholder-image.jpg";
+
 function Header() {
     const [open, setOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
@@ -21,9 +26,9 @@ function Header() {
     const [searching, setSearching] = useState(false);
 
     const { user, adminLogout, cartItems } = useContext(BookContext);
-    // console.log("results: ", results);
 
     const menuRef = useRef(null);
+    const inputRef = useRef(null);
     const navigate = useNavigate();
     const location = useLocation();
 
@@ -34,6 +39,7 @@ function Header() {
         navigate("/");
     };
 
+    // ---------- Debounced search (uses `search` param) ----------
     useEffect(() => {
         const term = search.trim();
 
@@ -49,10 +55,18 @@ function Header() {
         const timer = setTimeout(() => {
             axios
                 .get(`${import.meta.env.VITE_API}/api/product`, {
-                    params: { q: term, limit: 6 },
+                    // backend expects `search`, not `q`
+                    params: { search: term, limit: 6, page: 1 },
                     signal: controller.signal,
                 })
-                .then(({ data }) => setResults(data.data || []))
+                .then(({ data }) => {
+                    const list = Array.isArray(data?.data)
+                        ? data.data
+                        : Array.isArray(data)
+                            ? data
+                            : [];
+                    setResults(list);
+                })
                 .catch((e) => {
                     if (!axios.isCancel(e)) setResults([]);
                 })
@@ -65,13 +79,15 @@ function Header() {
         };
     }, [search]);
 
+    // ---------- Reset modal on route change ----------
     useEffect(() => {
         setSearch("");
         setResults([]);
         setSearchOpen(false);
         setMobileOpen(false);
-    }, [location.pathname]);
+    }, [location.pathname, location.search]);
 
+    // ---------- Outside-click for user menu ----------
     useEffect(() => {
         const handleClick = (e) =>
             menuRef.current &&
@@ -82,6 +98,7 @@ function Header() {
         return () => document.removeEventListener("mousedown", handleClick);
     }, []);
 
+    // ---------- Keyboard: Esc closes, "/" opens ----------
     useEffect(() => {
         const handleKey = (e) => {
             if (e.key === "Escape") {
@@ -89,7 +106,6 @@ function Header() {
                 setMobileOpen(false);
                 return;
             }
-
             const tag = e.target.tagName.toLowerCase();
             if (tag === "input" || tag === "textarea") return;
 
@@ -98,7 +114,6 @@ function Header() {
                 setSearchOpen(true);
             }
         };
-
         document.addEventListener("keydown", handleKey);
         return () => document.removeEventListener("keydown", handleKey);
     }, []);
@@ -109,10 +124,19 @@ function Header() {
         setResults([]);
     };
 
+    // ---------- Submit → navigate to /search?q=... ----------
+    const submitSearch = (e) => {
+        e?.preventDefault?.();
+        const term = search.trim();
+        if (term.length < 2) return;
+
+        closeSearch();
+        navigate(`/search?q=${encodeURIComponent(term)}`);
+    };
+
     return (
         <header className="w-full bg-blue-950 border-b border-blue-900/60 shadow-sm">
             <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 flex items-center justify-between gap-6">
-
                 <Link to="/" className="flex items-center gap-3">
                     <div className="h-9 w-9 rounded-lg bg-white flex items-center justify-center text-blue-950 font-semibold">
                         SB
@@ -131,7 +155,6 @@ function Header() {
                 </nav>
 
                 <div className="flex items-center gap-4">
-
                     <Link to="/cart" className="relative text-blue-100 hover:text-white">
                         <LuShoppingCart className="text-xl" />
                         {cartCount > 0 && (
@@ -172,8 +195,12 @@ function Header() {
                             {open && (
                                 <div className="absolute right-0 mt-3 w-64 rounded-2xl bg-white shadow-xl border border-gray-100 z-50 overflow-hidden">
                                     <div className="px-5 py-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-gray-300">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{user?.name?.toUpperCase()}</p>
-                                        <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
+                                        <p className="text-sm font-semibold text-gray-900 truncate">
+                                            {user?.name?.toUpperCase()}
+                                        </p>
+                                        <p className="text-xs text-gray-500 truncate mt-0.5">
+                                            {user?.email}
+                                        </p>
                                     </div>
 
                                     <div className="py-2">
@@ -185,7 +212,6 @@ function Header() {
                                             <LuUserRound className="h-4 w-4" />
                                             My Profile
                                         </Link>
-
                                         <Link
                                             to="/profile/orders"
                                             onClick={() => setOpen(false)}
@@ -193,7 +219,6 @@ function Header() {
                                         >
                                             📦 My Orders
                                         </Link>
-
                                         <Link
                                             to="/profile/change-password"
                                             onClick={() => setOpen(false)}
@@ -226,6 +251,7 @@ function Header() {
                 </div>
             </div>
 
+            {/* Mobile drawer */}
             {mobileOpen && (
                 <div className="fixed inset-0 z-[90] bg-black/50 backdrop-blur-sm">
                     <div className="absolute top-0 left-0 h-full w-72 bg-blue-950 shadow-xl p-6 animate-slideIn overflow-y-auto">
@@ -260,7 +286,7 @@ function Header() {
                                 onClick={() => setMobileOpen(false)}
                                 className="flex items-center gap-2 text-blue-100 hover:text-white"
                             >
-                                <LuShoppingCart /> Cart ({cartItems.length})
+                                <LuShoppingCart /> Cart ({cartCount})
                             </Link>
 
                             {!user ? (
@@ -288,6 +314,7 @@ function Header() {
                 </div>
             )}
 
+            {/* Search modal */}
             {searchOpen && (
                 <div
                     className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-sm flex items-start justify-center pt-24 px-4"
@@ -304,9 +331,11 @@ function Header() {
                             ✕
                         </button>
 
-                        <div className="flex items-center gap-3">
+                        {/* FORM: Enter submits and navigates */}
+                        <form onSubmit={submitSearch} className="flex items-center gap-3">
                             <MdSearch className="text-xl text-gray-400" />
                             <input
+                                ref={inputRef}
                                 autoFocus
                                 type="text"
                                 placeholder="Search books, authors, subjects..."
@@ -314,12 +343,18 @@ function Header() {
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
                             />
-                        </div>
+                            <button
+                                type="submit"
+                                className="hidden text-xs font-semibold text-blue-700 hover:text-blue-900 px-3 py-1.5 rounded-lg hover:bg-blue-50"
+                            >
+                                Search
+                            </button>
+                        </form>
 
                         <p className="text-xs text-gray-400 mt-2">
                             {search.trim().length > 0 && search.trim().length < 2
                                 ? "Type at least 2 characters"
-                                : "Search by book name, author or subject"}
+                                : "Press Enter to see all results"}
                         </p>
 
                         {searching && (
@@ -341,35 +376,48 @@ function Header() {
                         )}
 
                         {!searching && results.length > 0 && (
-                            <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                                {results.map((b) => (
-                                    <Link
-                                        to={`/products/${b._id}`}
-                                        key={b._id}
-                                        onClick={closeSearch}
-                                        className="group cursor-pointer rounded-xl border border-gray-200 bg-white p-3 transition hover:shadow-md hover:border-blue-400"
-                                    >
-                                        <div className="aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
-                                            <img
-                                                src={cdn(b.coverImage, 300)}
-                                                alt={b.name}
-                                                width={300}
-                                                height={300}
-                                                loading="lazy"
-                                                decoding="async"
-                                                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                                            />
-                                        </div>
+                            <>
+                                <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                                    {results.map((b) => (
+                                        <Link
+                                            to={`/products/${b.handle || b._id}`}
+                                            key={b._id || b.id}
+                                            onClick={closeSearch}
+                                            className="group cursor-pointer rounded-xl border border-gray-200 bg-white p-3 transition hover:shadow-md hover:border-blue-400"
+                                        >
+                                            <div className="aspect-square w-full overflow-hidden rounded-lg bg-gray-100">
+                                                <img
+                                                    src={getProductImage(b)}
+                                                    alt={b.title}
+                                                    width={300}
+                                                    height={300}
+                                                    loading="lazy"
+                                                    decoding="async"
+                                                    className="h-full w-full object-contain p-2 transition-transform duration-300 group-hover:scale-105"
+                                                />
+                                            </div>
 
-                                        <div className="mt-3 space-y-1">
-                                            <p className="line-clamp-2 text-sm font-semibold text-gray-900">
-                                                {b.title}
-                                            </p>
-                                            <p className="text-xs text-gray-500">{b.author}</p>
-                                        </div>
-                                    </Link>
-                                ))}
-                            </div>
+                                            <div className="mt-3 space-y-1">
+                                                <p className="line-clamp-2 text-sm font-semibold text-gray-900">
+                                                    {b.title}
+                                                </p>
+                                                {b.minPrice != null && (
+                                                    <p className="text-xs text-gray-600">
+                                                        From ₹{b.minPrice}
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </Link>
+                                    ))}
+                                </div>
+
+                                <button
+                                    onClick={submitSearch}
+                                    className="mt-4 w-full text-sm font-medium text-blue-700 hover:text-blue-900 py-2 rounded-lg hover:bg-blue-50 transition"
+                                >
+                                    See all results for “{search.trim()}” →
+                                </button>
+                            </>
                         )}
                     </div>
                 </div>

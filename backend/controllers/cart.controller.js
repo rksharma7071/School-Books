@@ -152,6 +152,42 @@ export const getAllCart = async (req, res) => {
     }
 };
 
+export const getCartById = async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({ success: false, message: "Invalid cart id" });
+        }
+
+        const cart = await Cart.findById(id)
+            .populate("userId", "name email")
+            .lean();
+
+        if (!cart) {
+            return res.status(404).json({ success: false, message: "Cart not found" });
+        }
+
+        const data = await buildCartResponse(cart);
+
+        return res.status(200).json({
+            success: true,
+            data: {
+                ...data,
+                user:
+                    cart.userId && typeof cart.userId === "object"
+                        ? cart.userId
+                        : null,
+                createdAt: cart.createdAt,
+                updatedAt: cart.updatedAt,
+            },
+        });
+    } catch (error) {
+        console.error("getCartById error:", error);
+        return res.status(500).json({ success: false, message: "Server error" });
+    }
+};
+
 export const getCartByUserId = async (req, res) => {
     try {
         const { id } = req.params;

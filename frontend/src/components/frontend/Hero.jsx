@@ -13,11 +13,11 @@ const Hero = () => {
                     </h1>
                     <p className="mt-4 text-blue-200 text-lg max-w-lg mx-auto md:mx-0">Thousands of textbooks, guides &amp; exam prep materials at the best prices. Free shipping on orders above ₹499.</p>
                     <div className="mt-8 flex flex-wrap items-center justify-center md:justify-start gap-4">
-                        <Link href="#bestsellers" className="px-8 py-3.5 bg-yellow-400 hover:bg-yellow-300 text-blue-950 font-semibold rounded-xl shadow-lg shadow-yellow-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
+                        <Link to={"/categories/new-arrivals-2026-27"} className="px-8 py-3.5 bg-yellow-400 hover:bg-yellow-300 text-blue-950 font-semibold rounded-xl shadow-lg shadow-yellow-500/30 transition-all hover:scale-105 active:scale-95 flex items-center gap-2">
                             Explore Now
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
                         </Link>
-                        <Link href="#categories" className="px-8 py-3.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium rounded-xl border border-white/20 transition-all">Browse Categories</Link>
+                        <Link to={"/categories/all"} className="px-8 py-3.5 bg-white/10 backdrop-blur-sm hover:bg-white/20 text-white font-medium rounded-xl border border-white/20 transition-all">Browse Categories</Link>
                     </div>
                     <div className="mt-8 flex items-center gap-6 text-sm text-blue-200 justify-center md:justify-start">
                         <span className="flex items-center gap-1.5"><span className="text-yellow-300 text-lg">★</span> 4.8/5 from 2.4k+ reviews</span>

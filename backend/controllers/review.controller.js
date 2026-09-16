@@ -335,14 +335,6 @@ export const updateReview = async (req, res) => {
     try {
         const review = req.review;
 
-        console.log("=== DEBUG updateReview ===");
-        console.log("review._id        :", review._id);
-        console.log("review.productId  :", review.productId);
-        console.log("typeof productId  :", typeof review.productId);
-        console.log("isModified(productId):", review.isModified("productId"));
-        console.log("doc keys          :", Object.keys(review.toObject()));
-        console.log("=========================");
-
         const isAdmin = req.user.role === "admin";
         const isOwner = String(review.userId) === String(req.user.id);
 

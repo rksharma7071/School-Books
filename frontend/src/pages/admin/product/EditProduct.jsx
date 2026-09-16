@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import axios from "axios";
-import BookImages from "../../../components/admin/BookImages.jsx";
+import ProductImages from "../../../components/admin/ProductImages.jsx";
 import { BookContext } from "../../../context/School.jsx";
 
 const slugify = (str) =>
@@ -47,11 +47,10 @@ const normalizeOptions = (opts) => {
 
 const optionsKey = (opts) => JSON.stringify(normalizeOptions(opts));
 
-function EditBook() {
+function EditProduct() {
     const navigate = useNavigate();
     const { setToastConfig, setShowToast } = useContext(BookContext);
     const loadedBook = useLoaderData();
-    // console.log("loadedBook: ", loadedBook);
     
     const [imageMeta, setImageMeta] = useState({
         removedPublicIds: [],
@@ -380,7 +379,7 @@ function EditBook() {
                         </div>
 
                         <div className="md:col-span-2">
-                            <BookImages
+                            <ProductImages
                                 existingImages={loadedBook.images || []}
                                 onImagesChange={setImages}
                                 onMetaChange={setImageMeta}
@@ -576,4 +575,4 @@ function EditBook() {
     );
 }
 
-export default EditBook;
+export default EditProduct;

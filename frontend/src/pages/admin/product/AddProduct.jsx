@@ -38,7 +38,7 @@ const emptyVariant = (options) => ({
     options,
 });
 
-function AddBook() {
+function AddProduct() {
     const navigate = useNavigate();
     const { setToastConfig, setShowToast } = useContext(BookContext);
 
@@ -467,4 +467,4 @@ function AddBook() {
     );
 }
 
-export default AddBook;
+export default AddProduct;

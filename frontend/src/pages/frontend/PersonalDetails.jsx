@@ -4,8 +4,8 @@ import Info from '../../components/frontend/Info'
 import { FiEdit } from 'react-icons/fi'
 
 function PersonalDetails() {
-  const { user } = useLoaderData() || {}
-  
+  const {user} = useLoaderData();
+
   return (
     <div>
       <div className="flex items-center justify-between mb-6">

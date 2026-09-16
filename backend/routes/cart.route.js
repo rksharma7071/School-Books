@@ -9,6 +9,7 @@ import {
     setItemQuantity,
     removeCartItem,
     validateCart,
+    getCartById,
 } from "../controllers/cart.controller.js";
 import authMiddleware from "../middlewares/authentication.js";
 import { authorize } from "../middlewares/authorize.js";
@@ -30,7 +31,8 @@ router.delete("/clear/:userId", authorize("admin"), clearCart);
 router.get("/", authorize("admin"), getAllCart);
 
 router.route("/:id")
-    .get(getCartByUserId)
+    // .get(getCartByUserId)
+    .get(getCartById)
     .delete(deleteCart);
 
 export default router;

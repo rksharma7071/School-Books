@@ -1,9 +1,9 @@
 import React, { useContext, useState, useMemo, useCallback } from "react";
 import { Link, useLoaderData, useSearchParams } from "react-router-dom";
-import BookTable from "../../../components/admin/BookTable.jsx";
+import ProductTable from "../../../components/admin/ProductTable.jsx";
 import { BookContext } from "../../../context/School.jsx";
 
-function Book() {
+function Product() {
     const { setToastConfig, setShowToast } = useContext(BookContext);
     const loaderData = useLoaderData();
     const [searchParams, setSearchParams] = useSearchParams();
@@ -96,7 +96,7 @@ function Book() {
                     </form>
 
                     <Link
-                        to={`/${import.meta.env.VITE_ADMIN}/books/add`}
+                        to={`/${import.meta.env.VITE_ADMIN}/products/add`}
                         className="hidden sm:inline-flex items-center px-4 py-2 rounded-lg bg-blue-600 text-white text-sm font-medium hover:bg-blue-700"
                     >
                         Add Book
@@ -118,10 +118,10 @@ function Book() {
                 )}
 
                 <div className="overflow-x-auto">
-                    <BookTable
+                    <ProductTable
                         isAllSelected={isAllSelected}
                         toggleSelectAll={toggleSelectAll}
-                        paginatedBooks={books}
+                        paginatedProducts={books}
                         selectedIds={selectedIds}
                         toggleSelect={toggleSelect}
                     />
@@ -181,4 +181,4 @@ function Book() {
     );
 }
 
-export default Book;
+export default Product;

@@ -16,11 +16,11 @@ router.use(authMiddleware);
 router.get("/order/:orderId", authorize("admin"), getPaymentByOrderId);
 
 router.route("/")
-    .get(authorize("admin"), getAllPayment)
-    .post(authorize("admin"), createPayment);
+    .get(authMiddleware, authorize("admin"), getAllPayment)
+    .post(authMiddleware, authorize("admin"), createPayment);
 
 router.route("/:id")
-    .get(authorize("admin"), getPaymentById)
-    .delete(authorize("admin"), deletePayment);
+    .get(authMiddleware, authorize("admin"), getPaymentById)
+    .delete(authMiddleware, authorize("admin"), deletePayment);
 
 export default router;

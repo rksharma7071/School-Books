@@ -2,68 +2,164 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://schoolbook.lol/</loc>
-    <lastmod>2026-01-15</lastmod>
-    <changefreq>weekly</changefreq>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://schoolbook.lol/categories</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/reviews</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://schoolbook.lol/contact</loc>
-    <lastmod>2026-01-15</lastmod>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/best-sellers</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/login</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://schoolbook.lol/new-arrivals</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/register</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://schoolbook.lol/offers</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/reset-password</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://schoolbook.lol/categories/new-arrivals-2026-27</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/products/694c1fe270e04730700b5281</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://schoolbook.lol/categories/previous-year-editions</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/products/694c1de970e04730700b5266</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://schoolbook.lol/categories/science-collection</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/products/6944f92c925e165b1a64b717</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://schoolbook.lol/categories/english-literature</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/products/694c20e870e04730700b529d</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://schoolbook.lol/categories/on-sale</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/products/6944f7b5925e165b1a64b704</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://schoolbook.lol/categories/complete-school-series</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/products/6937d1f13c27130b0ef4dbbf</loc>
-    <lastmod>2026-01-15</lastmod>
+    <loc>https://schoolbook.lol/categories/budget-books</loc>
+    <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/categories/premium-collection</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/categories/low-stock-alert</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/categories/out-of-stock</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/categories/in-stock</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/categories/class-6</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/categories/class-7</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/products/complete-mathematics-school-series</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/products/computer-science-with-python-class-11</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/products/ncert-physics-class-12</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/products/cbse-mathematics-practice-workbook-class-8</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/products/high-school-english-grammar-and-composition</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/products/ncert-science-class-9</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://schoolbook.lol/products/ncert-mathematics-class-10</loc>
+    <lastmod>2026-09-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>

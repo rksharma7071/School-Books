@@ -37,10 +37,10 @@ function SideMenu() {
                     </Link>
                     <p className="px-3 pt-4 text-xs font-semibold text-gray-400 uppercase tracking-wide">Management</p>
                     <div>
-                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/books?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
+                        <NavLink to={`/${import.meta.env.VITE_ADMIN}/products?page=1&limit=20`} className="w-full flex items-center justify-between px-3 py-2 text-gray-800 hover:bg-indigo-50 rounded-lg">
                             <span className="flex items-center gap-3">
                                 <span className="h-6 w-6 rounded bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs">B</span>
-                                Books
+                                Products
                             </span>
                         </NavLink>
                     </div>
@@ -151,7 +151,7 @@ function SideMenu() {
                         <LuLayoutDashboard className="text-xl" />
                     </NavItem>
 
-                    <NavItem to={`/${import.meta.env.VITE_ADMIN}/books`} label="Books">
+                    <NavItem to={`/${import.meta.env.VITE_ADMIN}/products`} label="Books">
                         <LuBookOpen className="text-xl" />
                     </NavItem>
 

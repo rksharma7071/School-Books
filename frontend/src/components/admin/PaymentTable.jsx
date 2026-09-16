@@ -5,8 +5,8 @@ function PaymentTable({
     isAllSelected,
     toggleSelectAll,
     toggleSelect,
-    paginatedPayment,
-    selectedIds,
+    paginatedPayment = [],
+    selectedIds = [],
 }) {
     const statusStyles = {
         paid: "bg-green-100 text-green-700",
@@ -15,13 +15,23 @@ function PaymentTable({
         refunded: "bg-blue-100 text-blue-700",
     };
 
-    const capitalize = (s = "") => s.charAt(0).toUpperCase() + s.slice(1);
+    const providerLabel = {
+        stripe: "Stripe",
+        paypal: "PayPal",
+        razorpay: "Razorpay",
+        shopify_payments: "Shopify Payments",
+    };
+
+    const capitalize = (s = "") =>
+        s ? s.charAt(0).toUpperCase() + s.slice(1) : "";
+
+    const columns = 6;
 
     return (
         <table className="min-w-full text-sm">
             <thead>
-                <tr>
-                    <th className="px-4 py-3 text-left">
+                <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="p-2 text-left w-10">
                         <input
                             type="checkbox"
                             checked={isAllSelected}
@@ -29,79 +39,62 @@ function PaymentTable({
                             className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
                         />
                     </th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">
-                        Transaction Id
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">
-                        Provider
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">
-                        Amount
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">
-                        Order
-                    </th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">
-                        Status
-                    </th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Transaction ID</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Provider</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Amount</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Order</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Status</th>
                 </tr>
             </thead>
+
             <tbody>
                 {paginatedPayment.length === 0 ? (
                     <tr>
-                        <td
-                            colSpan={6}
-                            className="px-4 py-6 text-center text-gray-500"
-                        >
-                            No payment found.
-                        </td>
+                        <td colSpan={columns} className="px-4 py-6 text-center text-gray-500">No payments found.</td>
                     </tr>
                 ) : (
                     paginatedPayment.map((payment) => {
-                        const isSelected = selectedIds.includes(payment._id);
+                        const rowId = payment._id || payment.id;
+                        const isSelected = selectedIds.includes(rowId);
 
                         return (
                             <tr
-                                key={payment._id}
+                                key={rowId}
                                 className="border-t border-gray-100 hover:bg-gray-50"
                             >
-                                <td className="px-4 py-3">
+                                <td className="p-2">
                                     <input
                                         type="checkbox"
                                         checked={isSelected}
-                                        onChange={() => toggleSelect(payment._id)}
+                                        onChange={() => toggleSelect(rowId)}
                                         className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
                                     />
                                 </td>
 
-                                <td className="px-4 py-3 text-gray-700 font-medium">
+                                <td className="p-2 font-medium text-gray-800">
                                     <Link
-                                        to={payment._id}
-                                        className="hover:underline"
+                                        to={`${rowId}`}
+                                        className="hover:text-blue-600 hover:underline"
                                     >
-                                        {payment.transactionId}
+                                        {payment.transactionId || "—"}
                                     </Link>
                                 </td>
 
-                                <td className="px-4 py-3 text-gray-700">
-                                    {capitalize(payment.provider)}
+                                <td className="p-2 text-gray-700">
+                                    {providerLabel[payment.provider] || capitalize(payment.provider) || "—"}
                                 </td>
 
-                                <td className="px-4 py-3 text-gray-700">
-                                    ₹{payment.amount}
+                                <td className="p-2 text-gray-700 tabular-nums">
+                                    ₹{Number(payment.amount ?? 0).toFixed(2)}
                                 </td>
 
-                                <td className="px-4 py-3 text-gray-900">
-                                    {payment.order
-                                        ? `#${payment.order.orderNumber}`
-                                        : "—"}
+                                <td className="p-2 text-gray-900">
+                                    {payment.order?.orderNumber ? `#${payment.order.orderNumber}` : "—"}
                                 </td>
 
-                                <td className="px-4 py-3">
+                                <td className="p-2">
                                     <span
-                                        className={`px-3 py-1 rounded-full text-sm font-medium ${statusStyles[payment.status] ||
-                                            "bg-gray-200 text-gray-600"
-                                            }`}
+                                        className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${statusStyles[payment.status] || "bg-gray-200 text-gray-600"}`}
                                     >
                                         {capitalize(payment.status)}
                                     </span>

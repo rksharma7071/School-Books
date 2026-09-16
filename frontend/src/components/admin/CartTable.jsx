@@ -24,8 +24,8 @@ function CartTable({ paginatedCarts }) {
 
                 return (
                     <Link
-                        key={cart._id}
-                        to={cart._id}
+                        key={cart.id}
+                        to={cart.id}
                         className="rounded-xl border border-gray-200 bg-white overflow-hidden block"
                     >
                         <div className="flex items-center justify-between px-5 py-4">

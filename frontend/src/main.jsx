@@ -5,9 +5,9 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import ProtectedRoute from './routes/ProtectedRoute.jsx'
 import { BookProvider } from './context/School.jsx'
 
-import Book from './pages/admin/book/Book.jsx'
-import AddBook from './pages/admin/book/AddBook.jsx'
-import EditBook from './pages/admin/book/EditBook.jsx'
+import Product from './pages/admin/product/Product.jsx'
+import AddProduct from './pages/admin/product/AddProduct.jsx'
+import EditProduct from './pages/admin/product/EditProduct.jsx'
 import Category from './pages/admin/category/Category.jsx'
 import AddCategory from './pages/admin/category/AddCategory.jsx';
 import EditCategory from './pages/admin/category/EditCategory.jsx'
@@ -35,7 +35,7 @@ import FReview from './pages/frontend/FReview.jsx'
 import FCart from './pages/frontend/Cart.jsx'
 import Home from './pages/frontend/Home.jsx'
 import Contact from './pages/frontend/Contact.jsx'
-import BookById from './pages/frontend/BookById.jsx'
+import ProductById from './pages/frontend/ProductById.jsx'
 import Checkout from './pages/frontend/Checkout.jsx'
 import Profile from './pages/frontend/Profile.jsx'
 import PersonalDetails from './pages/frontend/PersonalDetails.jsx'
@@ -50,8 +50,8 @@ import ResetPassword from './pages/frontend/ResetPassword.jsx'
 import Categories from "./pages/frontend/Category.jsx";
 import CategoryProducts from './pages/frontend/CategoryProducts.jsx'
 import { editUser, getUsersData } from './data/user.js'
-import { getBooksData, getBookById, getBookByHandle, editBookLoader } from './data/book.js'
-import { getCart, getCartById } from './data/cart.js'
+import { getProductsData, getProductById, getProductByHandle, editProductLoader } from './data/product.js'
+import { getCart, getCartById, getCartData } from './data/cart.js'
 import { getReview1, getReviewData } from './data/review.js'
 import { getDiscount, getDiscountById } from './data/discount.js'
 import { getPayment, getPaymentById } from './data/payment.js'
@@ -60,13 +60,14 @@ import { StrictMode } from 'react'
 import NotFound from './components/frontend/NotFound.jsx'
 // import { SpeedInsights } from "@vercel/speed-insights/react"
 // import { Analytics } from "@vercel/analytics/react";
-import getProfile from './data/profile.js'
+import { getProfile } from './data/profile.js'
 import { getAddress, getAddressById } from './data/address.js'
 import axiosInstance from './utils/axiosConfig.js'
 import VerifyEmail from './components/frontend/VerifyEmail.jsx'
 import ProtectedLogin from './routes/ProtectedLogin.jsx'
-import { editCategoryLoader, getCategoriesData, getCategoryById } from './data/category.js'
-
+import { editCategoryLoader, getCategories, getCategoriesData, getCategoryById, getCategoryProducts } from './data/category.js'
+import { searchProductsLoader } from './data/product.js'
+import SearchResults from './pages/frontend/SearchResults.jsx'
 
 window.axios = axiosInstance;
 
@@ -78,26 +79,28 @@ const router = createBrowserRouter([
     children: [
       { path: "", element: <Home /> },
       { path: "verify-email", element: <VerifyEmail /> },
-      { path: "categories/all", element: <Categories /> },
-      { path: "categories/:categoryName", element: <CategoryProducts /> },
-      { path: "cart", element: <FCart /> },
-      { path: "products/:handle", element: <BookById />, loader: getBookByHandle },
+      { path: "categories/all", element: <Categories />, loader: getCategories },
+      { path: "categories/:handle", element: <CategoryProducts />, loader: getCategoryProducts },
+      { path: "cart", element: <FCart />, loader: getCartData },
+      { path: "products/:handle", element: <ProductById />, loader: getProductByHandle },
       { path: "contact", element: <Contact /> },
       { path: "reviews", element: <FReview /> },
       { path: "checkout", element: <Checkout /> },
+      { path: "search", element: <SearchResults />, loader: searchProductsLoader },
       { path: "reset-password", element: <ResetPassword /> },
       {
         path: "profile",
         element: <Profile />,
-        loader: getProfile,
         children: [
           {
             index: true,
             element: <PersonalDetails />,
+            loader: getProfile,
           },
           {
             path: "orders",
             element: <MyOrders />,
+            loader: getProfile,
           },
           {
             path: "orders/:id",
@@ -107,6 +110,7 @@ const router = createBrowserRouter([
           {
             path: "address",
             element: <AddressList />,
+            loader: getProfile,
           },
           {
             path: "address/new",
@@ -152,9 +156,9 @@ const router = createBrowserRouter([
         // errorElement: <NotFound />,
         children: [
           { index: true, element: <Dashboard /> },
-          { path: "books", element: <Book />, loader: getBooksData },
-          { path: "books/add", element: <AddBook /> },
-          { path: "books/edit/:id", element: <EditBook />, loader: editBookLoader },
+          { path: "products", element: <Product />, loader: getProductsData },
+          { path: "products/add", element: <AddProduct /> },
+          { path: "products/edit/:id", element: <EditProduct />, loader: editProductLoader },
           { path: "categories", element: <Category />, loader: getCategoriesData },
           { path: "categories/add", element: <AddCategory /> },
           { path: "categories/edit/:id", element: <EditCategory />, loader: editCategoryLoader },
@@ -162,7 +166,7 @@ const router = createBrowserRouter([
           { path: "users/add", element: <AddUser /> },
           { path: "users/edit/:id", element: <EditUser />, loader: editUser },
           { path: "general", element: <General /> },
-          { path: "roles", element: <Role />,  },
+          { path: "roles", element: <Role />, },
           { path: "review", element: <Review />, loader: getReviewData },
           { path: "cart", element: <Cart />, loader: getCart },
           { path: "cart/:id", element: <CartById />, loader: getCartById },

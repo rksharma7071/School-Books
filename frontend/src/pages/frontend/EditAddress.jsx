@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from "react";
+import React, { useContext, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import axios from "axios";
 import InputField from "../../components/UI/InputField";
@@ -7,81 +7,66 @@ import { BookContext } from "../../context/School";
 function EditAddress() {
   const navigate = useNavigate();
   const { setToastConfig, setShowToast } = useContext(BookContext);
-
-  const address = useLoaderData() || {};
+  const address = useLoaderData();
 
   const [loading, setLoading] = useState(false);
-
-  const [form, setForm] = useState({
-    fullName: "",
-    phone: "",
-    address: "",
-    city: "",
-    state: "",
-    pincode: "",
-    country: "India",
-    isDefault: false,
-  });
-
   const [errors, setErrors] = useState({});
 
-  useEffect(() => {
-    if (address) {
-      setForm({
-        fullName: address.fullName || "",
-        phone: address.phone || "",
-        address: address.address || "",
-        city: address.city || "",
-        state: address.state || "",
-        pincode: address.pincode || "",
-        country: address.country || "India",
-        isDefault: address.isDefault || false,
-      });
-    }
-  }, [address]);
+  const [form, setForm] = useState({
+    fullName: address?.fullName || "",
+    phone: address?.phone || "",
+    address: address?.address || "",
+    city: address?.city || "",
+    state: address?.state || "",
+    pincode: address?.pincode || "",
+    country: address?.country || "India",
+    isDefault: address?.isDefault || false,
+  });
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
-    setForm({ ...form, [name]: type === "checkbox" ? checked : value });
-
-    if (errors[name]) {
-      setErrors({ ...errors, [name]: "" });
-    }
+    setForm((prev) => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   const validateForm = () => {
     const newErrors = {};
-
     if (!form.fullName.trim()) newErrors.fullName = "Full name is required";
     if (!form.phone.trim()) newErrors.phone = "Phone number is required";
     if (!form.address.trim()) newErrors.address = "Address is required";
     if (!form.city.trim()) newErrors.city = "City is required";
     if (!form.state.trim()) newErrors.state = "State is required";
     if (!form.pincode.trim()) newErrors.pincode = "Pincode is required";
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
+    if (!address?._id) return;
 
     setLoading(true);
 
     try {
-      await axios.patch(`${import.meta.env.VITE_API}/api/address/${address._id}`, form);
+      await axios.patch(
+        `${import.meta.env.VITE_API}/api/address/${address._id}`,
+        form,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        }
+      );
 
       setToastConfig({
         type: "success",
         message: "Address updated successfully",
       });
       setShowToast(true);
-
       navigate("/profile/address");
     } catch (error) {
       setToastConfig({
@@ -95,18 +80,13 @@ function EditAddress() {
     }
   };
 
-  if (!address) {
-    return <p className="text-gray-500">Loading address...</p>;
-  }
+  if (!address) return <p className="text-gray-500">Address not found.</p>;
 
   return (
     <div>
       <h3 className="text-xl font-semibold mb-6">Edit Address</h3>
 
-      <form
-        onSubmit={handleSubmit}
-        className="grid grid-cols-1 sm:grid-cols-2 gap-4"
-      >
+      <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Field name="fullName" placeholder="Full Name" value={form.fullName} onChange={handleChange} error={errors.fullName} />
         <Field name="phone" placeholder="Phone Number" value={form.phone} onChange={handleChange} error={errors.phone} />
         <Field name="address" placeholder="Street Address" value={form.address} onChange={handleChange} textarea rows={3} className="sm:col-span-2" error={errors.address} />
@@ -137,7 +117,6 @@ function EditAddress() {
           >
             {loading ? "Updating..." : "Update Address"}
           </button>
-
           <button
             type="button"
             onClick={() => navigate("/profile/address")}
@@ -155,9 +134,7 @@ function Field({ error, ...props }) {
   return (
     <div className="flex flex-col gap-1">
       <InputField {...props} />
-      {error && (
-        <span className="text-xs text-red-500">{error}</span>
-      )}
+      {error && <span className="text-xs text-red-500">{error}</span>}
     </div>
   );
 }

@@ -20,11 +20,61 @@ const normalize = (p) => ({
 
 export const getAllPayment = async (req, res) => {
     try {
-        const filter = {};
-        if (req.query.status) filter.status = req.query.status;
+        const page = Math.max(1, Number(req.query.page) || 1);
+        const limit = Math.min(100, Math.max(1, Number(req.query.limit) || 20));
+        const search = (req.query.search || "").trim();
+        const status = req.query.status;
 
-        const payments = await Payment.find(filter).populate(ORDER_POPULATE).sort({ createdAt: -1 }).lean();
-        res.json(payments.map(normalize));
+        const filter = {};
+        if (status) filter.status = status;
+
+        if (search) {
+            const or = [
+                { transactionId: { $regex: search, $options: "i" } },
+                { provider: { $regex: search, $options: "i" } },
+            ];
+
+            // If the search term is numeric, try to match an orderNumber
+            const numeric = Number(search);
+            if (Number.isInteger(numeric)) {
+                const matchingOrders = await Order.find({ orderNumber: numeric })
+                    .select("_id")
+                    .lean();
+                if (matchingOrders.length) {
+                    or.push({ orderId: { $in: matchingOrders.map((o) => o._id) } });
+                }
+            }
+
+            // Also let users search by amount (exact numeric match)
+            if (!Number.isNaN(numeric)) {
+                or.push({ amount: numeric });
+            }
+
+            filter.$or = or;
+        }
+
+        const [payments, total] = await Promise.all([
+            Payment.find(filter)
+                .populate(ORDER_POPULATE)
+                .sort({ createdAt: -1 })
+                .skip((page - 1) * limit)
+                .limit(limit)
+                .lean(),
+            Payment.countDocuments(filter),
+        ]);
+
+        return res.status(200).json({
+            success: true,
+            data: payments.map(normalize),
+            meta: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+                hasNextPage: page * limit < total,
+                hasPreviousPage: page > 1,
+            },
+        });
     } catch (error) {
         handleError(error, req, res);
     }

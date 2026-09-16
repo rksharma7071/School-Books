@@ -1,49 +1,73 @@
-import React from 'react'
-import axios from 'axios'
-import { useLoaderData, Link, useNavigate } from 'react-router-dom'
+import React from "react";
+import axios from "axios";
+import { useLoaderData, Link, useNavigate } from "react-router-dom";
 
 function OrderDetails() {
-    const order = useLoaderData()
-    const navigate = useNavigate()
+    const order = useLoaderData();
+    const navigate = useNavigate();
 
     const statusStyles = {
-        "in progress": 'bg-blue-100 text-blue-700 border-blue-200',
-        "fulfilled": 'bg-green-100 text-green-700 border-green-200',
-        "unfulfilled": 'bg-red-100 text-red-700 border-red-200',
-        "cancelled": 'bg-red-100 text-red-700 border-red-200',
-    }
+        "in progress": "bg-blue-100 text-blue-700 border-blue-200",
+        fulfilled: "bg-green-100 text-green-700 border-green-200",
+        unfulfilled: "bg-red-100 text-red-700 border-red-200",
+        cancelled: "bg-red-100 text-red-700 border-red-200",
+    };
+
+    const capitalizeWords = (text = "") =>
+        text.replace(/\b\w/g, (c) => c.toUpperCase());
 
     const handleCancelOrder = async () => {
-        const confirmCancel = window.confirm(
-            "Are you sure you want to cancel this order?"
-        )
-
-        if (!confirmCancel) return
+        if (!window.confirm("Are you sure you want to cancel this order?")) return;
 
         try {
-            await axios.patch(
-                `${import.meta.env.VITE_API}/api/order/${order._id}`,
-                { status: "cancelled" }
-            )
+            await axios.post(
+                `${import.meta.env.VITE_API}/api/order/${order._id}/cancel`,
+                { reason: "Cancelled by user" },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
 
-            alert("Order cancelled successfully")
-            navigate("/profile/orders")
+            alert("Order cancelled successfully");
+            navigate("/profile/orders");
         } catch (error) {
-            alert(
-                error.response?.data?.message ||
-                "Failed to cancel order"
-            )
+            alert(error.response?.data?.message || "Failed to cancel order");
         }
+    };
+
+    if (!order) {
+        return <p className="text-gray-500">Order not found.</p>;
     }
 
-    const capitalizeWords = (text = '') =>
-        text.replace(/\b\w/g, char => char.toUpperCase())
+    // Address snapshot (object) OR fallback to string
+    const renderAddress = (addr) => {
+        if (!addr) return "—";
+        if (typeof addr === "string") {
+            return decodeURIComponent(addr).replace(/\+/g, " ");
+        }
+        return (
+            <>
+                <p className="font-medium">{addr.fullName}</p>
+                <p>{addr.phone}</p>
+                <p>{addr.address}</p>
+                <p>
+                    {addr.city}, {addr.state} - {addr.pincode}
+                </p>
+                {addr.country && <p>{addr.country}</p>}
+            </>
+        );
+    };
 
-    const decodeAddress = (address = '') =>
-        decodeURIComponent(address).replace(/\+/g, ' ')
+    const getProductImage = (item) =>
+        item?.productId?.images?.[0]?.url ||
+        item?.productId?.image?.url ||
+        "/placeholder-image.jpg";
 
     return (
         <div className="space-y-6">
+            {/* Header */}
             <div className="flex justify-between items-start">
                 <div>
                     <h2 className="text-2xl font-semibold">
@@ -56,9 +80,9 @@ function OrderDetails() {
 
                 <div className="flex flex-col items-end gap-2">
                     <span
-                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border
-                        ${statusStyles[order.status] ||
-                            'bg-gray-100 text-gray-700 border-gray-200'}`}
+                        className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold border ${statusStyles[order.status] ||
+                            "bg-gray-100 text-gray-700 border-gray-200"
+                            }`}
                     >
                         {capitalizeWords(order.status)}
                     </span>
@@ -75,37 +99,65 @@ function OrderDetails() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <InfoCard title="Shipping Address">
-                        <p>{decodeAddress(order.shipping_address)}</p>
-                    </InfoCard>
+            {/* Info cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <InfoCard title="Shipping Address">
+                    {renderAddress(order.shipping_address)}
+                </InfoCard>
 
-                    <InfoCard title="Payment Information">
-                        <p><b>Payment ID:</b> {order.paymentId}</p>
-                        <p><b>Email:</b> {order.user?.email}</p>
-                        <p><b>Status:</b> Paid</p>
-                    </InfoCard>
-                </div>
+                <InfoCard title="Payment Information">
+                    <p>
+                        <b>Payment ID:</b>{" "}
+                        {order.paymentId || "—"}
+                    </p>
+                    <p>
+                        <b>Coupon:</b> {order.couponCode || "—"}
+                    </p>
+                    <p>
+                        <b>Status:</b>{" "}
+                        {order.paidAt ? "Paid" : "Pending"}
+                    </p>
+                    {order.shipment?.tracking_number && (
+                        <p>
+                            <b>Tracking:</b> {order.shipment.tracking_number}
+                        </p>
+                    )}
+                </InfoCard>
             </div>
 
+            {/* Items */}
             <div>
                 <h3 className="text-lg font-semibold mb-4">Items</h3>
 
                 <div className="space-y-4">
                     {order.items.map((item, index) => (
                         <div
-                            key={index}
+                            key={item._id || index}
                             className="flex items-center gap-4 border border-gray-300 rounded-lg p-4"
                         >
                             <img
-                                src={item.book.coverImage}
-                                alt={item.book.name}
-                                className="w-20 h-24 object-cover rounded"
+                                src={getProductImage(item)}
+                                alt={item.productName}
+                                className="w-20 h-24 object-contain bg-gray-50 rounded"
                             />
 
                             <div className="flex-1">
-                                <p className="font-medium">{item.book.name}</p>
+                                <p className="font-medium">
+                                    {item.productName || item.productId?.title || "Product"}
+                                </p>
+
+                                {item.variantOptions && (
+                                    <p className="text-xs text-gray-500">
+                                        {Object.values(item.variantOptions).join(" / ")}
+                                    </p>
+                                )}
+
+                                {item.variantSku && (
+                                    <p className="text-xs text-gray-400">
+                                        SKU: {item.variantSku}
+                                    </p>
+                                )}
+
                                 <p className="text-sm text-gray-500">
                                     Qty: {item.quantity}
                                 </p>
@@ -114,19 +166,23 @@ function OrderDetails() {
                                 </p>
                             </div>
 
-                            <p className="font-semibold">
-                                ₹{item.total_price}
-                            </p>
+                            <p className="font-semibold">₹{item.total_price}</p>
                         </div>
                     ))}
                 </div>
             </div>
 
+            {/* Summary */}
             <div className="max-w-md ml-auto border border-gray-300 rounded-lg p-4 space-y-2">
-                <SummaryRow label="Subtotal" value={order.subtotal} />
-                <SummaryRow label="Shipping" value={order.shipping} />
-                <SummaryRow label="Tax" value={order.tax} />
-                <SummaryRow label="Discount" value={`-₹${order.discount}`} />
+                <SummaryRow label="Subtotal" value={`₹${order.subtotal}`} />
+                <SummaryRow label="Shipping" value={`₹${order.shipping}`} />
+                <SummaryRow label="Tax" value={`₹${order.tax}`} />
+                {order.discount > 0 && (
+                    <SummaryRow
+                        label="Discount"
+                        value={`-₹${order.discount}`}
+                    />
+                )}
                 <hr className="border-gray-300" />
                 <SummaryRow label="Total" value={`₹${order.total}`} bold />
             </div>
@@ -138,27 +194,25 @@ function OrderDetails() {
                 ← Back to Orders
             </Link>
         </div>
-    )
+    );
 }
 
 function InfoCard({ title, children }) {
     return (
         <div className="bg-slate-50 rounded-lg p-4">
             <h4 className="font-semibold mb-2">{title}</h4>
-            <div className="text-sm text-gray-600 space-y-1">
-                {children}
-            </div>
+            <div className="text-sm text-gray-600 space-y-1">{children}</div>
         </div>
-    )
+    );
 }
 
 function SummaryRow({ label, value, bold }) {
     return (
         <div className="flex justify-between text-sm">
-            <span className={bold ? 'font-semibold' : ''}>{label}</span>
-            <span className={bold ? 'font-semibold' : ''}>{value}</span>
+            <span className={bold ? "font-semibold" : ""}>{label}</span>
+            <span className={bold ? "font-semibold" : ""}>{value}</span>
         </div>
-    )
+    );
 }
 
-export default OrderDetails
+export default OrderDetails;

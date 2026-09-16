@@ -9,105 +9,86 @@ function CartById() {
     const navigate = useNavigate();
     const { setToastConfig, setShowToast } = useContext(BookContext);
 
-    // Backend already computes lineTotal and subtotal
-    const items = cart.items || [];
+    if (!cart) {
+        return (
+            <div className="max-w-5xl mx-auto p-8 text-center text-sm text-gray-500">Cart not found.</div>
+        );
+    }
+
+    const items = Array.isArray(cart.items) ? cart.items : [];
     const totalAmount = cart.subtotal ?? items.reduce((sum, item) => sum + (item.lineTotal || 0), 0);
 
-    // `cart.user` is populated only on the admin list route.
-    // On the single-cart route we only have `userId`, so fall back gracefully.
     const customer = cart.user || null;
 
     const onDelete = async () => {
         if (!window.confirm("Do you want to delete this cart?")) return;
 
         try {
-            await axios.delete(`${import.meta.env.VITE_API}/api/cart/${cart.id}`, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
-                },
-            });
+            await axios.delete(
+                `${import.meta.env.VITE_API}/api/cart/${cart.id}`,
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
 
-            setToastConfig({
-                type: "success",
-                message: "Cart has been deleted successfully!",
-            });
+            setToastConfig({ type: "success", message: "Cart has been deleted successfully!" });
             setShowToast(true);
-            navigate(`/${import.meta.env.VITE_ADMIN}/cart`);
+            navigate(`/${import.meta.env.VITE_ADMIN}/cart?page=1&limit=20`);
         } catch (error) {
-            setToastConfig({
-                type: "error",
-                message:
-                    error.response?.data?.message ||
-                    error?.message ||
-                    "Cart Delete Error",
-            });
+            setToastConfig({ type: "error", message: error.response?.data?.message || error?.message || "Cart Delete Error" });
             setShowToast(true);
         }
     };
 
     return (
         <div className="max-w-5xl mx-auto space-y-6">
+            {/* Header */}
             <div className="rounded-xl border border-gray-200 bg-white p-5 flex items-center justify-between">
                 <div>
-                    <h2 className="text-lg font-semibold text-gray-900">
-                        {customer?.name || `User ${cart.userId}`}
-                    </h2>
-                    {customer?.email && (
-                        <p className="text-sm text-gray-500">{customer.email}</p>
-                    )}
+                    <h2 className="text-lg font-semibold text-gray-900">{customer?.name || `User ${cart.userId}`}</h2>
+                    {customer?.email && (<p className="text-sm text-gray-500">{customer.email}</p>)}
                     {cart.totalItems != null && (
-                        <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">
-                            {cart.totalItems} item(s)
-                        </span>
+                        <span className="inline-block mt-2 px-2 py-0.5 rounded-full text-xs bg-green-100 text-green-700">{cart.totalItems} item(s)</span>
                     )}
                 </div>
 
                 <div className="text-right">
                     <p className="text-xs text-gray-500">Cart Total</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                        ₹{totalAmount}
-                    </p>
+                    <p className="text-2xl font-bold text-gray-900">₹{totalAmount}</p>
                 </div>
             </div>
 
+            {/* Items */}
             <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                 <div className="px-5 py-3 border-b border-gray-200">
-                    <h3 className="text-sm font-semibold text-gray-700">
-                        Cart Items ({items.length})
-                    </h3>
+                    <h3 className="text-sm font-semibold text-gray-700">Cart Items ({items.length})</h3>
                 </div>
 
                 {items.length === 0 ? (
-                    <div className="p-8 text-center text-sm text-gray-500">
-                        This cart is empty.
-                    </div>
+                    <div className="p-8 text-center text-sm text-gray-500">This cart is empty.</div>
                 ) : (
-                    <div className="divide-y">
+                    <div className="divide-y divide-gray-200">
                         {items.map((item) => {
                             const product = item.product;
                             const variant = product?.variant;
+                            const unitPrice = variant?.price ?? product?.price ?? 0;
 
                             return (
-                                <div
-                                    key={item.itemId}
-                                    className="flex gap-5 p-5 items-center"
-                                >
+                                <div key={item.itemId} className="flex gap-5 p-5 items-center">
                                     {product?.image ? (
                                         <img
                                             src={product.image}
                                             alt={product.name}
-                                            className="w-20 h-28 object-cover rounded-md border border-gray-200"
+                                            className="w-20 h-28 object-contain bg-gray-50 rounded-md border border-gray-200"
                                         />
                                     ) : (
-                                        <div className="w-20 h-28 rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center text-xs text-gray-400">
-                                            No image
-                                        </div>
+                                        <div className="w-20 h-28 rounded-md border border-gray-200 bg-gray-50 flex items-center justify-center text-xs text-gray-400">No image</div>
                                     )}
 
                                     <div className="flex-1">
-                                        <h4 className="text-sm font-semibold text-gray-900">
-                                            {product?.name || "Unknown product"}
-                                        </h4>
+                                        <h4 className="text-sm font-semibold text-gray-900">{product?.name || "Unknown product"}</h4>
 
                                         {variant?.options && (
                                             <p className="text-xs text-gray-500 mt-1">
@@ -119,19 +100,15 @@ function CartById() {
 
                                         <div className="mt-2 flex gap-4 text-xs text-gray-600">
                                             <span>Qty: {item.quantity}</span>
-                                            <span>₹{product?.price ?? 0} each</span>
+                                            <span>₹{unitPrice} each</span>
                                             {!item.available && (
-                                                <span className="text-red-600 font-medium">
-                                                    Unavailable
-                                                </span>
+                                                <span className="text-red-600 font-medium">Unavailable</span>
                                             )}
                                         </div>
                                     </div>
 
                                     <div className="text-right">
-                                        <p className="text-sm font-semibold text-gray-900">
-                                            ₹{item.lineTotal ?? 0}
-                                        </p>
+                                        <p className="text-sm font-semibold text-gray-900">₹{item.lineTotal ?? unitPrice * item.quantity}</p>
                                     </div>
                                 </div>
                             );
@@ -140,9 +117,13 @@ function CartById() {
                 )}
             </div>
 
+            {/* Footer */}
             <div className="flex items-center justify-between">
                 <p className="text-xs text-gray-500">
-                    Created at {cart.createdAt ? new Date(cart.createdAt).toLocaleString() : "—"}
+                    Created at{" "}
+                    {cart.createdAt
+                        ? new Date(cart.createdAt).toLocaleString()
+                        : "—"}
                 </p>
 
                 <button

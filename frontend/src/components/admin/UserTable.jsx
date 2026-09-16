@@ -50,7 +50,7 @@ function UserTable({
         <table className="min-w-full text-sm">
             <thead>
                 <tr>
-                    <th className="px-4 py-3 text-left">
+                    <th className="px-4 text-left">
                         <input
                             type="checkbox"
                             checked={isAllSelected}
@@ -58,10 +58,10 @@ function UserTable({
                             className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
                         />
                     </th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Name</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Email</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Role</th>
-                    <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Name</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Email</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Role</th>
+                    <th className="p-2 text-right font-semibold text-gray-700">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -82,7 +82,7 @@ function UserTable({
                                 key={user._id}
                                 className="border-t border-gray-100 hover:bg-gray-50"
                             >
-                                <td className="px-4 py-3">
+                                <td className="px-4">
                                     <input
                                         type="checkbox"
                                         checked={isSelected}
@@ -90,10 +90,10 @@ function UserTable({
                                         className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer"
                                     />
                                 </td>
-                                <td className="px-4 py-3 text-gray-700">{user.name}</td>
-                                <td className="px-4 py-3 text-gray-700">{user.email}</td>
-                                <td className="px-4 py-3 text-gray-700">{roleLabel}</td>
-                                <td className="px-4 py-3 text-right">
+                                <td className="p-2 text-gray-700">{user.name}</td>
+                                <td className="p-2 text-gray-700">{user.email}</td>
+                                <td className="p-2 text-gray-700">{roleLabel}</td>
+                                <td className="p-2 text-right">
                                     <button
                                         className="text-lg text-blue-600 hover:cursor-pointer mr-3"
                                         onClick={() => editUser(user._id)}

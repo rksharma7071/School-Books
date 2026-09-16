@@ -37,8 +37,6 @@ const BookProvider = ({ children }) => {
                     res.data?.data ||
                     res.data;
 
-                // console.log("School Book:", currentUser);
-
                 if (currentUser) {
                     setUser(currentUser);
                 } else {
@@ -105,9 +103,6 @@ const BookProvider = ({ children }) => {
 
         await fetchUserCart(userId);
     };
-
-    // console.log("School User: ", user);
-
 
     return (
         <BookContext.Provider

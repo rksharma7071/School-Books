@@ -10,7 +10,7 @@ import Loading from "../../components/UI/Loading.jsx";
 import { useSEO } from "../../seo/SEO.jsx";
 import { getImageUrl } from "../../data/file.js";
 
-function BookById() {
+function ProductById() {
     const book = useLoaderData();
     const { user, setCartItems, setToastConfig, setShowToast, token } = useContext(BookContext);
     const navigate = useNavigate();
@@ -22,10 +22,7 @@ function BookById() {
     const [selectedImage, setSelectedImage] = useState(0);
 
     const scrollToReviews = () => {
-        reviewSectionRef.current?.scrollIntoView({
-            behavior: "smooth",
-            block: "start",
-        });
+        reviewSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
     };
 
     const bookId = book?._id;
@@ -72,10 +69,7 @@ function BookById() {
     const [quantity, setQuantity] = useState(1);
     const [loading, setLoading] = useState(false);
 
-    const approvedReviews = useMemo(
-        () => reviews?.recent?.filter((r) => r.approved) || [],
-        [reviews]
-    );
+    const approvedReviews = useMemo(() => reviews?.recent?.filter((r) => r.approved) || [], [reviews]);
 
     const avgRating = reviews?.summary?.averageRating || 0;
     const totalReviews = reviews?.summary?.totalReviews || approvedReviews.length;
@@ -83,14 +77,11 @@ function BookById() {
     const displayPrice = currentVariant.price || minPrice || 0;
     const stockQty = currentVariant.inventory_quantity ?? totalInventory ?? 0;
     const allImages = images.length > 0 ? images : (currentVariant.images || []);
-    // console.log("allImages", allImages);
 
     const displayImage = allImages[selectedImage] || allImages[0] || null;
-    
-    // console.log("displayImage", displayImage);
-    
+
+
     const displayImageUrl = displayImage ? getImageUrl(displayImage) : null;
-    // console.log("displayImageUrl", displayImageUrl);
     const increaseQty = () => {
         if (quantity < stockQty) setQuantity((q) => q + 1);
     };
@@ -118,57 +109,92 @@ function BookById() {
         }
 
         if (loading) return;
-        if (!currentVariant._id) return;
+        if (!currentVariant?._id) return;
 
         setLoading(true);
 
-        const cartItem = {
-            bookId: _id,
-            variantId: currentVariant._id,
-            quantity,
-            book: {
-                ...book,
-                selectedVariant: currentVariant,
-                displayPrice: currentVariant.price,
-                variantOptions: getVariantOptionsString()
-            }
-        };
+        const quantityToAdd = quantity;
+        const variantIdToAdd = currentVariant._id;
 
         setCartItems((prev) => {
-            const item = prev.find((i) => i.variantId === currentVariant._id);
-            return item
-                ? prev.map((i) =>
-                    i.variantId === currentVariant._id
-                        ? { ...i, quantity: i.quantity + quantity }
-                        : i
-                )
-                : [...prev, cartItem];
+            const existing = prev.find((i) => i.variantId === variantIdToAdd);
+
+            if (existing) {
+                return prev.map((i) => i.variantId === variantIdToAdd ? { ...i, quantity: i.quantity + quantityToAdd } : i);
+            }
+
+            return [
+                ...prev,
+                {
+                    productId: _id,
+                    variantId: variantIdToAdd,
+                    quantity: quantityToAdd,
+                    book: {
+                        ...book,
+                        selectedVariant: currentVariant,
+                        displayPrice: currentVariant.price,
+                        variantOptions: getVariantOptionsString(),
+                    },
+                },
+            ];
         });
 
         try {
-            await axios.post(`${import.meta.env.VITE_API}/api/cart`, {
-                userId: user.id,
-                bookId: _id,
-                variantId: currentVariant._id,
-                quantity,
-            }, {
-                headers: {
-                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+            const { data } = await axios.post(
+                `${import.meta.env.VITE_API}/api/cart/items`,
+                {
+                    productId: _id,
+                    variantId: variantIdToAdd,
+                    quantity: quantityToAdd,
                 },
-            });
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    },
+                }
+            );
+
+            if (data?.data?.items) {
+                setCartItems(
+                    data.data.items.map((item) => ({
+                        itemId: item.itemId,
+                        productId: item.productId,
+                        variantId: item.variantId,
+                        quantity: item.quantity,
+                        available: item.available,
+                        lineTotal: item.lineTotal,
+                        book: {
+                            _id: item.product?.id,
+                            title: item.product?.name,
+                            image: item.product?.image,
+                            selectedVariant: item.product?.variant,
+                            displayPrice: item.product?.variant?.price ?? item.product?.price,
+                            variantOptions: item.product?.variant?.options ? Object.values(item.product.variant.options).join(" / ") : "",
+                        },
+                    }))
+                );
+            }
 
             setToastConfig({
                 type: "success",
                 title: "Added to cart",
-                message: `${title}${getVariantOptionsString() ? ` (${getVariantOptionsString()})` : ''} added to cart.`,
+                message: `${title}${getVariantOptionsString() ? ` (${getVariantOptionsString()})` : ""} added to cart.`,
             });
         } catch (error) {
             console.error("Error adding to cart:", error);
-            setToastConfig({
-                type: "error",
-                title: "Failed",
-                message: error.response?.data?.message || "Could not add to cart. Please try again.",
+
+            setCartItems((prev) => {
+                const existing = prev.find((i) => i.variantId === variantIdToAdd);
+
+                if (existing && existing.quantity === quantityToAdd) {
+                    return prev.filter((i) => i.variantId !== variantIdToAdd);
+                }
+
+                return prev.map((i) => i.variantId === variantIdToAdd ? { ...i, quantity: Math.max(0, i.quantity - quantityToAdd) } : i
+                ).filter((i) => i.quantity > 0);
             });
+
+            setToastConfig({ type: "error", title: "Failed", message: error.response?.data?.message || "Could not add to cart. Please try again." });
         } finally {
             setLoading(false);
             setShowToast(true);
@@ -350,10 +376,7 @@ function BookById() {
                         onClick={handleAddToCart}
                         disabled={stockQty === 0 || loading}
                         className={`mt-6 w-full py-3 rounded-xl text-white font-semibold transition
-                            ${stockQty === 0
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-blue-900 hover:bg-blue-950"
-                            }`}
+                            ${stockQty === 0 ? "bg-gray-400 cursor-not-allowed" : "bg-blue-900 hover:bg-blue-950"}`}
                     >
                         {loading ? "Adding..." : stockQty === 0 ? "Out of Stock" : "Add to Cart"}
                     </button>
@@ -363,24 +386,16 @@ function BookById() {
                             onClick={() => setExpanded(!expanded)}
                             className="w-full flex items-center justify-between px-4 py-3 bg-gray-50 hover:bg-gray-100 transition"
                         >
-                            <span className="text-sm font-semibold text-gray-900">
-                                Description
-                            </span>
+                            <span className="text-sm font-semibold text-gray-900">Description</span>
 
-                            <span
-                                className={`transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}
-                            >
-                                <IoIosArrowDown />
-                            </span>
+                            <span className={`transition-transform duration-300 ${expanded ? "rotate-180" : ""}`}><IoIosArrowDown /></span>
                         </button>
 
                         <div
                             className={`overflow-hidden transition-all duration-300 ${expanded ? "max-h-full" : "max-h-0"}`}
                         >
                             <div className="px-4 py-3">
-                                <p className="text-gray-700 leading-relaxed text-sm">
-                                    {description}
-                                </p>
+                                <p className="text-gray-700 leading-relaxed text-sm">{description}</p>
                             </div>
                         </div>
                     </div>
@@ -405,4 +420,4 @@ function BookById() {
     );
 }
 
-export default BookById;
+export default ProductById;

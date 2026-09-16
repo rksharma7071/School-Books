@@ -11,11 +11,7 @@ const FReview = () => {
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
     const [ratingFilter, setRatingFilter] = useState(0);
-    const [sortBy, setSortBy] = useState("newest");
-
-
-    console.log("reviews", reviews);
-    
+    const [sortBy, setSortBy] = useState("newest");    
 
     useEffect(() => {
         fetchReviews();

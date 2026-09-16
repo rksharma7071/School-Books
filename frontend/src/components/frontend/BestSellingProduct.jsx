@@ -1,12 +1,12 @@
 import React, { useEffect, useState, useMemo, useContext, useRef, useCallback } from "react";
-import { getBooks } from "../../data/book.js";
+import { getProducts } from "../../data/product.js";
 import ProductCard from "./ProductCard.jsx";
 import Loading from "../UI/Loading.jsx";
 import { BookContext } from "../../context/School.jsx";
 
 function BestSellingProduct() {
     const { user, cartItems, setCartItems } = useContext(BookContext);
-    const [books, setBooks] = useState([]);
+    const [books, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const fetched = useRef(false);
 
@@ -17,13 +17,13 @@ function BestSellingProduct() {
         const loadBooks = async () => {
             try {
                 setLoading(true);
-                const response = await getBooks({
+                const response = await getProducts({
                     page: 1,
                     limit: 10,
                     sortBy: "createdAt",
                     sortOrder: "desc",
                 });
-                setBooks(response?.data || []);
+                setProducts(response?.data || []);
             } catch (error) {
                 console.error("Failed to load books:", error);
             } finally {

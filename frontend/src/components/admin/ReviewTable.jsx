@@ -14,9 +14,7 @@ function ReviewTable({
     selectedIds,
 }) {
     const { setToastConfig, setShowToast } = useContext(BookContext);
-
-    // console.log("review:", paginatedReviews);
-
+    
     const updateApproved = async (id, approved) => {
         const action = approved ? "publish" : "unpublish";
         if (!window.confirm(`Do you want to ${action} this review?`)) return;
@@ -84,14 +82,14 @@ function ReviewTable({
         <table className="min-w-full text-sm">
             <thead>
                 <tr>
-                    <th className="px-4 py-3 text-left">
+                    <th className="px-4 text-left">
                         <input type="checkbox" checked={isAllSelected} onChange={toggleSelectAll} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" />
                     </th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">User</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Book</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Title</th>
-                    <th className="px-4 py-3 text-left font-semibold text-gray-700">Body</th>
-                    <th className="px-4 py-3 text-right font-semibold text-gray-700">Actions</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">User</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Book</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Title</th>
+                    <th className="p-2 text-left font-semibold text-gray-700">Body</th>
+                    <th className="p-2 text-right font-semibold text-gray-700">Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -104,25 +102,25 @@ function ReviewTable({
                         const isSelected = selectedIds.includes(review.id);
                         return (
                             <tr key={review.id} className="border-t border-gray-100 hover:bg-gray-50">
-                                <td className="px-4 py-3">
+                                <td className="px-4">
                                     <input type="checkbox" checked={isSelected} onChange={() => toggleSelect(review.id)} className="h-4 w-4 rounded border-gray-300 hover:cursor-pointer" />
                                 </td>
 
-                                <td className="px-4 py-3 text-gray-900 font-medium">
+                                <td className="p-2 text-gray-900 font-medium">
                                     {review.user?.name || "Unknown user"}
                                     <Review rating={review.rating} />
                                 </td>
 
-                                <td className="px-4 py-3 text-gray-700">
+                                <td className="p-2 text-gray-700">
                                     {review.product?.title || review.productId?.title || review.product?.name || review.book?.title || review.book?.name || "Unknown book"}
                                 </td>
-                                <td className="px-4 py-3 text-gray-700">{review.title}</td>
-                                <td className="px-4 py-3 text-gray-700">
+                                <td className="p-2 text-gray-700">{review.title}</td>
+                                <td className="p-2 text-gray-700">
                                     <span className="block md:hidden">{truncateWords(review.body, 10)}</span>
                                     <span className="hidden md:block">{review.body}</span>
                                 </td>
 
-                                <td className="px-4 py-3 w-30 text-right">
+                                <td className="p-2 w-30 text-right">
                                     <div className="flex items-center justify-end gap-3">
                                         {review.approved === false && (
                                             <button

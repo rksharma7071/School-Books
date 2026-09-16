@@ -38,24 +38,6 @@ function EditUser() {
         }
     }, [user]);
 
-    // console.log("form: ", user);
-    // console.log("user: ", user.user);
-
-    // useEffect(() => {
-    //     if (loadedPermission) {
-    //         setPermission({
-    //             createUser: !!loadedPermission.createUser,
-    //             readUser: !!loadedPermission.readUser,
-    //             updateUser: !!loadedPermission.updateUser,
-    //             deleteUser: !!loadedPermission.deleteUser,
-    //             createBook: !!loadedPermission.createBook,
-    //             readBook: !!loadedPermission.readBook,
-    //             updateBook: !!loadedPermission.updateBook,
-    //             deleteBook: !!loadedPermission.deleteBook,
-    //         });
-    //     }
-    // }, [loadedPermission]);
-
     const handleChange = (e) => {
         const { name, value } = e.target;
         setForm((prev) => ({ ...prev, [name]: value }));

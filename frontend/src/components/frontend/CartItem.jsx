@@ -1,76 +1,83 @@
-import { FaPlus, FaTrash } from "react-icons/fa6";
-import { FaMinus } from "react-icons/fa6";
+import React from "react";
 
-function CartItem({ item, removeItemFromCart, updateQuantityByInput, updateQuantity }) {
+function CartItem({
+    item,
+    busy,
+    updateQuantity,
+    updateQuantityByInput,
+    removeItemFromCart,
+}) {
+    const name = item.product?.name ?? "Product";
+    const image = item.product?.image ?? "/no-image.png";
+    const unitPrice =
+        item.product?.variant?.price ?? item.product?.price ?? 0;
+    const options = item.product?.variant?.options
+        ? Object.values(item.product.variant.options).join(" / ")
+        : "";
+    const maxQty = item.product?.variant?.inventory_quantity ?? 0;
+    const unavailable = !item.available;
+
     return (
-        <div key={item._id} className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition p-4 flex flex-col sm:flex-row gap-4">
-            <div className="w-full sm:w-28 h-28 bg-gray-50 rounded-xl flex items-center justify-center overflow-hidden shrink-0">
-                <img
-                    src={item?.book?.coverImage}
-                    alt={item?.book?.name}
-                    className="h-full object-contain p-2"
+        <div className="bg-white rounded-xl border border-gray-200 p-4 grid grid-cols-[72px_1fr_auto_auto_auto] gap-4 items-center">
+            <img
+                src={image}
+                alt={name}
+                className="w-15 h-15 object-contain bg-gray-50 rounded-lg"
+            />
+
+            <div className="">
+                <h3 className="font-medium text-gray-900 line-clamp-2">{name}</h3>
+                {options && (<p className="text-xs text-gray-500 mt-0.5">{options}</p>)}
+                <p className="text-sm text-gray-700 mt-1">₹{unitPrice} {item.quantity > 1 && <>× {item.quantity}</>}</p>
+
+                {unavailable && (
+                    <p className="text-xs text-red-600 mt-1">No longer available</p>
+                )}
+
+
+            </div>
+
+            <div className="flex items-center gap-2 mt-3">
+                <button
+                    disabled={busy || unavailable || item.quantity <= 1}
+                    onClick={() => updateQuantity(item.itemId, -1)}
+                    className="w-8 h-8 rounded border border-gray-300 disabled:opacity-50"
+                >
+                    −
+                </button>
+
+                <input
+                    type="number"
+                    min={1}
+                    max={maxQty || undefined}
+                    value={item.quantity}
+                    disabled={busy || unavailable}
+                    onChange={(e) => updateQuantityByInput(item.itemId, e.target.value)}
+                    className="w-14 text-center border border-gray-300 rounded"
                 />
-            </div>
-
-            <div className="flex-1 flex flex-col justify-between">
-                <div>
-                    <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{item?.book?.name}</h3>
-                    <p className="text-xs text-gray-500 mt-0.5">by {item?.book?.author}</p>
-                </div>
-
-                <div className="mt-3 flex items-center justify-between">
-                    <span className="text-sm font-bold text-gray-900">₹{item?.book?.price}</span>
-                    <div className="flex items-center gap-2 bg-gray-50 border border-gray-500 rounded-lg px-2 py-1">
-                        <button
-                            onClick={() => updateQuantity(item?.bookId, -1)}
-                            disabled={item.quantity === 1}
-                            className={`w-7 h-7 flex items-center justify-center rounded-md text-sm font-bold
-                                                        ${item.quantity === 1
-                                    ? "text-gray-400 cursor-not-allowed"
-                                    : "hover:bg-gray-200"
-                                }`}
-                        >
-                            <FaMinus />
-                        </button>
-
-                        <input
-                            type="number"
-                            min={1}
-                            max={item?.book?.stockQty}
-                            value={item?.quantity}
-                            onChange={(e) =>
-                                updateQuantityByInput(item?.bookId, e.target.value)
-                            }
-                            className="w-12 text-center bg-white rounded-md text-sm py-0.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-
-                        <button
-                            onClick={() => updateQuantity(item.bookId, 1)}
-                            disabled={item?.quantity >= item?.book?.stockQty}
-                            className={`w-7 h-7 flex items-center justify-center rounded-md text-sm font-bold
-                                                        ${item?.quantity >= item?.book?.stockQty
-                                    ? "text-gray-400 cursor-not-allowed"
-                                    : "hover:bg-gray-200"
-                                }`}
-                        >
-                            <FaPlus />
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 sm:w-28">
-                <p className="text-sm font-semibold text-gray-900">₹{item?.book?.price * item.quantity}</p>
 
                 <button
-                    onClick={() => removeItemFromCart(item.bookId)}
-                    className="text-xs text-red-600 hover:text-red-700 font-medium"
+                    disabled={
+                        busy ||
+                        unavailable ||
+                        (maxQty && item.quantity >= maxQty)
+                    }
+                    onClick={() => updateQuantity(item.itemId, 1)}
+                    className="w-8 h-8 rounded border border-gray-300 disabled:opacity-50"
                 >
-                    Remove
+                    +
                 </button>
             </div>
+            <div className="text-right font-semibold text-gray-900">₹{item.lineTotal ?? unitPrice * item.quantity}</div>
+            <button
+                disabled={busy}
+                onClick={() => removeItemFromCart(item.itemId)}
+                className="text-sm text-red-600 hover:underline disabled:opacity-50"
+            >
+                Remove
+            </button>
         </div>
-    )
+    );
 }
 
-export default CartItem
+export default CartItem;

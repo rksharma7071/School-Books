@@ -8,7 +8,6 @@ import Button from '../../components/UI/Button';
 function ChangePassword() {
     const { user, cartItems, setCartItems, setToastConfig, setShowToast } = useContext(BookContext);
     const [loading, setLoading] = useState(false);
-    // console.log("User: ", user);
 
     const [form, setForm] = useState({
         oldPassword: '',
@@ -43,6 +42,11 @@ function ChangePassword() {
                     email: user.email,
                     oldPassword: form.oldPassword,
                     newPassword: form.newPassword,
+                },
+                {
+                    headers: {
+                        Authorization: `Bearer ${localStorage.getItem("token")}`,
+                    }
                 }
             );
 

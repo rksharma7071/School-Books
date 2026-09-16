@@ -3,6 +3,9 @@ import { Link, useLoaderData, useNavigate } from "react-router-dom";
 
 function PaymentById() {
   const payment = useLoaderData();
+
+  // console.log("Payment: ", payment.order.items);
+
   const navigate = useNavigate();
 
   const statusStyles = {
@@ -79,16 +82,16 @@ function PaymentById() {
       <div className="bg-white border border-gray-200 rounded-xl p-6">
         <h3 className="font-semibold text-gray-800 mb-4">Order Items</h3>
 
-        <div className="divide-y">
+        <div className="divide-y divide-gray-200">
           {payment.order?.items?.length ? (
             payment.order.items.map((item, index) => (
               <div key={index} className="flex justify-between py-3 text-sm">
                 <div>
                   <p className="font-medium text-gray-900">
-                    {item.bookId?._id ? (
-                      <Link to={`/products/${item.bookId._id}`}>{item.bookId.name}</Link>
+                    {item.productId?._id ? (
+                      <Link to={`/products/${item.productId._id}`}>{item.productName}</Link>
                     ) : (
-                      <span>{item.bookId?.name ?? "Unknown product"}</span>
+                      <span>{item.productName ?? "Unknown product"}</span>
                     )}
                   </p>
                   <p className="text-gray-500">

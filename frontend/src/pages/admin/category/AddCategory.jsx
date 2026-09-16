@@ -457,20 +457,14 @@ function AddCategory() {
                 </div>
               )}
 
-              <div className="max-h-72 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+              <div className="max-h-72 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-200">
                 {productsLoading ? (
-                  <p className="p-4 text-sm text-gray-500">
-                    Loading products…
-                  </p>
+                  <p className="p-4 text-sm text-gray-500">Loading products…</p>
                 ) : filteredProducts.length === 0 ? (
-                  <p className="p-4 text-sm text-gray-500">
-                    No products found.
-                  </p>
+                  <p className="p-4 text-sm text-gray-500">No products found.</p>
                 ) : (
                   filteredProducts.map((p) => {
-                    const checked = selectedProductIds.includes(
-                      p.id
-                    );
+                    const checked = selectedProductIds.includes(p.id);
                     return (
                       <label
                         key={p.id}
@@ -483,23 +477,15 @@ function AddCategory() {
                           className="h-4 w-4 rounded border-gray-300"
                         />
                         {p.image ? (
-                          <img
-                            src={p.image}
-                            alt=""
-                            className="h-9 w-9 rounded object-cover border border-gray-200"
-                          />
+                          <img src={p.image} alt="" className="h-9 w-9 rounded object-cover border border-gray-200" />
                         ) : (
                           <div className="h-9 w-9 rounded bg-gray-100 border border-gray-200" />
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm text-gray-900 truncate">
-                            {p.title}
-                          </p>
+                          <p className="text-sm text-gray-900 truncate">{p.title}</p>
                           <p className="text-xs text-gray-500 truncate">
                             {p.handle}
-                            {p.minPrice
-                              ? ` · ₹${p.minPrice}`
-                              : ""}
+                            {p.minPrice ? ` · ₹${p.minPrice}` : ""}
                           </p>
                         </div>
                       </label>
@@ -513,22 +499,12 @@ function AddCategory() {
           {form.type === "automatic" && (
             <div className="border-t pt-4 border-gray-200 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-semibold text-gray-800">
-                  Conditions
-                </h3>
-                <button
-                  type="button"
-                  onClick={addCondition}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  + Add condition
-                </button>
+                <h3 className="text-sm font-semibold text-gray-800">Conditions</h3>
+                <button type="button" onClick={addCondition} className="text-sm text-blue-600 hover:underline" >+ Add condition</button>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Match
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Match</label>
                 <select
                   name="conditionMatch"
                   value={form.conditionMatch}
@@ -541,9 +517,7 @@ function AddCategory() {
               </div>
 
               {conditions.length === 0 && (
-                <p className="text-sm text-gray-500">
-                  No conditions yet. Add at least one.
-                </p>
+                <p className="text-sm text-gray-500">No conditions yet. Add at least one.</p>
               )}
 
               <div className="space-y-2">
@@ -554,37 +528,27 @@ function AddCategory() {
                   >
                     <select
                       value={cond.field}
-                      onChange={(e) =>
-                        updateCondition(i, "field", e.target.value)
-                      }
+                      onChange={(e) => updateCondition(i, "field", e.target.value)}
                       className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
                     >
                       {FIELD_OPTIONS.map((f) => (
-                        <option key={f.value} value={f.value}>
-                          {f.label}
-                        </option>
+                        <option key={f.value} value={f.value}>{f.label}</option>
                       ))}
                     </select>
 
                     <select
                       value={cond.operator}
-                      onChange={(e) =>
-                        updateCondition(i, "operator", e.target.value)
-                      }
+                      onChange={(e) => updateCondition(i, "operator", e.target.value)}
                       className="border border-gray-300 rounded-lg px-2 py-1 text-sm"
                     >
                       {OPERATOR_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>
-                          {o.label}
-                        </option>
+                        <option key={o.value} value={o.value}>{o.label}</option>
                       ))}
                     </select>
 
                     <input
                       value={cond.value}
-                      onChange={(e) =>
-                        updateCondition(i, "value", e.target.value)
-                      }
+                      onChange={(e) => updateCondition(i, "value", e.target.value)}
                       placeholder="value"
                       className="flex-1 min-w-[140px] border border-gray-300 rounded-lg px-2 py-1 text-sm"
                     />
@@ -602,9 +566,7 @@ function AddCategory() {
 
               <div className="mt-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 p-3">
                 <div className="flex items-center justify-between mb-2">
-                  <h4 className="text-xs font-semibold text-gray-700">
-                    Matching products
-                  </h4>
+                  <h4 className="text-xs font-semibold text-gray-700">Matching products</h4>
                   <span className="text-xs text-gray-500">
                     {previewLoading
                       ? "Checking…"
@@ -629,11 +591,7 @@ function AddCategory() {
                         className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-3 py-1 text-xs text-gray-700"
                       >
                         {p.image ? (
-                          <img
-                            src={p.image}
-                            alt=""
-                            className="h-5 w-5 rounded object-cover"
-                          />
+                          <img src={p.image} alt="" className="h-5 w-5 rounded object-cover" />
                         ) : null}
                         {p.title}
                       </span>
@@ -647,19 +605,14 @@ function AddCategory() {
                 )}
               </div>
 
-              <p className="text-xs text-gray-500">
-                Note: products are assigned automatically by
-                conditions — <code>category.products</code> stays empty.
-              </p>
+              <p className="text-xs text-gray-500">Note: products are assigned automatically by conditions — <code>category.products</code> stays empty.</p>
             </div>
           )}
 
           <div className="border-t pt-4 border-gray-200">
             <h3 className="text-sm font-semibold text-gray-800 mb-3">Image</h3>
             <ImageGridManager onImagesChange={setImages} />
-            <p className="mt-2 text-xs text-gray-500">
-              Only the first uploaded image is used as the category image.
-            </p>
+            <p className="mt-2 text-xs text-gray-500">Only the first uploaded image is used as the category image.</p>
           </div>
 
           <button
