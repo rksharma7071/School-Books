@@ -204,7 +204,7 @@ function ProductById() {
     const jsonLdSchema = {
         "@context": "https://schema.org",
         "@type": "Product",
-        "@id": `https://schoolbook.lol/products/${bookId}`,
+        "@id": `https://www.schoolbook.lol/products/${bookId}`,
         name: title,
         description: description.replace(/\r?\n|\r/g, " ").slice(0, 300),
         sku: currentVariant.sku || bookId,
@@ -215,7 +215,7 @@ function ProductById() {
         },
         offers: {
             "@type": "AggregateOffer",
-            url: `https://schoolbook.lol/products/${handle}`,
+            url: `https://www.schoolbook.lol/products/${handle}`,
             priceCurrency: "INR",
             lowPrice: minPrice,
             highPrice: maxPrice,
@@ -234,7 +234,7 @@ function ProductById() {
     useSEO({
         title: `${title} | Buy Online`,
         description: description,
-        canonical: `https://schoolbook.lol/products/${handle}`,
+        canonical: `https://www.schoolbook.lol/products/${handle}`,
         ogTitle: title,
         jsonLd: jsonLdSchema,
     });

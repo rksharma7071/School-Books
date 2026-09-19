@@ -1,43 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://schoolbook.lol/</loc>
+    <loc>https://www.schoolbook.lol/</loc>
     <lastmod>2026-09-16T20:04:51.741Z</lastmod>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/categories</loc>
+    <loc>https://www.schoolbook.lol/categories</loc>
     <lastmod>2026-09-16T20:04:51.741Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/reviews</loc>
+    <loc>https://www.schoolbook.lol/reviews</loc>
     <lastmod>2026-09-16T20:04:51.741Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/contact</loc>
+    <loc>https://www.schoolbook.lol/contact</loc>
     <lastmod>2026-09-16T20:04:51.741Z</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/best-sellers</loc>
+    <loc>https://www.schoolbook.lol/best-sellers</loc>
     <lastmod>2026-09-16T20:04:51.741Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/new-arrivals</loc>
+    <loc>https://www.schoolbook.lol/new-arrivals</loc>
     <lastmod>2026-09-16T20:04:51.741Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://schoolbook.lol/offers</loc>
+    <loc>https://www.schoolbook.lol/offers</loc>
     <lastmod>2026-09-16T20:04:51.741Z</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>

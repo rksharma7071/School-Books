@@ -10,7 +10,7 @@ const API_URL =
     process.env.VITE_API || process.env.API_URL || "http://localhost:3000";
 
 const SITE_URL = (
-    process.env.SITE_URL || "https://schoolbook.lol"
+    process.env.SITE_URL || "https://www.schoolbook.lol"
 ).replace(/\/+$/, "");
 
 const MAX_URLS_PER_SITEMAP = 5000;

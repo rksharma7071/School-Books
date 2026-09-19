@@ -15,10 +15,10 @@ function Base() {
         "@context": "https://schema.org",
         "@type": "WebSite",
         "name": "SchoolBook",
-        "url": "https://schoolbook.lol/",
+        "url": "https://www.schoolbook.lol/",
         "potentialAction": {
             "@type": "SearchAction",
-            "target": "https://schoolbook.lol/search?q={search_term_string}",
+            "target": "https://www.schoolbook.lol/search?q={search_term_string}",
             "query-input": "required name=search_term_string"
         }
     };

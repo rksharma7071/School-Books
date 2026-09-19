@@ -11,4 +11,4 @@ Disallow: /account
 Disallow: /policies/
 Disallow: /search
 
-Sitemap: https://schoolbook.lol/sitemap.xml
+Sitemap: https://www.schoolbook.lol/sitemap.xml

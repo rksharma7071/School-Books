@@ -2,15 +2,15 @@
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <!-- Parent sitemap linking to product, page, collection and blog sitemaps. -->
   <sitemap>
-    <loc>https://schoolbook.lol/sitemap_products_1.xml</loc>
+    <loc>https://www.schoolbook.lol/sitemap_products_1.xml</loc>
     <lastmod>2026-09-16T20:04:51.740Z</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://schoolbook.lol/sitemap_pages_1.xml</loc>
+    <loc>https://www.schoolbook.lol/sitemap_pages_1.xml</loc>
     <lastmod>2026-09-16T20:04:51.741Z</lastmod>
   </sitemap>
   <sitemap>
-    <loc>https://schoolbook.lol/sitemap_collections_1.xml</loc>
+    <loc>https://www.schoolbook.lol/sitemap_collections_1.xml</loc>
     <lastmod>2026-09-16T20:04:51.742Z</lastmod>
   </sitemap>
 </sitemapindex>

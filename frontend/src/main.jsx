@@ -68,6 +68,7 @@ import ProtectedLogin from './routes/ProtectedLogin.jsx'
 import { editCategoryLoader, getCategories, getCategoriesData, getCategoryById, getCategoryProducts } from './data/category.js'
 import { searchProductsLoader } from './data/product.js'
 import SearchResults from './pages/frontend/SearchResults.jsx'
+import { HelmetProvider } from 'react-helmet-async';
 
 window.axios = axiosInstance;
 
@@ -185,10 +186,12 @@ const router = createBrowserRouter([
 
 createRoot(document.getElementById('root')).render(
   <BookProvider>
-    {/* <StrictMode> */}
-    <RouterProvider router={router} />
-    {/* <SpeedInsights /> */}
-    {/* <Analytics /> */}
-    {/* </StrictMode> */}
+    <HelmetProvider>
+      {/* <StrictMode> */}
+      <RouterProvider router={router} />
+      {/* <SpeedInsights /> */}
+      {/* <Analytics /> */}
+      {/* </StrictMode> */}
+    </HelmetProvider>
   </BookProvider>
 )
