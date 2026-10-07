@@ -63,10 +63,7 @@ function EditUser() {
             setShowToast(true);
         } catch (error) {
             console.log("error", error);
-            setToastConfig({
-                type: "error",
-                message: error.message || "Update failed",
-            });
+            setToastConfig({ type: "error", message: error.message || "Update failed" });
             setShowToast(true);
         }
     };

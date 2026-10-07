@@ -35,11 +35,6 @@ function ProductCard({ book, rating = 0 }) {
         e.preventDefault();
         e.stopPropagation();
 
-        if (!user) {
-            navigate("/login");
-            return;
-        }
-        if (loading) return;
         if (!currentVariant?._id) {
             setToastConfig({
                 type: "error",
@@ -49,6 +44,21 @@ function ProductCard({ book, rating = 0 }) {
             setShowToast(true);
             return;
         }
+
+        if (!user) {
+            navigate("/login", {
+                state: {
+                    action: "ADD_TO_CART",
+                    payload: {
+                        productId: book._id,
+                        variantId: currentVariant._id,
+                        quantity: 1
+                    }
+                }
+            });
+            return;
+        }
+        if (loading) return;
 
         setLoading(true);
 
@@ -303,11 +313,9 @@ function ProductCard({ book, rating = 0 }) {
                     {book.title}
                 </Link>
 
-                {book.description && (
-                    <p className="mt-1.5 text-xs text-gray-500 line-clamp-2">
-                        {book.description}
-                    </p>
-                )}
+                {/* {book.description && (
+                    <p className="mt-1.5 text-xs text-gray-500 line-clamp-2">{book.description}</p>
+                )} */}
 
                 {/* Options UI — uncomment when you want variant picking on the card */}
                 {/* {book.options && book.options.length > 0 && (

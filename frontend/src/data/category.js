@@ -28,14 +28,14 @@ const getCategorys = async ({ request } = {}) => {
 
 const getCategoryById = async ({ params }) => {
     const { data } = await api.get(`/api/categories/${params.id}`);
-    console.log("Get Category By Id", data.data);
+    // console.log("Get Category By Id", data.data);
 
     return data?.data || null;
 };
 
 const getCategoryByHandle = async ({ params }) => {
     const { data } = await api.get(`/api/product/${params.handle}`);
-    console.log("Get Category By Handle: ", data.data);
+    // console.log("Get Category By Handle: ", data.data);
 
     return data?.data || null;
 };

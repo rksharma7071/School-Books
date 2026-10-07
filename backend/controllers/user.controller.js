@@ -278,7 +278,7 @@ export const updateUser = async (req, res) => {
         const { email, name, role, status } = req.body;
 
         const isAdmin = req.user?.role === "admin";
-        console.log(req.user?.role);
+        // console.log(req.user?.role);
 
         const isSelf = String(user._id) === String(req.user.id);
 

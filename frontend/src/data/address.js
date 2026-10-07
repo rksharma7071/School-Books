@@ -7,7 +7,7 @@ const getAddress = async () => {
         const res = await axios.get(
             `${import.meta.env.VITE_API}/api/address/user/${user.id}`
         );
-        console.log("Get Address: ", res.data);
+        // console.log("Get Address: ", res.data);
 
         return res.data.address;
     } catch (error) {}

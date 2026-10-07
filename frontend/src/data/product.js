@@ -90,7 +90,7 @@ const getProducts = async ({ request } = {}) => {
 const getProductById = async ({ params }) => {
   try {
     const { data } = await api.get(`/api/product/${params.id}`);
-    console.log("Get Book By Id", data.data);
+    // console.log("Get Book By Id", data.data);
     return data?.data || null;
   } catch (error) {
     console.error("Error fetching book by ID:", error);

@@ -103,13 +103,23 @@ function ProductById() {
     };
 
     const handleAddToCart = async () => {
+        if (!currentVariant?._id) return;
+        
         if (!user) {
-            navigate("/login");
+            navigate("/login", {
+                state: {
+                    action: "ADD_TO_CART",
+                    payload: {
+                        productId: _id,
+                        variantId: currentVariant._id,
+                        quantity: quantity
+                    }
+                }
+            });
             return;
         }
 
         if (loading) return;
-        if (!currentVariant?._id) return;
 
         setLoading(true);
 

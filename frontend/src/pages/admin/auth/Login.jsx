@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useContext, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { BookContext } from "../../../context/School.jsx";
 import StatusMessage from "../../../components/frontend/StatusMessage.jsx";
 
@@ -8,6 +8,7 @@ function Login() {
     const { setUser, showToast, toastConfig, setToastConfig, setShowToast } = useContext(BookContext);
 
     const navigate = useNavigate();
+    const location = useLocation();
 
     const [form, setForm] = useState({
         email: "",
@@ -40,9 +41,29 @@ function Login() {
             if (user.role == "admin") {
                 navigate(`/${import.meta.env.VITE_ADMIN}`, { replace: true });
             } else {
-                navigate(`/`, { replace: true });
+                if (location.state?.action === "ADD_TO_CART" && location.state?.payload) {
+                    try {
+                        await axios.post(
+                            `${import.meta.env.VITE_API}/api/cart/items`,
+                            {
+                                productId: location.state.payload.productId,
+                                variantId: location.state.payload.variantId,
+                                quantity: location.state.payload.quantity,
+                            },
+                            {
+                                headers: {
+                                    Authorization: `Bearer ${token}`
+                                }
+                            }
+                        );
+                        navigate("/cart", { replace: true });
+                        return;
+                    } catch (err) {
+                        console.error("Failed to add to cart after login", err);
+                    }
+                }
+                navigate(`/profile`, { replace: true });
             }
-
 
         } catch (error) {
             setError(error.response?.data?.message || "Invalid email or password");

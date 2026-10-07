@@ -1,9 +1,11 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import jwt from "jsonwebtoken";
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { User } from "../models/user.model.js";
 
+const resend = new Resend(process.env.RESEND_API_KEY);
+const SENDER_EMAIL = process.env.SENDER_EMAIL || "onboarding@resend.dev"; // Replace with your verified domain email, e.g. info@schoolbook.lol
 
 const signToken = (user) => {
     if (!process.env.JWT_SECRET) {
@@ -35,40 +37,187 @@ const publicUser = (user) => ({
 
 const hashToken = (value) => crypto.createHash("sha256").update(String(value)).digest("hex");
 
-const getMailTransport = () =>
-    nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS,
-        },
-    });
-
 const sendVerificationEmail = async (user, token) => {
     try {
-        const transporter = getMailTransport();
-
         const baseUrl = (process.env.FRONTEND_URL || "").split(",")[0];
         const verifyUrl = `${baseUrl}/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
 
-        await transporter.sendMail({
-            from: `"Account Verification" <${process.env.EMAIL_USER}>`,
+        const BRAND = "Acme";
+        const LOGO_URL = process.env.LOGO_URL; // absolute HTTPS URL, e.g. https://acme.com/brand/logo.png
+        const ACCENT = "#4f46e5";
+
+        await resend.emails.send({
+            from: `"${BRAND} Accounts" <${SENDER_EMAIL}>`,
             to: user.email,
             subject: "Verify your email address",
-
-            text: `Please verify your email by visiting: ${verifyUrl}`,
-
+            text: [
+                `Verify your email address`,
+                ``,
+                `Thanks for signing up for ${BRAND}. Confirm this address to activate your account:`,
+                verifyUrl,
+                ``,
+                `This link expires in 24 hours. If you didn't create a ${BRAND} account, you can ignore this email.`,
+            ].join("\n"),
             html: `
-                <div style="font-family:Arial,sans-serif;padding:20px">
-                    <h2>Verify your email</h2>
-                    <p>Click the link below to verify your email address:</p>
-                    <p><a href="${verifyUrl}">${verifyUrl}</a></p>
-                    <p>This link expires in 24 hours.</p>
-                </div>
-            `,
+<!DOCTYPE html>
+<html lang="en" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="x-apple-disable-message-reformatting">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <title>Verify your email address</title>
+  <!--[if mso]>
+  <style>
+    table, td, p, a, h1 { font-family: Arial, Helvetica, sans-serif !important; }
+  </style>
+  <![endif]-->
+  <style>
+    a { text-decoration: none; }
+
+    @media (max-width: 600px) {
+      .container { width: 100% !important; }
+      .px  { padding-left: 24px !important; padding-right: 24px !important; }
+      .h1  { font-size: 22px !important; line-height: 30px !important; }
+      .btn { width: 100% !important; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .bg    { background-color: #0b0f19 !important; }
+      .card  { background-color: #151a23 !important; }
+      .text  { color: #e5e7eb !important; }
+      .muted { color: #9ca3af !important; }
+      .note  { background-color: #1b2230 !important; border-color: #2a3140 !important; }
+    }
+  </style>
+</head>
+
+<body class="bg" style="margin:0; padding:0; width:100%; background-color:#f3f4f6;">
+
+  <!-- Preheader: shows in the inbox preview, hidden in the body -->
+  <div style="display:none; font-size:1px; color:#f3f4f6; line-height:1px; max-height:0; max-width:0; opacity:0; overflow:hidden;">
+    Confirm your email address to activate your ${BRAND} account. This link expires in 24 hours.
+    &#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;&#847;&zwnj;&nbsp;
+  </div>
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" class="bg" style="background-color:#f3f4f6;">
+    <tr>
+      <td align="center" style="padding:40px 16px;">
+
+        <table role="presentation" class="container" width="600" cellpadding="0" cellspacing="0" border="0" style="width:600px; max-width:600px;">
+
+          <!-- Card -->
+          <tr>
+            <td class="card px" style="background-color:#ffffff; border-radius:14px; padding:40px 40px 36px 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+
+                <!-- Logo -->
+                <tr>
+                  <td align="center" style="padding-bottom:32px;">
+                    <img src="${LOGO_URL}"
+                         width="160" height="40"
+                         alt="${BRAND}"
+                         style="display:block; width:160px; height:40px; border:0; outline:none; text-decoration:none;">
+                  </td>
+                </tr>
+
+                <!-- Heading -->
+                <tr>
+                  <td align="center">
+                    <h1 class="h1 text" style="margin:0 0 12px 0; font-family:Arial,Helvetica,sans-serif; font-size:24px; line-height:32px; font-weight:700; color:#111827;">
+                      Verify your email address
+                    </h1>
+                  </td>
+                </tr>
+
+                <!-- Intro copy -->
+                <tr>
+                  <td align="center" style="padding-bottom:28px;">
+                    <p class="muted" style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:15px; line-height:24px; color:#6b7280;">
+                      Thanks for signing up for ${BRAND}. Confirm this address to activate
+                      your account &mdash; it only takes a second.
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Button -->
+                <tr>
+                  <td align="center" style="padding-bottom:24px;">
+                    <!--[if mso]>
+                    <v:roundrect xmlns:v="urn:schemas-microsoft-com:vml" xmlns:w="urn:schemas-microsoft-com:office:word"
+                      href="${verifyUrl}"
+                      style="height:52px; v-text-anchor:middle; width:260px;"
+                      arcsize="23%" strokecolor="${ACCENT}" fillcolor="${ACCENT}">
+                      <w:anchorlock/>
+                      <center style="color:#ffffff; font-family:Arial,sans-serif; font-size:16px; font-weight:700;">
+                        Verify email address
+                      </center>
+                    </v:roundrect>
+                    <![endif]-->
+                    <!--[if !mso]><!-- -->
+                    <a class="btn" href="${verifyUrl}"
+                       style="display:inline-block; width:260px; background-color:${ACCENT}; color:#ffffff; font-family:Arial,Helvetica,sans-serif; font-size:16px; font-weight:700; line-height:52px; text-align:center; border-radius:12px;">
+                      Verify email address
+                    </a>
+                    <!--<![endif]-->
+                  </td>
+                </tr>
+
+                <!-- Fallback link -->
+                <tr>
+                  <td align="center" style="padding-bottom:8px;">
+                    <p class="muted" style="margin:0 0 6px 0; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:20px; color:#9ca3af;">
+                      Button not working? Paste this link into your browser:
+                    </p>
+                    <p style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:20px; word-break:break-all;">
+                      <a href="${verifyUrl}" style="color:${ACCENT}; text-decoration:underline;">${verifyUrl}</a>
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Expiry / security note -->
+                <tr>
+                  <td style="padding-top:28px;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0">
+                      <tr>
+                        <td class="note" style="background-color:#f9fafb; border:1px solid #e5e7eb; border-radius:10px; padding:14px 16px;">
+                          <p class="muted" style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:13px; line-height:20px; color:#6b7280;">
+                            This link expires in <strong>24 hours</strong>. If you didn&rsquo;t create a
+                            ${BRAND} account, you can safely ignore this email.
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td align="center" style="padding:24px 8px 0 8px;">
+              <p class="muted" style="margin:0 0 6px 0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:18px; color:#9ca3af;">
+                ${BRAND} &middot; 123 Example Street, City, Country
+              </p>
+              <p class="muted" style="margin:0; font-family:Arial,Helvetica,sans-serif; font-size:12px; line-height:18px; color:#9ca3af;">
+                This is a one-time transactional message about your account.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `,
         });
     } catch (error) {
-        console.error("Failed to send verification email:", error.message);
+        console.error("Failed to send verification email:", error.message || error);
     }
 };
 
@@ -117,7 +266,7 @@ export const signUp = async (req, res) => {
 
         await sendVerificationEmail(user, rawToken);
 
-        console.log({ user, rawToken });
+        // console.log({ user, rawToken });
 
         return res.status(201).json({
             success: true,
@@ -299,8 +448,8 @@ export const requestOTP = async (req, res) => {
         await user.save();
 
         try {
-            await getMailTransport().sendMail({
-                from: `"Password Reset" <${process.env.EMAIL_USER}>`,
+            await resend.emails.send({
+                from: `"Password Reset" <${SENDER_EMAIL}>`,
                 to: user.email,
                 subject: "Your OTP Code",
                 text: `Your OTP is ${otp}. It expires in 5 minutes.`,
@@ -314,7 +463,7 @@ export const requestOTP = async (req, res) => {
                 `,
             });
         } catch (error) {
-            console.error("Failed to send OTP:", error.message);
+            console.error("Failed to send OTP:", error.message || error);
             return res.status(500).json({ success: false, message: "Failed to send OTP email. Please try again later." });
         }
 

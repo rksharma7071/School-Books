@@ -372,48 +372,70 @@ export const getAllProducts = async (req, res) => {
 
         const pipeline = [
             { $match: match },
-            {
-                $addFields: {
-                    minPrice: { $min: "$variants.price" },
-                    maxPrice: { $max: "$variants.price" },
-                    totalInventory: {
-                        $sum: {
-                            $map: {
-                                input: "$variants",
-                                as: "variant",
-                                in: {
-                                    $cond: [
-                                        { $ne: ["$$variant.isActive", false] },
-                                        "$$variant.inventory_quantity",
-                                        0,
-                                    ],
-                                },
+        ];
+
+        const isComputedSort = sortBy === "price" || sortBy === "inventory";
+        const hasPriceFilter = minPrice !== undefined || maxPrice !== undefined;
+        const needsComputedBeforeLimit = isComputedSort || hasPriceFilter;
+        
+        const order = sortOrder === "asc" ? 1 : -1;
+
+        // If not sorting by a computed field, we can sort early to use indexes
+        if (!isComputedSort) {
+            pipeline.push({ $sort: { [sortBy]: order } });
+        }
+
+        const addFieldsStage = {
+            $addFields: {
+                minPrice: { $min: "$variants.price" },
+                maxPrice: { $max: "$variants.price" },
+                totalInventory: {
+                    $sum: {
+                        $map: {
+                            input: "$variants",
+                            as: "variant",
+                            in: {
+                                $cond: [
+                                    { $ne: ["$$variant.isActive", false] },
+                                    "$$variant.inventory_quantity",
+                                    0,
+                                ],
                             },
                         },
                     },
                 },
             },
-        ];
+        };
 
-        if (minPrice !== undefined || maxPrice !== undefined) {
-            const priceFilter = {};
-            if (minPrice !== undefined) priceFilter.$gte = Number(minPrice);
-            if (maxPrice !== undefined) priceFilter.$lte = Number(maxPrice);
-            pipeline.push({ $match: { minPrice: priceFilter } });
+        if (needsComputedBeforeLimit) {
+            pipeline.push(addFieldsStage);
+            
+            if (hasPriceFilter) {
+                const priceFilter = {};
+                if (minPrice !== undefined) priceFilter.$gte = Number(minPrice);
+                if (maxPrice !== undefined) priceFilter.$lte = Number(maxPrice);
+                pipeline.push({ $match: { minPrice: priceFilter } });
+            }
+
+            if (isComputedSort) {
+                const sortFields = { price: "minPrice", inventory: "totalInventory" };
+                pipeline.push({ $sort: { [sortFields[sortBy]]: order } });
+            }
         }
-
-        const sortFields = { price: "minPrice", inventory: "totalInventory" };
-        const field = sortFields[sortBy] || sortBy;
-        const order = sortOrder === "asc" ? 1 : -1;
-        pipeline.push({ $sort: { [field]: order } });
 
         let total = null;
         if (includeTotal === "true") {
-            const result = await Product.aggregate([...pipeline, { $count: "total" }]);
+            const countPipeline = [...pipeline, { $count: "total" }];
+            const result = await Product.aggregate(countPipeline);
             total = result[0]?.total || 0;
         }
 
         pipeline.push({ $skip: (pageNum - 1) * limitNum }, { $limit: limitNum });
+
+        // If we didn't add computed fields yet, add them now for the subset
+        if (!needsComputedBeforeLimit) {
+            pipeline.push(addFieldsStage);
+        }
 
         const products = await Product.aggregate(pipeline);
 
@@ -421,6 +443,8 @@ export const getAllProducts = async (req, res) => {
             ...product,
             inventoryStatus: getInventoryStatus(product.totalInventory || 0),
         }));
+
+        res.set("Cache-Control", "public, s-maxage=60, stale-while-revalidate=300");
 
         return res.status(200).json({
             success: true,
