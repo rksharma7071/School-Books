@@ -4,12 +4,12 @@ import ProfileSidebar from '../../components/frontend/ProfileSidebar';
 
 function Profile() {
     return (
-        <div className="bg-slate-100 py-10">
+        <div className="bg-slate-100 py-6 sm:py-10">
             <div className="max-w-7xl mx-auto px-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4 md:gap-6">
                     <ProfileSidebar />
 
-                    <section className="md:col-span-3 bg-white rounded-lg shadow p-6">
+                    <section className="md:col-span-3 bg-white rounded-lg shadow p-5 sm:p-6">
                         <Outlet />
                     </section>
                 </div>

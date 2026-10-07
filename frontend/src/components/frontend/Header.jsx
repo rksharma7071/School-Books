@@ -158,9 +158,7 @@ function Header() {
                     <Link to="/cart" className="relative text-blue-100 hover:text-white">
                         <LuShoppingCart className="text-xl" />
                         {cartCount > 0 && (
-                            <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] font-semibold rounded-full px-1.5">
-                                {cartCount}
-                            </span>
+                            <span className="absolute -top-1 -right-2 bg-red-600 text-white text-[10px] font-semibold rounded-full px-1.5">{cartCount}</span>
                         )}
                     </Link>
 
@@ -184,23 +182,15 @@ function Header() {
                                 onClick={() => setOpen((prev) => !prev)}
                                 className="flex items-center gap-2"
                             >
-                                <span className="hidden md:inline text-sm text-blue-100 font-medium">
-                                    {user?.name}
-                                </span>
-                                <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">
-                                    {user?.name?.[0]?.toUpperCase()}
-                                </div>
+                                <span className="hidden md:inline text-sm text-blue-100 font-medium">{user?.name}</span>
+                                <div className="h-9 w-9 rounded-full bg-blue-700 flex items-center justify-center border border-blue-400 text-white text-sm font-semibold">{user?.name?.[0]?.toUpperCase()}</div>
                             </button>
 
                             {open && (
                                 <div className="absolute right-0 mt-3 w-64 rounded-2xl bg-white shadow-xl border border-gray-100 z-50 overflow-hidden">
                                     <div className="px-5 py-4 bg-gradient-to-r from-slate-50 to-slate-100 border-b border-gray-300">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">
-                                            {user?.name?.toUpperCase()}
-                                        </p>
-                                        <p className="text-xs text-gray-500 truncate mt-0.5">
-                                            {user?.email}
-                                        </p>
+                                        <p className="text-sm font-semibold text-gray-900 truncate">{user?.name?.toUpperCase()}</p>
+                                        <p className="text-xs text-gray-500 truncate mt-0.5">{user?.email}</p>
                                     </div>
 
                                     <div className="py-2">
@@ -271,9 +261,9 @@ function Header() {
                         <nav className="flex flex-col gap-4 text-blue-100 text-sm font-medium">
                             <Link onClick={() => setMobileOpen(false)} to="/" className="hover:text-white">Home</Link>
                             <Link onClick={() => setMobileOpen(false)} to="/categories/all" className="hover:text-white">Categories</Link>
-                            <Link onClick={() => setMobileOpen(false)} to="/best-sellers" className="hover:text-white">Best Sellers</Link>
-                            <Link onClick={() => setMobileOpen(false)} to="/new-arrivals" className="hover:text-white">New Arrivals</Link>
-                            <Link onClick={() => setMobileOpen(false)} to="/offers" className="hover:text-white">Offers</Link>
+                            {/* <Link onClick={() => setMobileOpen(false)} to="/best-sellers" className="hover:text-white">Best Sellers</Link> */}
+                            {/* <Link onClick={() => setMobileOpen(false)} to="/new-arrivals" className="hover:text-white">New Arrivals</Link> */}
+                            {/* <Link onClick={() => setMobileOpen(false)} to="/offers" className="hover:text-white">Offers</Link> */}
                             <Link onClick={() => setMobileOpen(false)} to="/reviews" className="hover:text-white">Reviews</Link>
                             <Link onClick={() => setMobileOpen(false)} to="/contact" className="hover:text-white">Contact Us</Link>
                         </nav>
