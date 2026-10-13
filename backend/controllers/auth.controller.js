@@ -42,7 +42,7 @@ const sendVerificationEmail = async (user, token) => {
         const baseUrl = (process.env.FRONTEND_URL || "").split(",")[0];
         const verifyUrl = `${baseUrl}/verify-email?token=${token}&email=${encodeURIComponent(user.email)}`;
 
-        const BRAND = "Acme";
+        const BRAND = "SchoolBook";
         const LOGO_URL = process.env.LOGO_URL; // absolute HTTPS URL, e.g. https://acme.com/brand/logo.png
         const ACCENT = "#4f46e5";
 

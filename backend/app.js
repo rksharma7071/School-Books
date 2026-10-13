@@ -2,6 +2,7 @@ import dns from "dns";
 dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 import express from "express";
+import compression from "compression";
 import "dotenv/config";
 
 import { connectDB } from "./config/database.js";
@@ -45,6 +46,7 @@ app.post(
     handleRazorpayWebhook
 );
 
+app.use(compression());
 app.use(express.json({ limit: "1mb" }));
 app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
